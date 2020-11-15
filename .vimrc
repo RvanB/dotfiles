@@ -5,16 +5,14 @@ set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
 Plugin 'christoomey/vim-tmux-navigator'
+Plugin 'godlygeek/tabular'
+Plugin 'plasticboy/vim-markdown'
+Plugin 'preservim/nerdtree'
+Plugin 'tpope/vim-fugitive'
+Plugin 'tpope/vim-surround'
+Plugin 'scrooloose/syntastic'
+Plugin 'scrooloose/nerdcommenter'
 call vundle#end()
-filetype plugin indent on
-
-
-set number relativenumber
-syntax on
-
-color inkpot
-
-set timeoutlen=1000 ttimeoutlen=0
 
 " toggle relativenumber depending on normal/insert mode
 augroup numbertoggle
@@ -22,6 +20,24 @@ augroup numbertoggle
   autocmd BufEnter,FocusGained,InsertLeave * set relativenumber
   autocmd BufLeave,FocusLost,InsertEnter   * set norelativenumber
 augroup END
+
+
+" NerdTREE
+autocmd vimenter * NERDTree
+autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
+map <C-n> :NERDTreeToggle<CR>
+let g:NERDTreeShowLineNumbers=1
+
+
+filetype plugin indent on
+
+set number relativenumber
+set ruler
+syntax on
+
+color inkpot
+
+set timeoutlen=1000 ttimeoutlen=0
 
 set tabstop=2
 set shiftwidth=2
@@ -42,4 +58,7 @@ nnoremap k gk
 
 set undolevels=1000
 set noswapfile
-" highlight LineNr ctermfg=0
+
+" NerdTREE red directories
+hi Directory guifg=#FF0000 ctermfg=red
+
