@@ -1,6 +1,7 @@
 set nocompatible
 filetype off
 
+" Vundle
 set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
@@ -11,7 +12,14 @@ Plugin 'tpope/vim-fugitive'
 Plugin 'tpope/vim-surround'
 Plugin 'scrooloose/syntastic'
 Plugin 'scrooloose/nerdcommenter'
-Plugin 'JuliaEditorSupport/julia-vim'
+" Plugin 'JuliaEditorSupport/julia-vim'
+Plugin 'ervandew/supertab'
+Plugin 'chrisbra/Colorizer'
+Plugin 'junegunn/rainbow_parentheses.vim'
+Plugin 'junegunn/vim-easy-align'
+Plugin 'Yggdroot/indentLine'
+Plugin 'vim-airline/vim-airline'
+Plugin 'inkarkat/vim-visualrepeat'
 call vundle#end()
 
 " toggle relativenumber depending on normal/insert mode
@@ -27,6 +35,9 @@ autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isT
 map <C-n> :NERDTreeToggle<CR>
 let g:NERDTreeShowLineNumbers=1
 
+" EasyAlign
+xmap ga <Plug>(EasyAlign)
+nmap ga <Plug>(EasyAlign)
 
 filetype plugin indent on
 
@@ -50,7 +61,7 @@ set incsearch
 set hlsearch
 
 " noremap ,<space> :nohlsearch<CR>
-noremap <Enter> :nohlsearch<CR>
+noremap <Esc> :nohlsearch<CR>
 
 " Jumping up/down goes to next row in editor when lines wrapped
 nnoremap j gj
@@ -60,5 +71,5 @@ set undolevels=1000
 set noswapfile
 
 " NerdTREE red directories
-hi Directory guifg=#FF0000 ctermfg=red
+" hi Directory guifg=#FF0000 ctermfg=red
 
