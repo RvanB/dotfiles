@@ -1,5 +1,5 @@
 set nocompatible
-filetype off
+" filetype off
 
 " Vundle
 set rtp+=~/.vim/bundle/Vundle.vim
@@ -10,16 +10,17 @@ Plugin 'godlygeek/tabular'
 Plugin 'preservim/nerdtree'
 Plugin 'tpope/vim-fugitive'
 Plugin 'tpope/vim-surround'
-Plugin 'scrooloose/syntastic'
+" Plugin 'scrooloose/syntastic'
 Plugin 'scrooloose/nerdcommenter'
 " Plugin 'JuliaEditorSupport/julia-vim'
 Plugin 'ervandew/supertab'
 Plugin 'chrisbra/Colorizer'
 Plugin 'junegunn/rainbow_parentheses.vim'
 Plugin 'junegunn/vim-easy-align'
-Plugin 'Yggdroot/indentLine'
-Plugin 'vim-airline/vim-airline'
+" Plugin 'Yggdroot/indentLine'
+" Plugin 'vim-airline/vim-airline'
 Plugin 'inkarkat/vim-visualrepeat'
+Plugin 'udalov/kotlin-vim'
 call vundle#end()
 
 " toggle relativenumber depending on normal/insert mode
@@ -45,7 +46,7 @@ set number relativenumber
 set ruler
 syntax on
 
-color inkpot
+color desert
 
 set timeoutlen=0 ttimeoutlen=0
 
@@ -73,3 +74,4 @@ set noswapfile
 " NerdTREE red directories
 " hi Directory guifg=#FF0000 ctermfg=red
 
+au BufRead,BufNewFile *.k set filetype=kpl

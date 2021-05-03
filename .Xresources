@@ -1,44 +1,68 @@
 ! Use a nice truetype font and size by default... 
-xterm*faceName: DejaVu Sans Mono Book
-xterm*faceSize: 12
-
-! Every shell is a login shell by default (for inclusion of all necessary environment variables)
-xterm*loginshell: true
+XTerm*faceName: Meslo LG S for Powerline
+XTerm*faceSize: 12
 
 ! I like a LOT of scrollback...
-xterm*savelines: 16384
+XTerm*savelines: 16384
 
 ! double-click to select whole URLs
-xterm*charClass: 33:48,36-47:48,58-59:48,61:48,63-64:48,95:48,126:48
+XTerm*charClass: 33:48,36-47:48,58-59:48,61:48,63-64:48,95:48,126:48
 
 ! DOS-box colours...
-xterm*foreground: rgb:a8/a8/a8
-xterm*background: rgb:00/00/00
-xterm*color0: rgb:00/00/00
-xterm*color1: rgb:a8/00/00
-xterm*color2: rgb:00/a8/00
-xterm*color3: rgb:a8/54/00
-xterm*color4: rgb:00/00/a8
-xterm*color5: rgb:a8/00/a8
-xterm*color6: rgb:00/a8/a8
-xterm*color7: rgb:a8/a8/a8
-xterm*color8: rgb:54/54/54
-xterm*color9: rgb:fc/54/54
-xterm*color10: rgb:54/fc/54
-xterm*color11: rgb:fc/fc/54
-xterm*color12: rgb:54/54/fc
-xterm*color13: rgb:fc/54/fc
-xterm*color14: rgb:54/fc/fc
-xterm*color15: rgb:fc/fc/fc
+!XTerm*foreground: rgb:a8/a8/a8
+!XTerm*background: rgb:00/00/00
+!XTerm*color0: rgb:00/00/00
+!XTerm*color1: rgb:a8/00/00
+!XTerm*color2: rgb:00/a8/00
+!XTerm*color3: rgb:a8/54/00
+!XTerm*color4: rgb:00/00/a8
+!XTerm*color5: rgb:a8/00/a8
+!XTerm*color6: rgb:00/a8/a8
+!XTerm*color7: rgb:a8/a8/a8
+!XTerm*color8: rgb:54/54/54
+!XTerm*color9: rgb:fc/54/54
+!XTerm*color10: rgb:54/fc/54
+!XTerm*color11: rgb:fc/fc/54
+!XTerm*color12: rgb:54/54/fc
+!XTerm*color13: rgb:fc/54/fc
+!XTerm*color14: rgb:54/fc/fc
+!XTerm*color15: rgb:fc/fc/fc
+
+XTerm*background: rgb:10/10/10
+XTerm*foreground: rgb:d3/d3/d3
+XTerm*color0:     rgb:10/10/10
+XTerm*color1:     rgb:cd/5c/5c
+XTerm*color2:     rgb:2e/8b/57
+XTerm*color3:     rgb:f0/e6/8c
+XTerm*color4:     rgb:b0/c4/de
+XTerm*color5:     rgb:ba/55/d3
+XTerm*color6:     rgb:46/82/b4
+XTerm*color7:     rgb:d3/d3/d3
+XTerm*color8:     rgb:4d/4d/4d
+XTerm*color9:     rgb:ff/6a/6a
+XTerm*color10:    rgb:8f/bc/8f
+XTerm*color11:    rgb:ff/fa/cd
+XTerm*color12:    rgb:1e/90/ff
+XTerm*color13:    rgb:db/70/93
+XTerm*color14:    rgb:5f/9e/a0
+XTerm*color15:    rgb:ff/ff/ff
 
 ! right hand side scrollbar...
-xterm*rightScrollBar: true
-xterm*ScrollBar: true
+XTerm*rightScrollBar: true
+XTerm*ScrollBar: false
 
 ! stop output to terminal from jumping down to bottom of scroll again
-xterm*scrollTtyOutput: false
+XTerm*scrollTtyOutput: false
 
-xterm*metaSendsEscape: true
-xterm*eightBitInput: false
+XTerm*metaSendsEscape: true
+XTerm*eightBitInput: false
 
-xterm*selectToClipboard: true
+XTerm*selectToClipboard: true
+
+! Xft.dpi: 96
+! Xft.antialias: true
+! Xft.hinting: true
+! Xft.rgba: rgb
+! Xfg.autohint: false
+! Xft.hintstyle: hintslight
+! Xft.lcdfilter: lcddefault
