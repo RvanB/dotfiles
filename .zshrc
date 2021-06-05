@@ -1,25 +1,22 @@
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
-export ZSH="/home/rvan/.oh-my-zsh"
+export ZSH="$HOME/.oh-my-zsh"
 export SHELL=/bin/zsh
-#export TERM=screen-256color
-# export PATH="/home/rvan/miniconda3/bin:$PATH"  # commented out by conda initialize
-export PATH="/home/rvan/blitz:$PATH"
-export PATH="/home/rvan/software/android-studio/bin:$PATH"
+export PATH="$HOME/blitz:$PATH"
+export PATH="$HOME/software/android-studio/bin:$PATH"
 
 DISABLE_UNTRACKED_FILES_DIRTY="true"
 
 KEYTIMEOUT=1
 skip_global_compinit=1
-ZSH_THEME="clean"
+ZSH_THEME="custom"
 
 plugins=(
   git
   zsh-syntax-highlighting
   zsh-completions
   colored-man-pages
-  oh-my-matrix
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -39,14 +36,11 @@ compinit
 
 alias hg='history | grep'
 alias vim="nvim"
-alias studio="studio.sh > /dev/null 2> /dev/null &"
+alias tmux="TERM=xterm-256color tmux"
 
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
-export SDKMAN_DIR="/home/rvan/.sdkman"
-[[ -s "/home/rvan/.sdkman/bin/sdkman-init.sh" ]] && source "/home/rvan/.sdkman/bin/sdkman-init.sh"
-
-# zsh-bd
-. $HOME/.zsh/plugins/bd/bd.zsh
+export SDKMAN_DIR="$HOME/.sdkman"
+[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
 
 # Load version control information
 autoload -Uz vcs_info
@@ -54,31 +48,18 @@ precmd() { vcs_info }
 
 # Format the vcs_info_msg_0_ variable
 zstyle ':vcs_info:git:*' formats ':%b'
- 
-# Set up the prompt (with git branch name)
-setopt PROMPT_SUBST
-
-# export PROMPT='%(!.%{%F{yellow}%}.)$USER@%{$fg[white]%}%M ${ret_status} %{$fg[cyan]%}%c%{$reset_color%} $(git_prompt_info)'
-PROMPT="%B%F{red}%n%f%b" 
-PROMPT+="@"
-PROMPT+="%F{blue}${${(%):-%m}}%f" # Blue host name
-PROMPT+=" "
-PROMPT+="%F{yellow}%~" # Yellow working directory
-PROMPT+='%F{blue}${vcs_info_msg_0_}'
-PROMPT+="%F{yellow} %# "
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/home/rvan/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+__conda_setup="$('$HOME/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
 if [ $? -eq 0 ]; then
     eval "$__conda_setup"
 else
-    if [ -f "/home/rvan/miniconda3/etc/profile.d/conda.sh" ]; then
-        . "/home/rvan/miniconda3/etc/profile.d/conda.sh"
+    if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
+        . "$HOME/miniconda3/etc/profile.d/conda.sh"
     else
-        export PATH="/home/rvan/miniconda3/bin:$PATH"
+        export PATH="$HOME/miniconda3/bin:$PATH"
     fi
 fi
 unset __conda_setup
 # <<< conda initialize <<<
-
