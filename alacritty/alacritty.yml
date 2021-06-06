@@ -1,0 +1,40 @@
+colors:
+
+  primary:
+    background: '0x101010'
+    foreground: '0xbdbdbd'
+
+  normal:
+
+    black: '0x101010'
+    red: '0xcd5c5c'
+    green: '0x2e8b57'
+    
+    magenta: '0xba55d3'
+    cyan: '0x4682b4'
+    white: '0xbdbdbd'
+
+  bright:
+    black: '0x4d4d4d'
+    red: '0xff6a6a'
+    green: '0x8fbc8f'
+    yellow: '0xfffacd'
+    blue: '0x1e90ff'
+    magenta: '0xdb7093'
+    cyan: '0x5f9ea0'
+    white: '0xc0c0c0'
+
+font:
+  normal:
+    family: "Go Mono"
+    style: "Regular"
+
+  bold:
+    family: "Go Mono"
+    style: "Bold"
+
+  italic:
+    family: "Go Mono"
+    style: "Italic"
+  size: 16
+

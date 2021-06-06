@@ -11,6 +11,7 @@ XTerm*charClass: 33:48,36-47:48,58-59:48,61:48,63-64:48,95:48,126:48
 
 XTerm*background: rgb:10/10/10
 XTerm*foreground: rgb:d3/d3/d3
+
 XTerm*color0:     rgb:10/10/10
 XTerm*color1:     rgb:cd/5c/5c
 XTerm*color2:     rgb:2e/8b/57
@@ -19,6 +20,7 @@ XTerm*color4:     rgb:b0/c4/de
 XTerm*color5:     rgb:ba/55/d3
 XTerm*color6:     rgb:46/82/b4
 XTerm*color7:     rgb:d3/d3/d3
+
 XTerm*color8:     rgb:4d/4d/4d
 XTerm*color9:     rgb:ff/6a/6a
 XTerm*color10:    rgb:8f/bc/8f

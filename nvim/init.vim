@@ -24,6 +24,8 @@ Plugin 'dhruvasagar/vim-table-mode'
 
 call vundle#end()
 
+" Something
+
 " Kite
 set statusline=%<%f\ %h%m%r%{kite#statusline()}%=%-14.(%l,%c%V%)\ %P
 set laststatus=2  " always display the status line
@@ -61,7 +63,7 @@ let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
 set t_8f=^[[38;2;%lu;%lu;%lum  " Needed in tmux
 set t_8b=^[[48;2;%lu;%lu;%lum  " Ditto
 set termguicolors
-set background=dark
+set background=light
 colorscheme solarized8
 
 set timeoutlen=0 ttimeoutlen=0
