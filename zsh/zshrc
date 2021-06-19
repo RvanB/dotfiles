@@ -1,10 +1,21 @@
 # Raiden van Bronkhorst
 # zsh configuration
 
+########## ZSH CONFIGURATIONS ##########
+# Auto cd into directories
+setopt auto_cd
+export PATH="/Applications/kitty.app/Contents/MacOS:$PATH"
+
+# MacPorts
+export PATH="/opt/local/bin:/opt/local/sbin:$PATH"
+export MANPATH=/opt/local/share/man:$MANPATH
+
+# cargo binaries
+export PATH="$HOME/.cargo/bin/:$PATH"
+
 ########## COMPLETIONS ##########
 
-
-fpath=("$HOME/dotfiles/zsh-completions/src" $fpath)
+fpath=(~/.zsh/completion $fpath)
 
 # Partial completion
 zstyle ':completion:*' completer _complete
@@ -12,7 +23,7 @@ zstyle ':completion:*' completer _complete
 # Case insensitivity
 zstyle ':completion:*' matcher-list '' 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' '+l:|=* r:|=*'
 
-autoload -Uz compinit && compinit
+autoload -Uz compinit && compinit -i
 
 ########## THEMING ##########
 
@@ -47,14 +58,19 @@ function git_prompt() {
 PROMPT='$(exit_code_prompt) %{$fg[blue]%}${PWD/#$HOME/~}%{$reset_color%} $ '
 RPROMPT='$(git_prompt) ${vcs_info_msg_0_}'
 
-
 ########## ALIASES ##########
 #
 alias hg='history | grep'
 alias vim="nvim"
 alias tmux="TERM=xterm-256color tmux"
-alias la='ls -la'
-alias l='ls -l'
+alias ls='exa -ah --color=always --group-directories-first'
+
+# Configuration files
+alias cfkitty='vim ~/.config/kitty/kitty.conf'
+alias cfalacritty='vim ~/.config/alacritty/alacritty.yml'
+alias cfzsh='vim ~/.zshrc'
+alias cfvim='vim ~/.config/nvim/init.vim'
+alias cftmux='vim ~/.tmux.conf'
 
 ########## PROGRAM SETUP ##########
 
@@ -74,7 +90,6 @@ unset __conda_setup
 # <<< conda initialize <<<
 conda activate
 
-
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
@@ -82,4 +97,3 @@ export NVM_DIR="$HOME/.nvm"
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
 export SDKMAN_DIR="$HOME/.sdkman"
 [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
-

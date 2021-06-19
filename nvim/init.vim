@@ -21,7 +21,8 @@ Plugin 'itchyny/lightline.vim'
 Plugin 'lifepillar/vim-solarized8'
 Plugin 'psliwka/vim-smoothie'
 Plugin 'dhruvasagar/vim-table-mode'
-
+Plugin 'cormacrelf/dark-notify'
+Plugin 'NLKNguyen/papercolor-theme'
 call vundle#end()
 
 " Something
@@ -63,8 +64,14 @@ let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
 set t_8f=^[[38;2;%lu;%lu;%lum  " Needed in tmux
 set t_8b=^[[48;2;%lu;%lu;%lum  " Ditto
 set termguicolors
+
+colorscheme papercolor
 set background=light
-colorscheme solarized8
+
+" Dark notify
+:lua <<EOF
+require('dark_notify').run()
+EOF
 
 set timeoutlen=0 ttimeoutlen=0
 
