@@ -23,17 +23,22 @@ Plugin 'psliwka/vim-smoothie'
 Plugin 'dhruvasagar/vim-table-mode'
 Plugin 'cormacrelf/dark-notify'
 Plugin 'NLKNguyen/papercolor-theme'
+Plugin 'iamcco/markdown-preview.nvim'
+Plugin 'dense-analysis/ale'
+" Plugin 'maximbaz/lightline-ale'
+Plugin 'preservim/tagbar'
+Plugin 'jistr/vim-nerdtree-tabs'
+Plugin 'othree/yajs.vim'
+Plugin 'maxmellon/vim-jsx-pretty'
+Plugin 'tpope/vim-commentary'
 call vundle#end()
 
-" Something
-
-" Kite
-set statusline=%<%f\ %h%m%r%{kite#statusline()}%=%-14.(%l,%c%V%)\ %P
-set laststatus=2  " always display the status line
+" Mouse
+set mouse=a
 
 " Git Gutter
+let g:gitgutter_async=0
 set updatetime=100
-
 
 " toggle relativenumber depending on normal/insert mode
 augroup numbertoggle
@@ -45,8 +50,11 @@ augroup END
 " NerdTREE
 " autocmd vimenter * NERDTree
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
-map <C-n> :NERDTreeToggle<CR>
+map <C-n> :NERDTreeTabsToggle<CR>
 let g:NERDTreeShowLineNumbers=1
+
+" TagBar
+nmap <C-t> :TagbarToggle<CR>
 
 " EasyAlign
 xmap ga <Plug>(EasyAlign)
@@ -61,11 +69,20 @@ syntax enable
 set t_Co=256
 let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
 let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
-set t_8f=^[[38;2;%lu;%lu;%lum  " Needed in tmux
-set t_8b=^[[48;2;%lu;%lu;%lum  " Ditto
+set t_8f=[38;2;%lu;%lu;%lum  " Needed in tmux
+set t_8b=[48;2;%lu;%lu;%lum  " Ditto
 set termguicolors
 
-colorscheme papercolor
+
+let g:PaperColor_Theme_Options = {
+  \   'theme': {
+  \     'default': {
+  \       'allow_italic': 1
+  \     }
+  \   }
+  \ }
+
+colorscheme PaperColor
 set background=light
 
 " Dark notify
@@ -73,11 +90,14 @@ set background=light
 require('dark_notify').run()
 EOF
 
+" Italics
+set t_ZH=[3m
+set t_ZR=[23m
 set timeoutlen=0 ttimeoutlen=0
 
 set tabstop=2
 set shiftwidth=2
-set expandtab
+set noexpandtab
 
 set visualbell
 set noerrorbells
@@ -104,4 +124,33 @@ au BufRead,BufNewFile *.k set filetype=kpl
 let g:kite_tab_complete=1
 set completeopt+=menuone
 set completeopt+=noselect
+
+
+" Markdown
+set conceallevel=2
+let g:mkdp_auto_start=1
+
+function! MathAndLiquid()
+    "" Define certain regions
+    " Block math. Look for "$$[anything]$$"
+    syn region math start=/\$\$/ end=/\$\$/
+    " inline math. Look for "$[not $][anything]$"
+    syn match math_block '\$[^$].\{-}\$'
+
+    " Liquid single line. Look for "{%[anything]%}"
+    syn match liquid '{%.*%}'
+    " Liquid multiline. Look for "{%[anything]%}[anything]{%[anything]%}"
+    syn region highlight_block start='{% highlight .*%}' end='{%.*%}'
+    " Fenced code blocks, used in GitHub Flavored Markdown (GFM)
+    syn region highlight_block start='```' end='```'
+
+    "" Actually highlight those regions.
+    hi link math Statement
+    hi link liquid Statement
+    hi link highlight_block Function
+    hi link math_block Function
+endfunction
+
+" Call everytime we open a Markdown file
+autocmd BufRead,BufNewFile,BufEnter *.md,*.markdown call MathAndLiquid()
 
