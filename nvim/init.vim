@@ -16,35 +16,32 @@ Plugin 'junegunn/vim-easy-align'
 Plugin 'inkarkat/vim-visualrepeat'
 Plugin 'udalov/kotlin-vim'
 Plugin 'kopischke/vim-fetch'
-Plugin 'airblade/vim-gitgutter'
-Plugin 'itchyny/lightline.vim'
-Plugin 'lifepillar/vim-solarized8'
+" Plugin 'itchyny/lightline.vim'
+" Plugin 'lifepillar/vim-solarized8'
 Plugin 'psliwka/vim-smoothie'
 Plugin 'dhruvasagar/vim-table-mode'
 Plugin 'cormacrelf/dark-notify'
-Plugin 'NLKNguyen/papercolor-theme'
+" Plugin 'NLKNguyen/papercolor-theme'
 Plugin 'iamcco/markdown-preview.nvim'
 Plugin 'dense-analysis/ale'
 " Plugin 'maximbaz/lightline-ale'
-Plugin 'preservim/tagbar'
+" Plugin 'preservim/tagbar'
 Plugin 'jistr/vim-nerdtree-tabs'
 Plugin 'othree/yajs.vim'
 Plugin 'maxmellon/vim-jsx-pretty'
-Plugin 'tpope/vim-commentary'
+" Plugin 'tpope/vim-commentary'
+Plugin 'lervag/vimtex'
+Plugin 'ctrlpvim/ctrlp.vim'
 call vundle#end()
 
 " Mouse
 set mouse=a
 
-" Git Gutter
-let g:gitgutter_async=0
-set updatetime=100
-
 " toggle relativenumber depending on normal/insert mode
 augroup numbertoggle
-  autocmd!
-  autocmd BufEnter,FocusGained,InsertLeave * set relativenumber
-  autocmd BufLeave,FocusLost,InsertEnter   * set norelativenumber
+	autocmd!
+	autocmd BufEnter,FocusGained,InsertLeave * set relativenumber
+	autocmd BufLeave,FocusLost,InsertEnter	 * set norelativenumber
 augroup END
 
 " NerdTREE
@@ -71,18 +68,21 @@ let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
 let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
 set t_8f=[38;2;%lu;%lu;%lum  " Needed in tmux
 set t_8b=[48;2;%lu;%lu;%lum  " Ditto
-set termguicolors
 
+" set termguicolors
 
 let g:PaperColor_Theme_Options = {
-  \   'theme': {
-  \     'default': {
-  \       'allow_italic': 1
-  \     }
-  \   }
-  \ }
+\		'theme': {
+\		'default': {
+\			'allow_italic': 1
+\		}
+\		}
+\ }
 
-colorscheme PaperColor
+" colorscheme PaperColor
+
+
+color inkpot
 set background=light
 
 " Dark notify
@@ -95,9 +95,22 @@ set t_ZH=[3m
 set t_ZR=[23m
 set timeoutlen=0 ttimeoutlen=0
 
-set tabstop=2
+" Indentation
+
+" Show whitespace characters
+set listchars=eol:¬,tab:>·,trail:~,extends:>,precedes:<,space:␣
+
+noremap <F5> :set list!<CR>
+
+" Tab settings
+" set tabstop=2
+" set shiftwidth=2
+" set noexpandtab
+
+" Space settings
+set expandtab
 set shiftwidth=2
-set noexpandtab
+set tabstop=2
 
 set visualbell
 set noerrorbells
@@ -131,26 +144,47 @@ set conceallevel=2
 let g:mkdp_auto_start=1
 
 function! MathAndLiquid()
-    "" Define certain regions
-    " Block math. Look for "$$[anything]$$"
-    syn region math start=/\$\$/ end=/\$\$/
-    " inline math. Look for "$[not $][anything]$"
-    syn match math_block '\$[^$].\{-}\$'
+	"" Define certain regions
+	" Block math. Look for "$$[anything]$$"
+	syn region math start=/\$\$/ end=/\$\$/
+	" inline math. Look for "$[not $][anything]$"
+	syn match math_block '\$[^$].\{-}\$'
 
-    " Liquid single line. Look for "{%[anything]%}"
-    syn match liquid '{%.*%}'
-    " Liquid multiline. Look for "{%[anything]%}[anything]{%[anything]%}"
-    syn region highlight_block start='{% highlight .*%}' end='{%.*%}'
-    " Fenced code blocks, used in GitHub Flavored Markdown (GFM)
-    syn region highlight_block start='```' end='```'
+	" Liquid single line. Look for "{%[anything]%}"
+	syn match liquid '{%.*%}'
+	" Liquid multiline. Look for "{%[anything]%}[anything]{%[anything]%}"
+	syn region highlight_block start='{% highlight .*%}' end='{%.*%}'
+	" Fenced code blocks, used in GitHub Flavored Markdown (GFM)
+	syn region highlight_block start='```' end='```'
 
-    "" Actually highlight those regions.
-    hi link math Statement
-    hi link liquid Statement
-    hi link highlight_block Function
-    hi link math_block Function
+	"" Actually highlight those regions.
+	hi link math Statement
+	hi link liquid Statement
+	hi link highlight_block Function
+	hi link math_block Function
 endfunction
 
 " Call everytime we open a Markdown file
 autocmd BufRead,BufNewFile,BufEnter *.md,*.markdown call MathAndLiquid()
 
+" VimTex
+let g:vimtex_view_method = "skim"
+let g:vimtex_view_general_viewer = '/Applications/Skim.app/Contents/SharedSupport/displayline'
+let g:vimtex_view_general_options = '-r @line @pdf @tex'
+
+augroup vimtex_mac
+    autocmd!
+    autocmd User VimtexEventCompileSuccess call UpdateSkim()
+augroup END
+
+function! UpdateSkim() abort
+    let l:out = b:vimtex.out()
+    let l:src_file_path = expand('%:p')
+    let l:cmd = [g:vimtex_view_general_viewer, '-r']
+
+    if !empty(system('pgrep Skim'))
+    call extend(l:cmd, ['-g'])
+    endif
+
+    call jobstart(l:cmd + [line('.'), l:out, l:src_file_path])
+endfunction
