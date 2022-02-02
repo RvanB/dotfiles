@@ -16,20 +16,16 @@ Plugin 'junegunn/vim-easy-align'
 Plugin 'inkarkat/vim-visualrepeat'
 Plugin 'udalov/kotlin-vim'
 Plugin 'kopischke/vim-fetch'
-" Plugin 'itchyny/lightline.vim'
-" Plugin 'lifepillar/vim-solarized8'
+Plugin 'itchyny/lightline.vim'
 Plugin 'psliwka/vim-smoothie'
 Plugin 'dhruvasagar/vim-table-mode'
-Plugin 'cormacrelf/dark-notify'
-" Plugin 'NLKNguyen/papercolor-theme'
 Plugin 'iamcco/markdown-preview.nvim'
 Plugin 'dense-analysis/ale'
-" Plugin 'maximbaz/lightline-ale'
-" Plugin 'preservim/tagbar'
+Plugin 'maximbaz/lightline-ale'
+Plugin 'preservim/tagbar'
 Plugin 'jistr/vim-nerdtree-tabs'
 Plugin 'othree/yajs.vim'
 Plugin 'maxmellon/vim-jsx-pretty'
-" Plugin 'tpope/vim-commentary'
 Plugin 'lervag/vimtex'
 Plugin 'ctrlpvim/ctrlp.vim'
 call vundle#end()
@@ -69,26 +65,7 @@ let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
 set t_8f=[38;2;%lu;%lu;%lum  " Needed in tmux
 set t_8b=[48;2;%lu;%lu;%lum  " Ditto
 
-" set termguicolors
-
-let g:PaperColor_Theme_Options = {
-\		'theme': {
-\		'default': {
-\			'allow_italic': 1
-\		}
-\		}
-\ }
-
-" colorscheme PaperColor
-
-
 color inkpot
-set background=light
-
-" Dark notify
-:lua <<EOF
-require('dark_notify').run()
-EOF
 
 " Italics
 set t_ZH=[3m
@@ -129,16 +106,6 @@ nnoremap k gk
 set undolevels=1000
 set noswapfile
 
-au BufRead,BufNewFile *.k set filetype=kpl
-
-" NerdTree
-" hi Directory guifg=#FF0000 ctermfg=red
-
-let g:kite_tab_complete=1
-set completeopt+=menuone
-set completeopt+=noselect
-
-
 " Markdown
 set conceallevel=2
 let g:mkdp_auto_start=1
@@ -166,25 +133,3 @@ endfunction
 
 " Call everytime we open a Markdown file
 autocmd BufRead,BufNewFile,BufEnter *.md,*.markdown call MathAndLiquid()
-
-" VimTex
-let g:vimtex_view_method = "skim"
-let g:vimtex_view_general_viewer = '/Applications/Skim.app/Contents/SharedSupport/displayline'
-let g:vimtex_view_general_options = '-r @line @pdf @tex'
-
-augroup vimtex_mac
-    autocmd!
-    autocmd User VimtexEventCompileSuccess call UpdateSkim()
-augroup END
-
-function! UpdateSkim() abort
-    let l:out = b:vimtex.out()
-    let l:src_file_path = expand('%:p')
-    let l:cmd = [g:vimtex_view_general_viewer, '-r']
-
-    if !empty(system('pgrep Skim'))
-    call extend(l:cmd, ['-g'])
-    endif
-
-    call jobstart(l:cmd + [line('.'), l:out, l:src_file_path])
-endfunction

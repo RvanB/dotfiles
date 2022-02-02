@@ -4,14 +4,8 @@
 ########## ZSH CONFIGURATIONS ##########
 # Auto cd into directories
 setopt auto_cd
-export PATH="/Applications/kitty.app/Contents/MacOS:$PATH"
 
-# MacPorts
-export PATH="/opt/local/bin:/opt/local/sbin:$PATH"
-export MANPATH=/opt/local/share/man:$MANPATH
-
-# cargo binaries
-export PATH="$HOME/.cargo/bin/:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 
 ########## COMPLETIONS ##########
 
@@ -63,11 +57,9 @@ RPROMPT='$(git_prompt) ${vcs_info_msg_0_} (node $(nvm current))'
 alias hg='history | grep'
 alias vim="nvim"
 alias tmux="TERM=xterm-256color tmux"
-alias ls='exa -ah --color=always --group-directories-first'
 
 # Configuration files
 alias cfkitty='vim ~/.config/kitty/kitty.conf'
-alias cfalacritty='vim ~/.config/alacritty/alacritty.yml'
 alias cfzsh='vim ~/.zshrc'
 alias cfvim='vim ~/.config/nvim/init.vim'
 alias cftmux='vim ~/.tmux.conf'
@@ -93,10 +85,3 @@ conda activate
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
-#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
-export SDKMAN_DIR="$HOME/.sdkman"
-[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
-
-# Disable Homebrew auto update
-export HOMEBREW_NO_AUTO_UPDATE=1
