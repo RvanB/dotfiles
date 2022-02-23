@@ -7,6 +7,9 @@ setopt auto_cd
 
 export PATH="$HOME/.local/bin:$PATH"
 
+# Cargo binaries
+export PATH="$HOME/.cargo/bin/:$PATH"
+
 ########## COMPLETIONS ##########
 
 fpath=(~/.zsh/completion $fpath)
@@ -18,6 +21,10 @@ zstyle ':completion:*' completer _complete
 zstyle ':completion:*' matcher-list '' 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' '+l:|=* r:|=*'
 
 autoload -Uz compinit && compinit -i
+
+# Suggestions
+source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
+ZSH_AUTOSUGGEST_STRATEGY=completion
 
 ########## THEMING ##########
 
@@ -50,13 +57,15 @@ function git_prompt() {
 }
 
 PROMPT='$(exit_code_prompt) %{$fg[blue]%}${PWD/#$HOME/~}%{$reset_color%} $ '
-RPROMPT='$(git_prompt) ${vcs_info_msg_0_} (node $(nvm current))'
+RPROMPT='$(git_prompt) ${vcs_info_msg_0_}'
 
 ########## ALIASES ##########
 #
 alias hg='history | grep'
+alias v="nvim"
 alias vim="nvim"
 alias tmux="TERM=xterm-256color tmux"
+alias ls='exa -ah --color=always'
 
 # Configuration files
 alias cfkitty='vim ~/.config/kitty/kitty.conf'
@@ -80,8 +89,14 @@ else
 fi
 unset __conda_setup
 # <<< conda initialize <<<
-conda activate
+# conda activate
 
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh" --no-use # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# Disable Homebrew auto update
+export HOMEBREW_NO_AUTO_UPDATE=1
+
+# FZF
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh

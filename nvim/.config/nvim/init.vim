@@ -8,27 +8,26 @@ Plugin 'VundleVim/Vundle.vim'
 Plugin 'christoomey/vim-tmux-navigator'
 Plugin 'godlygeek/tabular'
 Plugin 'preservim/nerdtree'
-Plugin 'tpope/vim-fugitive'
-Plugin 'tpope/vim-surround'
-Plugin 'chrisbra/Colorizer'
 Plugin 'junegunn/rainbow_parentheses.vim'
-Plugin 'junegunn/vim-easy-align'
 Plugin 'inkarkat/vim-visualrepeat'
-Plugin 'udalov/kotlin-vim'
 Plugin 'kopischke/vim-fetch'
 Plugin 'itchyny/lightline.vim'
-Plugin 'psliwka/vim-smoothie'
 Plugin 'dhruvasagar/vim-table-mode'
 Plugin 'iamcco/markdown-preview.nvim'
 Plugin 'dense-analysis/ale'
 Plugin 'maximbaz/lightline-ale'
 Plugin 'preservim/tagbar'
-Plugin 'jistr/vim-nerdtree-tabs'
 Plugin 'othree/yajs.vim'
 Plugin 'maxmellon/vim-jsx-pretty'
 Plugin 'lervag/vimtex'
-Plugin 'ctrlpvim/ctrlp.vim'
+Plugin 'tiagofumo/vim-nerdtree-syntax-highlight'
+Plugin 'NLKNguyen/papercolor-theme'
 call vundle#end()
+
+" FZF
+set rtp+=~/.fzf
+nmap <C-P> :FZF<CR>
+let g:fzf_layout = { 'down': '10' }
 
 " Mouse
 set mouse=a
@@ -43,8 +42,10 @@ augroup END
 " NerdTREE
 " autocmd vimenter * NERDTree
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
-map <C-n> :NERDTreeTabsToggle<CR>
+map <C-n> :NERDTreeToggle<CR>
 let g:NERDTreeShowLineNumbers=1
+let g:NERDTreeFileExtensionHighlightFullName=1
+let g:NERDTreeLimitedSyntax=1
 
 " TagBar
 nmap <C-t> :TagbarToggle<CR>
@@ -59,13 +60,25 @@ set number relativenumber
 " set ruler
 syntax enable
 
-set t_Co=256
+" set t_Co=256
 let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
 let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
 set t_8f=[38;2;%lu;%lu;%lum  " Needed in tmux
 set t_8b=[48;2;%lu;%lu;%lum  " Ditto
 
-color inkpot
+set termguicolors
+
+let g:PaperColor_Theme_Options = {
+\		'theme': {
+\		'default': {
+\			'allow_italic': 1
+\		}
+\		}
+\ }
+
+set background=light
+
+colorscheme PaperColor
 
 " Italics
 set t_ZH=[3m
@@ -133,3 +146,25 @@ endfunction
 
 " Call everytime we open a Markdown file
 autocmd BufRead,BufNewFile,BufEnter *.md,*.markdown call MathAndLiquid()
+
+" VimTex
+let g:vimtex_view_method = "skim"
+let g:vimtex_view_general_viewer = '/Applications/Skim.app/Contents/SharedSupport/displayline'
+let g:vimtex_view_general_options = '-r @line @pdf @tex'
+
+augroup vimtex_mac
+    autocmd!
+    autocmd User VimtexEventCompileSuccess call UpdateSkim()
+augroup END
+
+function! UpdateSkim() abort
+    let l:out = b:vimtex.out()
+    let l:src_file_path = expand('%:p')
+    let l:cmd = [g:vimtex_view_general_viewer, '-r']
+
+    if !empty(system('pgrep Skim'))
+    call extend(l:cmd, ['-g'])
+    endif
+
+    call jobstart(l:cmd + [line('.'), l:out, l:src_file_path])
+endfunction
