@@ -8,7 +8,6 @@ Plugin 'VundleVim/Vundle.vim'
 Plugin 'christoomey/vim-tmux-navigator'
 Plugin 'godlygeek/tabular'
 Plugin 'preservim/nerdtree'
-Plugin 'junegunn/rainbow_parentheses.vim'
 Plugin 'inkarkat/vim-visualrepeat'
 Plugin 'kopischke/vim-fetch'
 Plugin 'itchyny/lightline.vim'
@@ -22,12 +21,28 @@ Plugin 'maxmellon/vim-jsx-pretty'
 Plugin 'lervag/vimtex'
 Plugin 'tiagofumo/vim-nerdtree-syntax-highlight'
 Plugin 'NLKNguyen/papercolor-theme'
+Plugin 'cormacrelf/dark-notify'
+Plugin 'junegunn/fzf.vim'
 call vundle#end()
+
+" Linter
+let g:ale_python_flake8_options = '--max-line-length=100'
 
 " FZF
 set rtp+=~/.fzf
 nmap <C-P> :FZF<CR>
-let g:fzf_layout = { 'down': '10' }
+let g:fzf_layout = { 'window': { 'width': 1, 'height': 1 } }
+let $FZF_DEFAULT_OPTS="--ansi --preview-window 'right:50%' --layout reverse --margin 1,4"
+" let g:fzf_layout = { 'right': '50%' }
+
+" Leader key
+let mapleader = ","
+
+" Grep
+" opens search results in a window w/ links and highlight the matches
+command! -nargs=+ Grep execute 'silent grep! -I -r -n --exclude *.{json,pyc} . -e <args>' | copen | execute 'silent /<args>'
+" shift-control-* Greps for the word under the cursor
+:nmap <leader>g :Grep <c-r>=expand("<cword>")<cr><cr>
 
 " Mouse
 set mouse=a
@@ -80,10 +95,15 @@ set background=light
 
 colorscheme PaperColor
 
+" Dark notify
+:lua <<EOF
+require('dark_notify').run()
+EOF
+
 " Italics
 set t_ZH=[3m
 set t_ZR=[23m
-set timeoutlen=0 ttimeoutlen=0
+" set timeoutlen=0 ttimeoutlen=0
 
 " Indentation
 
@@ -120,7 +140,7 @@ set undolevels=1000
 set noswapfile
 
 " Markdown
-set conceallevel=2
+set conceallevel=3
 let g:mkdp_auto_start=1
 
 function! MathAndLiquid()

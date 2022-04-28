@@ -52,26 +52,27 @@ function exit_code_prompt {
 function git_prompt() {
   local STATUS=$(git status --short 2> /dev/null)
   if [[ -n $STATUS ]]; then
-    echo "*"
+    echo "%{$fg[red]%}*%{$reset_color%} "
   fi
 }
 
-PROMPT='$(exit_code_prompt) %{$fg[blue]%}${PWD/#$HOME/~}%{$reset_color%} $ '
-RPROMPT='$(git_prompt) ${vcs_info_msg_0_}'
+PROMPT=$'$(exit_code_prompt) %{$fg[magenta]%}${PWD/#$HOME/~}%{$reset_color%} ${vcs_info_msg_0_}$(git_prompt)%{$fg[cyan]%}$ %{$reset_color%}'
+RPROMPT='(node $(nvm current))'
 
 ########## ALIASES ##########
 #
-alias hg='history | grep'
+alias hg="history | grep"
 alias v="nvim"
 alias vim="nvim"
-alias tmux="TERM=xterm-256color tmux"
-alias ls='exa -ah --color=always'
+# alias tmux="TERM=xterm-256color tmux"
+alias t="tmux"
+alias ls='exa --color=always'
 
 # Configuration files
-alias cfkitty='vim ~/.config/kitty/kitty.conf'
-alias cfzsh='vim ~/.zshrc'
-alias cfvim='vim ~/.config/nvim/init.vim'
-alias cftmux='vim ~/.tmux.conf'
+alias cfkitty='vim ~/dotfiles/kitty/.config/kitty/kitty.conf'
+alias cfzsh='vim ~/dotfiles/zsh/.zshrc'
+alias cfvim='vim ~/dotfiles/nvim/.config/nvim/init.vim'
+alias cftmux='vim ~/dotfiles/tmux/.tmux.conf'
 
 ########## PROGRAM SETUP ##########
 
@@ -89,7 +90,7 @@ else
 fi
 unset __conda_setup
 # <<< conda initialize <<<
-# conda activate
+conda activate
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh" --no-use # This loads nvm
