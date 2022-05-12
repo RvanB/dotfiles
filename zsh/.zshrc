@@ -67,6 +67,7 @@ alias vim="nvim"
 # alias tmux="TERM=xterm-256color tmux"
 alias t="tmux"
 alias ls='exa --color=always'
+alias ca='conda activate'
 
 # Configuration files
 alias cfkitty='vim ~/dotfiles/kitty/.config/kitty/kitty.conf'
@@ -93,7 +94,7 @@ unset __conda_setup
 conda activate
 
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh" --no-use # This loads nvm
+[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh" # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 # Disable Homebrew auto update

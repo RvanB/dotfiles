@@ -26,7 +26,7 @@ Plugin 'junegunn/fzf.vim'
 call vundle#end()
 
 " Linter
-let g:ale_python_flake8_options = '--max-line-length=100'
+let g:ale_python_flake8_options = '--max-line-length=1000'
 
 " FZF
 set rtp+=~/.fzf
