@@ -2,9 +2,6 @@
 # zsh configuration
 
 ########## ZSH CONFIGURATIONS ##########
-# Auto cd into directories
-setopt auto_cd
-
 export PATH="$HOME/.local/bin:$PATH"
 
 # Cargo binaries
@@ -12,31 +9,31 @@ export PATH="$HOME/.cargo/bin/:$PATH"
 
 ########## COMPLETIONS ##########
 
-fpath=(~/.zsh/completion $fpath)
+# fpath=(~/.zsh/completion $fpath)
 
 # Partial completion
-zstyle ':completion:*' completer _complete
+# zstyle ':completion:*' completer _complete
 
 # Case insensitivity
-zstyle ':completion:*' matcher-list '' 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' '+l:|=* r:|=*'
+# zstyle ':completion:*' matcher-list '' 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' '+l:|=* r:|=*'
 
-autoload -Uz compinit && compinit -i
+# autoload -Uz compinit && compinit -i
 
 # Suggestions
-source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
-ZSH_AUTOSUGGEST_STRATEGY=completion
+# source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
+# ZSH_AUTOSUGGEST_STRATEGY=completion
 
 ########## THEMING ##########
 
 # Load version control information
-autoload -Uz vcs_info
+# autoload -Uz vcs_info
 #zstyle ':vcs_info:*' enable git svn
-precmd() { vcs_info }
+# precmd() { vcs_info }
 
 # Enable colors
 autoload -U colors && colors
 
-zstyle ':vcs_info:git*' formats "%b"
+# zstyle ':vcs_info:git*' formats "%b"
 
 setopt PROMPT_SUBST
 
@@ -56,8 +53,7 @@ function git_prompt() {
   fi
 }
 
-PROMPT=$'$(exit_code_prompt) %{$fg[magenta]%}${PWD/#$HOME/~}%{$reset_color%} ${vcs_info_msg_0_}$(git_prompt)%{$fg[cyan]%}$ %{$reset_color%}'
-RPROMPT='(node $(nvm current))'
+PROMPT=$'$(exit_code_prompt) %{$fg[magenta]%}${PWD/#$HOME/~}%{$reset_color%} %{$fg[cyan]%}$ %{$reset_color%}'
 
 ########## ALIASES ##########
 #
@@ -66,11 +62,15 @@ alias v="nvim"
 alias vim="nvim"
 # alias tmux="TERM=xterm-256color tmux"
 alias t="tmux"
-alias ls='exa --color=always'
+alias l='ls'
+alias ll='ls -l'
+alias la='ls -la'
 alias ca='conda activate'
+alias cda='conda deactivate'
 
 # Configuration files
 alias cfkitty='vim ~/dotfiles/kitty/.config/kitty/kitty.conf'
+alias cfalacritty='vim ~/dotfiles/alacritty/.config/alacritty/alacritty.yml'
 alias cfzsh='vim ~/dotfiles/zsh/.zshrc'
 alias cfvim='vim ~/dotfiles/nvim/.config/nvim/init.vim'
 alias cftmux='vim ~/dotfiles/tmux/.tmux.conf'
@@ -81,24 +81,22 @@ alias cftmux='vim ~/dotfiles/tmux/.tmux.conf'
 # !! Contents within this block are managed by 'conda init' !!
 __conda_setup="$('$HOME/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
 if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
+  eval "$__conda_setup"
 else
-    if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
-        . "$HOME/miniconda3/etc/profile.d/conda.sh"
-    else
-        export PATH="$HOME/miniconda3/bin:$PATH"
-    fi
+  if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
+    . "$HOME/miniconda3/etc/profile.d/conda.sh"
+  else
+    export PATH="$HOME/miniconda3/bin:$PATH"
+  fi
 fi
 unset __conda_setup
 # <<< conda initialize <<<
-conda activate
 
+# echo "Loading nvm..."
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh" # This loads nvm
+[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh" --no-use # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
-# Disable Homebrew auto update
-export HOMEBREW_NO_AUTO_UPDATE=1
+# echo "Now using node $(nvm current)"
 
 # FZF
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
