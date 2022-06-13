@@ -60,6 +60,8 @@ PROMPT=$'$(exit_code_prompt) %{$fg[magenta]%}${PWD/#$HOME/~}%{$reset_color%} %{$
 alias hg="history | grep"
 alias v="nvim"
 alias vim="nvim"
+alias emacs="emacs -nw"
+alias e="emacs"
 # alias tmux="TERM=xterm-256color tmux"
 alias t="tmux"
 alias l='ls'
@@ -69,6 +71,7 @@ alias ca='conda activate'
 alias cda='conda deactivate'
 
 # Configuration files
+alias cfemacs='vim ~/dotfiles/emacs/.emacs'
 alias cfkitty='vim ~/dotfiles/kitty/.config/kitty/kitty.conf'
 alias cfalacritty='vim ~/dotfiles/alacritty/.config/alacritty/alacritty.yml'
 alias cfzsh='vim ~/dotfiles/zsh/.zshrc'

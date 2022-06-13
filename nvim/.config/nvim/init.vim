@@ -13,12 +13,13 @@ Plugin 'preservim/tagbar'
 Plugin 'othree/yajs.vim'
 Plugin 'maxmellon/vim-jsx-pretty'
 Plugin 'lervag/vimtex'
-Plugin 'vim-autoformat/vim-autoformat'
 Plugin 'tssm/c64-vim-color-scheme'
 Plugin 'NLKNguyen/papercolor-theme'
 Plugin 'morhetz/gruvbox'
 Plugin 'lifepillar/vim-solarized8'
 Plugin 'junegunn/fzf.vim'
+Plugin 'chrisbra/csv.vim'
+Plugin 'ishan9299/modus-theme-vim'
 call vundle#end()
 
 set scrolloff=10
@@ -33,12 +34,6 @@ set wildmenu
 set wildmode=longest:full,full
 set wildignorecase
 set wildignore=*.git/*
-
-" Python3 for pynvim (for vim-autoformat)
-let g:python3_host_prog=$CONDA_PYTHON_EXE
-
-" Autoformatter
-au BufWrite * :Autoformat
 
 " Leader key
 let mapleader = ","
@@ -105,7 +100,7 @@ let g:PaperColor_Theme_Options = {'theme': {'default': {'allow_italic': 1}}}
 let g:gruvbox_italic=1
 
 set background=dark
-colorscheme PaperColor
+colorscheme modus-vivendi
 
 " Italics
 set t_ZH=[3m
