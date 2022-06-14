@@ -7,6 +7,11 @@ export PATH="$HOME/.local/bin:$PATH"
 # Cargo binaries
 export PATH="$HOME/.cargo/bin/:$PATH"
 
+# virtualenvwrapper
+export WORKON_HOME="$HOME/envs"
+export VIRTUALENVWRAPPER_PYTHON="/usr/local/bin/python3"
+source /usr/local/bin/virtualenvwrapper.sh
+
 ########## COMPLETIONS ##########
 
 # fpath=(~/.zsh/completion $fpath)
@@ -60,15 +65,13 @@ PROMPT=$'$(exit_code_prompt) %{$fg[magenta]%}${PWD/#$HOME/~}%{$reset_color%} %{$
 alias hg="history | grep"
 alias v="nvim"
 alias vim="nvim"
-alias emacs="emacs -nw"
+alias emacs="emacs -nw --debug-init"
 alias e="emacs"
 # alias tmux="TERM=xterm-256color tmux"
 alias t="tmux"
 alias l='ls'
 alias ll='ls -l'
 alias la='ls -la'
-alias ca='conda activate'
-alias cda='conda deactivate'
 
 # Configuration files
 alias cfemacs='vim ~/dotfiles/emacs/.emacs'
@@ -79,21 +82,6 @@ alias cfvim='vim ~/dotfiles/nvim/.config/nvim/init.vim'
 alias cftmux='vim ~/dotfiles/tmux/.tmux.conf'
 
 ########## PROGRAM SETUP ##########
-
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('$HOME/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-  eval "$__conda_setup"
-else
-  if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
-    . "$HOME/miniconda3/etc/profile.d/conda.sh"
-  else
-    export PATH="$HOME/miniconda3/bin:$PATH"
-  fi
-fi
-unset __conda_setup
-# <<< conda initialize <<<
 
 # echo "Loading nvm..."
 export NVM_DIR="$HOME/.nvm"
