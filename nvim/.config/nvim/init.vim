@@ -99,7 +99,7 @@ set termguicolors
 let g:PaperColor_Theme_Options = {'theme': {'default': {'allow_italic': 1}}}
 let g:gruvbox_italic=1
 
-set background=dark
+set background=light
 colorscheme modus-vivendi
 
 " Italics

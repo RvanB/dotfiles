@@ -65,8 +65,6 @@ PROMPT=$'$(exit_code_prompt) %{$fg[magenta]%}${PWD/#$HOME/~}%{$reset_color%} %{$
 alias hg="history | grep"
 alias v="nvim"
 alias vim="nvim"
-alias emacs="emacs -nw --debug-init"
-alias e="emacs"
 # alias tmux="TERM=xterm-256color tmux"
 alias t="tmux"
 alias l='ls'

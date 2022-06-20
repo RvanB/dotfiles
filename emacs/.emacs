@@ -11,6 +11,7 @@
   (package-install 'use-package))
 
 ;; Always ensure packages
+(require 'use-package-ensure)
 (setq use-package-always-ensure t)
 
 ;; Tabnine completion
@@ -23,12 +24,21 @@
 ;; Number the candidates (use M-1, M-2 etc to select completions).
 (setq company-show-numbers t)
 
-(use-package golden-ratio-scroll-screen
-  :init
-  (global-set-key [remap scroll-down-command] 'golden-ratio-scroll-screen-down)
-  (global-set-key [remap scroll-up-command] 'golden-ratio-scroll-screen-up))
+;; Keybindings
+(use-package general
+  :config
+  (general-create-definer rvb/leader-keys
+    :keymaps '(normal insert visual emacs)
+    :prefix "SPC"
+    :global-prefix "C-SPC")
 
-(global-hl-line-mode 1)
+  (rvb/leader-keys
+    "j"  'counsel-switch-buffer
+    "k"  'kill-buffer
+    "f"  'counsel-fzf
+  ))
+
+(setq evil-want-keybinding nil)
 
 ;; load evil
 (use-package evil
@@ -39,18 +49,17 @@
   (setq evil-split-window-below t)
   (setq evil-shift-round nil)
   (setq evil-want-C-u-scroll t)
-  (setq evil-undo-system 'undo-tree)
+  (setq evil-undo-system 'undo-fu)
   (setq evil-want-C-i-jump nil)
+  (setq evil-respect-visual-line-mode t)
   :config ;; tweak evil after loading it
+  (evil-mode 1))
 
-  ;; Use golden ratio scrolling
-  (define-key evil-normal-state-map (kbd "C-u") 'golden-ratio-scroll-screen-down)
-  (define-key evil-visual-state-map (kbd "C-u") 'golden-ratio-scroll-screen-down)
-  (define-key evil-normal-state-map (kbd "C-d") 'golden-ratio-scroll-screen-up)
-  (define-key evil-visual-state-map (kbd "C-d") 'golden-ratio-scroll-screen-up)
-
-  (evil-mode 1)
-  (global-undo-tree-mode 1))
+;; load evil-collection
+(use-package evil-collection
+  :after evil
+  :config
+  (evil-collection-init))
 
 ;; Elpy (Python stuff)
 (setenv "WORKON_HOME" "~/envs")
@@ -58,15 +67,26 @@
   :config
   (defalias 'workon 'pyvenv-workon)
   (elpy-enable))
-  
+
+;; EIN
+(use-package ein
+  :init
+  (setq ein:output-area-inlined-images t)
+  )
+
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((emacs-lisp . t)
+   (ein .t)))
+
 (use-package ivy
   :diminish
   :init
-  (global-set-key (kbd "C-c C-f") 'counsel-fzf)
   :config
   (ivy-mode 1))
 
 (use-package projectile
+  :diminish
   :ensure t
   :init
   (projectile-mode +1)
@@ -76,13 +96,16 @@
 
 
 ;; Change theme
-(load-theme 'modus-vivendi)
+(setq modus-themes-bold-constructs t)
+(setq modus-themes-italic-constructs t)
+(load-theme 'modus-operandi)
+
+;; Change fon
+(set-face-font 'default "Menlo 16" nil)
 
 ;; Disable bell
 (setq ring-bell-function 'ignore)
 
-;; Disable scroll bar
-(scroll-bar-mode -1)
 
 ;; FZF binary
 (setq counsel-fzf-cmd (concat (concat (getenv "HOME") "/.fzf/bin/fzf") " -f \"%s\""))
@@ -96,14 +119,10 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(company-tabnine projectile elpy counsel use-package undo-tree magit jupyter ivy helm evil))
- '(warning-suppress-types
-   '(((python python-shell-completion-native-turn-on-maybe))
-     ((python python-shell-completion-native-turn-on-maybe)))))
+   '(ein yaml-mode use-package undo-fu queue pythonic projectile magit helm golden-ratio-scroll-screen general evil-collection elpy counsel company-tabnine)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
-
