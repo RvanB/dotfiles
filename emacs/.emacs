@@ -98,9 +98,9 @@
 ;; Change theme
 (setq modus-themes-bold-constructs t)
 (setq modus-themes-italic-constructs t)
-(load-theme 'modus-operandi)
+(load-theme 'modus-operandi t)
 
-;; Change fon
+;; Change font
 (set-face-font 'default "Menlo 16" nil)
 
 ;; Disable bell
@@ -108,6 +108,7 @@
 
 
 ;; FZF binary
+(use-package counsel)
 (setq counsel-fzf-cmd (concat (concat (getenv "HOME") "/.fzf/bin/fzf") " -f \"%s\""))
 
 ;; Display line numbers

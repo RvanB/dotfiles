@@ -9,8 +9,8 @@ export PATH="$HOME/.cargo/bin/:$PATH"
 
 # virtualenvwrapper
 export WORKON_HOME="$HOME/envs"
-export VIRTUALENVWRAPPER_PYTHON="/usr/local/bin/python3"
-source /usr/local/bin/virtualenvwrapper.sh
+export VIRTUALENVWRAPPER_PYTHON=$(which python3)
+source $(which virtualenvwrapper.sh)
 
 ########## COMPLETIONS ##########
 
@@ -63,21 +63,21 @@ PROMPT=$'$(exit_code_prompt) %{$fg[magenta]%}${PWD/#$HOME/~}%{$reset_color%} %{$
 ########## ALIASES ##########
 #
 alias hg="history | grep"
-alias v="nvim"
-alias vim="nvim"
+# alias v="nvim"
+# alias vim="nvim"
 # alias tmux="TERM=xterm-256color tmux"
 alias t="tmux"
 alias l='ls'
 alias ll='ls -l'
 alias la='ls -la'
+alias emacs='emacs -nw'
 
 # Configuration files
-alias cfemacs='vim ~/dotfiles/emacs/.emacs'
-alias cfkitty='vim ~/dotfiles/kitty/.config/kitty/kitty.conf'
-alias cfalacritty='vim ~/dotfiles/alacritty/.config/alacritty/alacritty.yml'
-alias cfzsh='vim ~/dotfiles/zsh/.zshrc'
-alias cfvim='vim ~/dotfiles/nvim/.config/nvim/init.vim'
-alias cftmux='vim ~/dotfiles/tmux/.tmux.conf'
+alias cfemacs='emacs ~/dotfiles/emacs/.emacs'
+alias cfkitty='emacs ~/dotfiles/kitty/.config/kitty/kitty.conf'
+alias cfalacritty='emacs ~/dotfiles/alacritty/.config/alacritty/alacritty.yml'
+alias cfzsh='emacs ~/dotfiles/zsh/.zshrc'
+alias cftmux='emacs ~/dotfiles/tmux/.tmux.conf'
 
 ########## PROGRAM SETUP ##########
 
