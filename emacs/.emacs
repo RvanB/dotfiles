@@ -68,17 +68,6 @@
   (defalias 'workon 'pyvenv-workon)
   (elpy-enable))
 
-;; EIN
-(use-package ein
-  :init
-  (setq ein:output-area-inlined-images t)
-  )
-
-(org-babel-do-load-languages
- 'org-babel-load-languages
- '((emacs-lisp . t)
-   (ein .t)))
-
 (use-package ivy
   :diminish
   :init
@@ -96,12 +85,13 @@
 
 
 ;; Change theme
+(use-package modus-themes)
 (setq modus-themes-bold-constructs t)
 (setq modus-themes-italic-constructs t)
 (load-theme 'modus-operandi t)
 
 ;; Change font
-(set-face-font 'default "Menlo 16" nil)
+(set-face-font 'default "Liberation Mono 12" nil)
 
 ;; Disable bell
 (setq ring-bell-function 'ignore)
@@ -119,8 +109,10 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   '("a0415d8fc6aeec455376f0cbcc1bee5f8c408295d1c2b9a1336db6947b89dd98" default))
  '(package-selected-packages
-   '(ein yaml-mode use-package undo-fu queue pythonic projectile magit helm golden-ratio-scroll-screen general evil-collection elpy counsel company-tabnine)))
+   '(yaml-mode use-package undo-fu queue pythonic projectile magit helm general evil-collection elpy counsel company-tabnine)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
