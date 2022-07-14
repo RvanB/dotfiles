@@ -7,10 +7,13 @@ export PATH="$HOME/.local/bin:$PATH"
 # Cargo binaries
 export PATH="$HOME/.cargo/bin/:$PATH"
 
-# virtualenvwrapper
-export WORKON_HOME="$HOME/envs"
-export VIRTUALENVWRAPPER_PYTHON=$(which python3)
-source $(which virtualenvwrapper.sh)
+# # pyenv
+# export PYENV_ROOT="$HOME/.pyenv"
+# command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+# eval "$(pyenv init -)"
+
+# Default editor
+export EDITOR=$(which emacs)
 
 ########## COMPLETIONS ##########
 
@@ -60,32 +63,54 @@ function git_prompt() {
 
 PROMPT=$'$(exit_code_prompt) %{$fg[magenta]%}${PWD/#$HOME/~}%{$reset_color%} %{$fg[cyan]%}$ %{$reset_color%}'
 
-########## ALIASES ##########
-#
+########## ALIASES ###########
+
 alias hg="history | grep"
-# alias v="nvim"
-# alias vim="nvim"
+alias v="nvim"
+alias vim="nvim"
 # alias tmux="TERM=xterm-256color tmux"
 alias t="tmux"
+alias ls="ls --color='auto'"
 alias l='ls'
 alias ll='ls -l'
 alias la='ls -la'
 alias emacs='emacs -nw'
+alias ca='conda activate'
+alias cda='conda deactivate'
+alias tt='tt -notheme -showwpm -blockcursor'
 
 # Configuration files
-alias cfemacs='emacs ~/dotfiles/emacs/.emacs'
-alias cfkitty='emacs ~/dotfiles/kitty/.config/kitty/kitty.conf'
-alias cfalacritty='emacs ~/dotfiles/alacritty/.config/alacritty/alacritty.yml'
-alias cfzsh='emacs ~/dotfiles/zsh/.zshrc'
-alias cftmux='emacs ~/dotfiles/tmux/.tmux.conf'
+alias cfemacs='$EDITOR ~/dotfiles/emacs/.emacs'
+alias cfvim="$EDITOR ~/dotfiles/nvim/.config/nvim/init.vim"
+alias cfkitty='$EDITOR ~/dotfiles/kitty/.config/kitty/kitty.conf'
+alias cfalacritty='$EDITOR ~/dotfiles/alacritty/.config/alacritty/alacritty.yml'
+alias cfzsh='$EDITOR ~/dotfiles/zsh/.zshrc'
+alias cftmux='$EDITOR ~/dotfiles/tmux/.tmux.conf'
+
 
 ########## PROGRAM SETUP ##########
 
 # echo "Loading nvm..."
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh" --no-use # This loads nvm
+[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh" # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 # echo "Now using node $(nvm current)"
 
 # FZF
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/Users/rvan/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/Users/rvan/miniconda3/etc/profile.d/conda.sh" ]; then
+        . "/Users/rvan/miniconda3/etc/profile.d/conda.sh"
+    else
+        export PATH="/Users/rvan/miniconda3/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+# <<< conda initialize <<<
+

@@ -3,8 +3,9 @@
 (add-to-list 'package-archives
              '("melpa" . "https://melpa.org/packages/"))
 (package-initialize)
-(unless package-archive-contents
-  (package-refresh-contents t))
+(when (memq window-system '(mac ns x))
+  (exec-path-from-shell-initialize))
+(package-refresh-contents t)
 
 ;; Initialize use-package
 (unless (package-installed-p 'use-package)
@@ -14,10 +15,23 @@
 (require 'use-package-ensure)
 (setq use-package-always-ensure t)
 
-;; Tabnine completion
-(use-package company-tabnine)
-(add-to-list 'company-backends #'company-tabnine)
+(use-package anaconda-mode)
+(add-hook 'python-mode-hook 'anaconda-mode)
+(add-hook 'python-mode-hook 'anaconda-eldoc-mode)
 
+(use-package conda
+  :defer t
+  :init
+  (setq conda-anaconda-home (expand-file-name "~/miniconda3"))
+  (setq conda-env-home-directory (expand-file-name "~/miniconda3"))
+  :config
+  (conda-env-initialize-interactive-shells)
+  (conda-env-initialize-eshell))
+
+(add-hook 'after-init-hook 'global-company-mode)
+
+(use-package company-tabnine :ensure t)
+(add-to-list 'company-backends #'company-tabnine)
 ;; Trigger completion immediately.
 (setq company-idle-delay 0)
 
@@ -61,13 +75,6 @@
   :config
   (evil-collection-init))
 
-;; Elpy (Python stuff)
-(setenv "WORKON_HOME" "~/envs")
-(use-package elpy
-  :config
-  (defalias 'workon 'pyvenv-workon)
-  (elpy-enable))
-
 (use-package ivy
   :diminish
   :init
@@ -91,7 +98,7 @@
 (load-theme 'modus-operandi t)
 
 ;; Change font
-(set-face-font 'default "Liberation Mono 12" nil)
+(set-face-font 'default "Menlo 16" nil)
 
 ;; Disable bell
 (setq ring-bell-function 'ignore)
@@ -110,9 +117,10 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("a0415d8fc6aeec455376f0cbcc1bee5f8c408295d1c2b9a1336db6947b89dd98" default))
+   '("dad40020beea412623b04507a4c185079bff4dcea20a93d8f8451acb6afc8358" "a0415d8fc6aeec455376f0cbcc1bee5f8c408295d1c2b9a1336db6947b89dd98" default))
+ '(inhibit-startup-screen t)
  '(package-selected-packages
-   '(yaml-mode use-package undo-fu queue pythonic projectile magit helm general evil-collection elpy counsel company-tabnine)))
+   '(company-anaconda anaconda-mode conda vterm markdown-mode lsp-pyright yaml-mode use-package undo-fu queue pythonic projectile magit helm general evil-collection counsel company-tabnine)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

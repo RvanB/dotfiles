@@ -100,7 +100,7 @@ let g:PaperColor_Theme_Options = {'theme': {'default': {'allow_italic': 1}}}
 let g:gruvbox_italic=1
 
 set background=light
-colorscheme modus-vivendi
+colorscheme modus-operandi
 
 " Italics
 set t_ZH=[3m
