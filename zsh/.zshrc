@@ -4,6 +4,9 @@
 ########## ZSH CONFIGURATIONS ##########
 export PATH="$HOME/.local/bin:$PATH"
 
+# AWS
+export PATH="$HOME/aws/:$HOME/aws/aws-cli/:$PATH"
+
 # Cargo binaries
 export PATH="$HOME/.cargo/bin/:$PATH"
 
@@ -70,7 +73,7 @@ alias v="nvim"
 alias vim="nvim"
 # alias tmux="TERM=xterm-256color tmux"
 alias t="tmux"
-alias ls="ls --color='auto'"
+alias ls="exa --group-directories-first"
 alias l='ls'
 alias ll='ls -l'
 alias la='ls -la'
@@ -101,14 +104,14 @@ export NVM_DIR="$HOME/.nvm"
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/Users/rvan/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+__conda_setup="$('$HOME/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
 if [ $? -eq 0 ]; then
     eval "$__conda_setup"
 else
-    if [ -f "/Users/rvan/miniconda3/etc/profile.d/conda.sh" ]; then
-        . "/Users/rvan/miniconda3/etc/profile.d/conda.sh"
+    if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
+        . "$HOME/miniconda3/etc/profile.d/conda.sh"
     else
-        export PATH="/Users/rvan/miniconda3/bin:$PATH"
+        export PATH="$HOME/miniconda3/bin:$PATH"
     fi
 fi
 unset __conda_setup

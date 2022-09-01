@@ -155,18 +155,16 @@
 
 (add-hook 'dired-mode-hook 'dired-hide-details-mode)
 
+;; Auto refresh buffers when file changes (if unmodified)
+(global-auto-revert-mode t)
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-   '("dad40020beea412623b04507a4c185079bff4dcea20a93d8f8451acb6afc8358" "a0415d8fc6aeec455376f0cbcc1bee5f8c408295d1c2b9a1336db6947b89dd98" default))
  '(helm-minibuffer-history-key "M-p")
- '(inhibit-startup-screen t)
- '(neo-window-fixed-size nil)
  '(package-selected-packages
-   '(helm-projectile helm-ag fzf affe rjsx-mode company-anaconda anaconda-mode conda vterm markdown-mode lsp-pyright yaml-mode use-package undo-fu queue pythonic projectile magit helm general evil-collection company-tabnine)))
+   '(all-the-icons-dired all-the-icons helm-ag helm-projectile helm rjsx-mode yaml-mode yaml vterm use-package undo-fu projectile modus-themes magit general exec-path-from-shell evil-collection counsel conda company-tabnine anaconda-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
