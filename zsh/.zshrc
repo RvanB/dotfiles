@@ -5,7 +5,7 @@
 export PATH="$HOME/.local/bin:$PATH"
 
 # AWS
-export PATH="$HOME/aws/:$HOME/aws/aws-cli/:$PATH"
+# export PATH="$HOME/aws/:$HOME/aws/aws-cli/:$PATH"
 
 # Cargo binaries
 export PATH="$HOME/.cargo/bin/:$PATH"
@@ -73,7 +73,7 @@ alias v="nvim"
 alias vim="nvim"
 # alias tmux="TERM=xterm-256color tmux"
 alias t="tmux"
-alias ls="exa --group-directories-first"
+alias ls="exa --group-directories-first -s ext"
 alias l='ls'
 alias ll='ls -l'
 alias la='ls -la'

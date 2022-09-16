@@ -34,15 +34,15 @@
   (conda-env-initialize-interactive-shells)
   (conda-env-initialize-eshell))
 
-(add-hook 'after-init-hook 'global-company-mode)
+;; (add-hook 'after-init-hook 'global-company-mode)
 
-(use-package company-tabnine :ensure t)
-(add-to-list 'company-backends #'company-tabnine)
+;; (use-package company-tabnine :ensure t)
+;; (add-to-list 'company-backends #'company-tabnine)
 ;; Trigger completion immediately.
-(setq company-idle-delay 0)
+;; (setq company-idle-delay 0)
 
 ;; Number the candidates (use M-1, M-2 etc to select completions).
-(setq company-show-numbers t)
+;; (setq company-show-numbers t)
 
 ;; Keybindings
 (use-package general
@@ -56,12 +56,15 @@
     "k"  'kill-buffer
     "f"  'helm-projectile-find-file
     "s"  'helm-ag
+    "p"  'helm-projectile-switch-project
+    "t"  'eshell-toggle
+    "e"  'conda-env-activate
   ))
 
 (setq evil-want-keybinding nil)
 
-(global-visual-line-mode t)
-(global-hl-line-mode t)
+;; (global-visual-line-mode t)
+;; (global-hl-line-mode t)
 
 ;; Disable toolbar
 (tool-bar-mode -1)
@@ -97,6 +100,7 @@
   :diminish
   :ensure t
   :init
+  (setq projectile-switch-project-action 'helm-projectile-find-file)
   (projectile-mode +1)
   :bind (:map projectile-mode-map
               ("s-p" . projectile-command-map)
@@ -125,11 +129,12 @@
 
 (use-package helm-ag)
 
+
 ;; Change theme
 (use-package modus-themes)
 (setq modus-themes-bold-constructs t)
 (setq modus-themes-italic-constructs t)
-(load-theme 'modus-operandi t)
+(load-theme 'modus-vivendi t)
 
 ;; Change font
 (set-face-font 'default "Monaco 16" nil)
@@ -140,6 +145,14 @@
 ;; Display line numbers
 (global-display-line-numbers-mode 1)
 
+;; Scrolling
+(setq scroll-margin 10
+      scroll-conservatively 101
+      scroll-up-aggressively 0.01
+      scroll-down-aggressively 0.01
+      scroll-preserve-screen-position t
+      auto-window-vscroll nil)
+
 ;; Disable backup files
 (setq make-backup-files nil)
 
@@ -147,6 +160,8 @@
 (setq vc-follow-symlinks t)
 
 (scroll-bar-mode -1)
+
+(use-package eshell-toggle)
 
 (use-package all-the-icons)
 (use-package all-the-icons-dired
@@ -162,9 +177,12 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   '("4a288765be220b99defaaeb4c915ed783a9916e3e08f33278bf5ff56e49cbc73" "5a611788d47c1deec31494eb2bb864fde402b32b139fe461312589a9f28835db" default))
  '(helm-minibuffer-history-key "M-p")
+ '(inhibit-startup-screen t)
  '(package-selected-packages
-   '(all-the-icons-dired all-the-icons helm-ag helm-projectile helm rjsx-mode yaml-mode yaml vterm use-package undo-fu projectile modus-themes magit general exec-path-from-shell evil-collection counsel conda company-tabnine anaconda-mode)))
+   '(eshell-toggle sublimity-scroll sublimity all-the-icons-dired all-the-icons helm-ag helm-projectile helm rjsx-mode yaml-mode yaml vterm use-package undo-fu projectile modus-themes magit general exec-path-from-shell evil-collection counsel conda company-tabnine anaconda-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
