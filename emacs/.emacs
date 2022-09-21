@@ -59,6 +59,7 @@
     "p"  'helm-projectile-switch-project
     "t"  'eshell-toggle
     "e"  'conda-env-activate
+    "r"  'helm-resume
   ))
 
 (setq evil-want-keybinding nil)
@@ -129,15 +130,19 @@
 
 (use-package helm-ag)
 
+(use-package git-gutter
+  :config
+  (global-git-gutter-mode +1)
+  )
 
 ;; Change theme
 (use-package modus-themes)
 (setq modus-themes-bold-constructs t)
 (setq modus-themes-italic-constructs t)
-(load-theme 'modus-vivendi t)
+(load-theme 'modus-operandi t)
 
 ;; Change font
-(set-face-font 'default "Monaco 16" nil)
+;; (set-face-font 'default "Menlo 14" nil)
 
 ;; Disable bell
 (setq ring-bell-function 'ignore)
@@ -161,6 +166,8 @@
 
 (scroll-bar-mode -1)
 
+(set-default 'truncate-lines t)
+
 (use-package eshell-toggle)
 
 (use-package all-the-icons)
@@ -182,7 +189,7 @@
  '(helm-minibuffer-history-key "M-p")
  '(inhibit-startup-screen t)
  '(package-selected-packages
-   '(eshell-toggle sublimity-scroll sublimity all-the-icons-dired all-the-icons helm-ag helm-projectile helm rjsx-mode yaml-mode yaml vterm use-package undo-fu projectile modus-themes magit general exec-path-from-shell evil-collection counsel conda company-tabnine anaconda-mode)))
+   '(git-gutter impatient-mode eshell-toggle sublimity-scroll sublimity all-the-icons-dired all-the-icons helm-ag helm-projectile helm rjsx-mode yaml-mode yaml vterm use-package undo-fu projectile modus-themes magit general exec-path-from-shell evil-collection counsel conda company-tabnine anaconda-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
