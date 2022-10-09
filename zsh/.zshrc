@@ -15,8 +15,6 @@ export PATH="$HOME/.cargo/bin/:$PATH"
 # command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 # eval "$(pyenv init -)"
 
-# Default editor
-export EDITOR=$(which emacs)
 
 ########## COMPLETIONS ##########
 
@@ -64,7 +62,7 @@ function git_prompt() {
   fi
 }
 
-PROMPT=$'$(exit_code_prompt) %{$fg[magenta]%}${PWD/#$HOME/~}%{$reset_color%} %{$fg[cyan]%}$ %{$reset_color%}'
+PROMPT=$'%n@%m $(exit_code_prompt) %{$fg[magenta]%}${PWD/#$HOME/~}%{$reset_color%} %{$fg[cyan]%}$ %{$reset_color%}'
 
 ########## ALIASES ###########
 
@@ -83,12 +81,12 @@ alias cda='conda deactivate'
 alias tt='tt -notheme -showwpm -blockcursor'
 
 # Configuration files
-alias cfemacs='$EDITOR ~/dotfiles/emacs/.emacs'
-alias cfvim="$EDITOR ~/dotfiles/nvim/.config/nvim/init.vim"
-alias cfkitty='$EDITOR ~/dotfiles/kitty/.config/kitty/kitty.conf'
-alias cfalacritty='$EDITOR ~/dotfiles/alacritty/.config/alacritty/alacritty.yml'
-alias cfzsh='$EDITOR ~/dotfiles/zsh/.zshrc'
-alias cftmux='$EDITOR ~/dotfiles/tmux/.tmux.conf'
+alias cfemacs='emacs -nw ~/dotfiles/emacs/.emacs'
+alias cfvim="emacs -nw ~/dotfiles/nvim/.config/nvim/init.vim"
+alias cfkitty='emacs -nw ~/dotfiles/kitty/.config/kitty/kitty.conf'
+alias cfalacritty='emacs -nw ~/dotfiles/alacritty/.config/alacritty/alacritty.yml'
+alias cfzsh='emacs -nw ~/dotfiles/zsh/.zshrc'
+alias cftmux='emacs -nw ~/dotfiles/tmux/.tmux.conf'
 
 
 ########## PROGRAM SETUP ##########
@@ -101,6 +99,16 @@ export NVM_DIR="$HOME/.nvm"
 
 # FZF
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+# Tere
+tere() {
+    local result=$(command tere --autocd-timeout off "$@")
+    [ -n "$result" ] && cd -- "$result"
+}
+
+# Keybindings
+bindkey -s "^F" "tere^M"
+bindkey -s "^K" "ls^M"
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!

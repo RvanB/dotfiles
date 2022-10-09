@@ -139,10 +139,11 @@
 (use-package modus-themes)
 (setq modus-themes-bold-constructs t)
 (setq modus-themes-italic-constructs t)
+(setq modus-themes-mode-line '(3d))
 (load-theme 'modus-operandi t)
 
 ;; Change font
-;; (set-face-font 'default "Menlo 14" nil)
+(set-face-font 'default "MonoLisa 14" nil)
 
 ;; Disable bell
 (setq ring-bell-function 'ignore)
@@ -185,7 +186,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("4a288765be220b99defaaeb4c915ed783a9916e3e08f33278bf5ff56e49cbc73" "5a611788d47c1deec31494eb2bb864fde402b32b139fe461312589a9f28835db" default))
+   '("dad40020beea412623b04507a4c185079bff4dcea20a93d8f8451acb6afc8358" "a0415d8fc6aeec455376f0cbcc1bee5f8c408295d1c2b9a1336db6947b89dd98" "4a288765be220b99defaaeb4c915ed783a9916e3e08f33278bf5ff56e49cbc73" "5a611788d47c1deec31494eb2bb864fde402b32b139fe461312589a9f28835db" default))
  '(helm-minibuffer-history-key "M-p")
  '(inhibit-startup-screen t)
  '(package-selected-packages

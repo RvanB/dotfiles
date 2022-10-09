@@ -93,14 +93,14 @@ if (empty($TMUX))
   endif
 endif
 
-set termguicolors
+" set termguicolors
 
 " Theme options
 let g:PaperColor_Theme_Options = {'theme': {'default': {'allow_italic': 1}}}
 let g:gruvbox_italic=1
 
-set background=light
-colorscheme modus-operandi
+"set background=light
+"colorscheme modus-operandi
 
 " Italics
 set t_ZH=[3m
