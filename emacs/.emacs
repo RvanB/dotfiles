@@ -19,20 +19,20 @@
 (when (memq window-system '(mac ns x))
   (exec-path-from-shell-initialize))
 
-(use-package anaconda-mode)
-(add-hook 'python-mode-hook 'anaconda-mode)
-(add-hook 'python-mode-hook 'anaconda-eldoc-mode)
+;; (use-package anaconda-mode)
+;; (add-hook 'python-mode-hook 'anaconda-mode)
+;; (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
 
 (use-package rjsx-mode)
 
-(use-package conda
-  :defer t
-  :init
-  (setq conda-anaconda-home (expand-file-name "~/miniconda3"))
-  (setq conda-env-home-directory (expand-file-name "~/miniconda3"))
-  :config
-  (conda-env-initialize-interactive-shells)
-  (conda-env-initialize-eshell))
+;; (use-package conda
+  ;; :defer t
+  ;; :init
+  ;; (setq conda-anaconda-home (expand-file-name "~/miniconda3"))
+  ;; (setq conda-env-home-directory (expand-file-name "~/miniconda3"))
+  ;; :config
+  ;; (conda-env-initialize-interactive-shells)
+  ;; (conda-env-initialize-eshell))
 
 ;; (add-hook 'after-init-hook 'global-company-mode)
 
