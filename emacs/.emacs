@@ -171,12 +171,12 @@
 
 (use-package eshell-toggle)
 
-(use-package all-the-icons)
-(use-package all-the-icons-dired
-  :config
-  (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
+;; (use-package all-the-icons)
+;; (use-package all-the-icons-dired
+;;   :config
+;;   (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
 
-(add-hook 'dired-mode-hook 'dired-hide-details-mode)
+;; (add-hook 'dired-mode-hook 'dired-hide-details-mode)
 
 ;; Auto refresh buffers when file changes (if unmodified)
 (global-auto-revert-mode t)
