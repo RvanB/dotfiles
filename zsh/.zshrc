@@ -75,19 +75,27 @@ alias ls="exa --group-directories-first -s ext"
 alias l='ls'
 alias ll='ls -l'
 alias la='ls -la'
-alias emacs='emacs -nw'
 alias ca='conda activate'
 alias cda='conda deactivate'
 alias tt='tt -notheme -showwpm -blockcursor'
 
 # Configuration files
-alias cfemacs='emacs -nw ~/dotfiles/emacs/.emacs'
-alias cfvim="emacs -nw ~/dotfiles/nvim/.config/nvim/init.vim"
-alias cfkitty='emacs -nw ~/dotfiles/kitty/.config/kitty/kitty.conf'
-alias cfalacritty='emacs -nw ~/dotfiles/alacritty/.config/alacritty/alacritty.yml'
-alias cfzsh='emacs -nw ~/dotfiles/zsh/.zshrc'
-alias cftmux='emacs -nw ~/dotfiles/tmux/.tmux.conf'
+alias cfemacs='vim ~/dotfiles/emacs/.emacs'
+alias cfvim="vim ~/dotfiles/nvim/.config/nvim/init.vim"
+alias cfkitty='vim ~/dotfiles/kitty/.config/kitty/kitty.conf'
+alias cfalacritty='vim ~/dotfiles/alacritty/.config/alacritty/alacritty.yml'
+alias cfzsh='vim ~/dotfiles/zsh/.zshrc'
+alias cftmux='vim ~/dotfiles/tmux/.tmux.conf'
 
+if [[ "$TERM" == "dumb" ]]
+then
+    unsetopt zle
+    unsetopt prompt_cr
+    unsetopt prompt_subst
+    unfunction precmd
+    unfunction preexec
+    PS1='$ '
+fi
 
 ########## PROGRAM SETUP ##########
 

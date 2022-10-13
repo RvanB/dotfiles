@@ -60,6 +60,7 @@
     "t"  'eshell-toggle
     "e"  'conda-env-activate
     "r"  'helm-resume
+    "c"  'comment-or-uncomment-region
   ))
 
 (setq evil-want-keybinding nil)
@@ -130,10 +131,10 @@
 
 (use-package helm-ag)
 
-(use-package git-gutter
-  :config
-  (global-git-gutter-mode +1)
-  )
+;; (use-package git-gutter
+;;   :config
+;;   (global-git-gutter-mode +1)
+;;   )
 
 ;; Change theme
 (use-package modus-themes)

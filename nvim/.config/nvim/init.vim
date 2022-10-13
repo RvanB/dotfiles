@@ -102,6 +102,8 @@ let g:gruvbox_italic=1
 "set background=light
 "colorscheme modus-operandi
 
+color zellner
+
 " Italics
 set t_ZH=[3m
 set t_ZR=[23m
