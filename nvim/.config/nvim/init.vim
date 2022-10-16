@@ -45,7 +45,7 @@ command! -nargs=+ Grep execute 'silent grep! -I -r -n --exclude *.{json,pyc} . -
 :nmap <leader>g :Grep <c-r>=expand("<cword>")<cr><cr>
 
 " Mouse
-set mouse=a
+" set mouse=a
 
 " toggle relativenumber depending on normal/insert mode
 augroup numbertoggle

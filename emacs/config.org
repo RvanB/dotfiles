@@ -1,5 +1,6 @@
 #+TITLE: Emacs Configuration
 #+AUTHOR: Raiden van Bronkhorst
+#+STARTUP: overview
 #+OPTIONS: toc:nil
 
 * Repos and main setup
@@ -54,14 +55,15 @@
 
 * Projectile
 #+begin_src emacs-lisp
-(use-package projectile
-  ;;:ensure t
-  :init
-  ;;(setq projectile-switch-project-action 'helm-projectile-find-file)
-  (projectile-mode +1)
-  :bind (:map projectile-mode-map
-              ("s-p" . projectile-command-map)
-              ("C-c p" . projectile-command-map)))
+  (use-package projectile
+    ;;:ensure t
+    :init
+    (setq projectile-switch-project-action 'counsel-git)
+    ;;(setq projectile-switch-project-action 'helm-projectile-find-file)
+    (projectile-mode +1)
+    :bind (:map projectile-mode-map
+		("s-p" . projectile-command-map)
+		("C-c p" . projectile-command-map)))
 #+end_src
 
 * COMMENT Vertico/ Consult
@@ -76,6 +78,7 @@
 #+end_src
 
 * Ivy
+
 #+begin_src emacs-lisp
   (use-package ivy
     :init
@@ -90,72 +93,16 @@
     )
 #+end_src
 
-** Save history
+* Org
+** Set agenda files
 #+begin_src emacs-lisp
-  (use-package savehist
-    :init
-    (savehist-mode))
+  (setq org-agenda-files '("~/docs/tasks.org"))
 #+end_src
-
-** Marginalia
+** Open todo list on open
 #+begin_src emacs-lisp
-(use-package marginalia
-:after vertico
-:custom
-(marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-lightn nil))
-:init
-(marginalia-mode))
+  (setq inhibit-splash-screen t)
+  (org-todo-list)
 #+end_src
-** Consult
-#+begin_src emacs-lisp
-  (use-package consult
-    ;; Enable automatic preview at point in the *Completions* buffer. This is
-    ;; relevant when you use the default completion UI.
-    :hook (completion-list-mode . consult-preview-at-point-mode)
-    )
-#+end_src
-* COMMENT Evil Mode
-**Disable evil default keybinding
-#+begin_src emacs-lisp
-(setq evil-want-keybinding nil)
-#+end_src
-
-** Evil
-#+begin_src emacs-lisp
-(use-package evil
-  :init ;; tweak evil's configuration before loading it
-  (setq evil-search-module 'evil-search)
-  (setq evil-ex-complete-emacs-commands nil)
-  (setq evil-vsplit-window-right t)
-  (setq evil-split-window-below t)
-  (setq evil-shift-round nil)
-  (setq evil-want-C-u-scroll t)
-  (setq evil-undo-system 'undo-fu)
-  (setq evil-want-C-i-jump nil)
-  (setq evil-respect-visual-line-mode t)
-  :config ;; tweak evil after loading it
-  (evil-mode 1))
-#+end_src
-** Evil-collection
-#+begin_src emacs-lisp
-(use-package evil-collection
-  :after evil
-  :config
-  (evil-collection-init))
-#+end_src
-
-** 'q' quits in non-interactive buffers
-#+begin_src emacs-lisp
-(defun my-evil-record-macro ()
-  (interactive)
-  (if buffer-read-only
-      (quit-window)
-    (call-interactively 'evil-record-macro)))
-
-(with-eval-after-load 'evil-maps
-  (define-key evil-normal-state-map (kbd "q") 'my-evil-record-macro))
-#+end_src
-
 * Appearance
 ** COMMENT Git gutter
 #+begin_src emacs-lisp
@@ -165,7 +112,7 @@
    )
 #+end_src
 
-** Beacon
+** COMMENT Beacon
 #+begin_src emacs-lisp
   (use-package beacon
     :ensure t
@@ -173,11 +120,11 @@
     (progn
       (beacon-mode 1)
       ;;(setq beacon-push-mark 35)
-      (setq beacon-blink-when-point-moves-vertically 10)
+      ;;(setq beacon-blink-when-point-moves-vertically 10)
       (setq beacon-color "#666600")))
 #+end_src
 
-** Change theme
+** COMMENT Change theme
 *** COMMENT Modus Themes
 #+begin_src emacs-lisp
 (use-package modus-themes)
@@ -189,7 +136,7 @@
 
 *** COMMENT Leuven
 #+begin_src emacs-lisp
-(load-theme 'leuven t)
+  (load-theme 'leuven t)
 #+end_src
 
 *** COMMENT Zenburn
@@ -201,7 +148,7 @@
 
 ** COMMENT Change Font
 #+begin_src emacs-lisp
-(set-face-font 'default "MonoLisa 16" nil)
+(set-face-font 'default "MonoLisa 12" nil)
 #+end_src
 
 ** Disable bell
@@ -212,17 +159,17 @@
 ** Scrolling
 
 #+begin_src emacs-lisp
-(setq scroll-margin 10
-      scroll-conservatively 101
-      scroll-up-aggressively 0.01
-      scroll-down-aggressively 0.01
-      scroll-preserve-screen-position t
-      auto-window-vscroll nil)
+  (setq scroll-margin 10
+	scroll-conservatively 101
+	scroll-up-aggressively 0.01
+	scroll-down-aggressively 0.01
+	scroll-preserve-screen-position t
+	auto-window-vscroll nil)
 #+end_src
 
 ** Modes and variables
 
-*** COMMENT Highlighted current line
+*** Highlighted current line
 #+begin_src emacs-lisp
 ;; let's enable it for all programming major modes
 (add-hook 'prog-mode-hook #'hl-line-mode)
@@ -260,3 +207,4 @@
 #+begin_src emacs-lisp
 (setq vc-follow-symlinks t)
 #+end_src
+
