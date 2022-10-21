@@ -106,16 +106,6 @@ export NVM_DIR="$HOME/.nvm"
 # FZF
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
-# Tere
-tere() {
-    local result=$(command tere --autocd-timeout off "$@")
-    [ -n "$result" ] && cd -- "$result"
-}
-
-# Keybindings
-bindkey -s "^F" "tere^M"
-bindkey -s "^K" "ls^M"
-
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
 __conda_setup="$('$HOME/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
