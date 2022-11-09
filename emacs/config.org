@@ -1,6 +1,5 @@
 #+TITLE: Emacs Configuration
 #+AUTHOR: Raiden van Bronkhorst
-#+STARTUP: overview
 #+OPTIONS: toc:nil
 
 * Repos and main setup
@@ -155,7 +154,6 @@
     :config
     (setq ivy-use-virtual-buffers t)
     (setq enable-recursive-minibuffers t)
-    (global-set-key "\C-s" 'swiper)
     (global-set-key (kbd "C-c C-r") 'ivy-resume)
     (global-set-key (kbd "C-x C-f") 'counsel-find-file)
     (global-set-key (kbd "C-c g") 'counsel-git)
@@ -168,11 +166,6 @@
 ** Set agenda files
 #+begin_src emacs-lisp
   (setq org-agenda-files '("~/docs/tasks.org"))
-#+end_src
-** Open todo list on open
-#+begin_src emacs-lisp
-  (setq inhibit-splash-screen t)
-  (org-todo-list)
 #+end_src
 * Appearance
 ** COMMENT Git gutter
@@ -195,8 +188,8 @@
       (setq beacon-color "#666600")))
 #+end_src
 
-** COMMENT Change theme
-*** COMMENT Modus Themes
+** Change theme
+*** Modus Themes
 #+begin_src emacs-lisp
 (use-package modus-themes)
 (setq modus-themes-bold-constructs t)
@@ -217,10 +210,15 @@
     (load-theme 'zenburn t))
 #+end_src
 
-** COMMENT Change Font
+** Change Font
 #+begin_src emacs-lisp
-(set-face-font 'default "MonoLisa 12" nil)
+    ;; (set-face-font 'default "MonoLisa 12" nil)
+    ;; http://blog.vivekhaldar.com/post/4809065853/dotemacs-extract-interactively-change-font-size
+
+  (set-face-attribute 'default nil :height 180)
 #+end_src
+
+#+RESULTS:
 
 ** Disable bell
 #+begin_src emacs-lisp
@@ -251,7 +249,7 @@
 *** Other
 #+begin_src emacs-lisp
   ;;(global-display-line-numbers-mode 1)
-  ;;(scroll-bar-mode -1)
+  (scroll-bar-mode -1)
   (set-default 'truncate-lines t)
   (global-auto-revert-mode t)
 
@@ -274,13 +272,13 @@
     (global-set-key [remap scroll-up-command] 'golden-ratio-scroll-screen-up)
   )
 #+end_src
+
 ** Follow symlinks
 #+begin_src emacs-lisp
 (setq vc-follow-symlinks t)
 #+end_src
 
 ** Expand-region
-
 #+begin_src emacs-lisp
   (use-package expand-region
     :bind ("C-=" . er/expand-region))
@@ -291,4 +289,19 @@
   (use-package which-key
     :config
     (which-key-mode))
+#+end_src
+
+** Hungry delete
+#+begin_src emacs-lisp
+  (use-package hungry-delete
+    :config
+    (global-hungry-delete-mode))
+#+end_src
+
+** Project switching
+#+begin_src emacs-lisp
+  (setq project-switch-commands
+	'((project-find-file "Find file" nil)
+	  (project-find-dir "Find directory" nil)
+	  (magit-project-status "Magit" 109)))
 #+end_src
