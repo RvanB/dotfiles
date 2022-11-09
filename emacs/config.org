@@ -60,7 +60,7 @@
 		("C-c p" . projectile-command-map)))
 #+end_src
 
-* COMMENT Vertico/ Consult
+* Vertico/ Consult
 ** Vertico
 #+begin_src emacs-lisp
   (use-package vertico
@@ -123,30 +123,30 @@
     :hook
     (embark-collect-mode . consult-preview-at-point-mode))
 
-#+end_src
+    #+end_src
 
 ** Marginalia
 #+begin_src emacs-lisp
-;; Enable rich annotations using the Marginalia package
-(use-package marginalia
-  ;; Either bind `marginalia-cycle' globally or only in the minibuffer
-  :bind (("M-A" . marginalia-cycle)
-         :map minibuffer-local-map
-         ("M-A" . marginalia-cycle))
+  ;; Enable rich annotations using the Marginalia package
+  (use-package marginalia
+    ;; Either bind `marginalia-cycle' globally or only in the minibuffer
+    :bind (("M-A" . marginalia-cycle)
+	   :map minibuffer-local-map
+	   ("M-A" . marginalia-cycle))
 
-  ;; The :init configuration is always executed (Not lazy!)
-  :init
+    ;; The :init configuration is always executed (Not lazy!)
+    :init
 
-  ;; Must be in the :init section of use-package such that the mode gets
-  ;; enabled right away. Note that this forces loading the package.
-  (marginalia-mode))
+    ;; Must be in the :init section of use-package such that the mode gets
+    ;; enabled right away. Note that this forces loading the package.
+    (marginalia-mode))
 #+end_src
 
 * Magit
 #+begin_src emacs-lisp
   (use-package magit)
 #+end_src
-* Ivy
+* COMMENT Ivy
 #+begin_src emacs-lisp
   (use-package counsel
     :init
@@ -170,10 +170,10 @@
 * Appearance
 ** COMMENT Git gutter
 #+begin_src emacs-lisp
-(use-package git-gutter
-   :config
-   (global-git-gutter-mode +1)
-   )
+  (use-package git-gutter
+    :config
+    (global-git-gutter-mode +1)
+    )
 #+end_src
 
 ** COMMENT Beacon
@@ -191,11 +191,11 @@
 ** Change theme
 *** Modus Themes
 #+begin_src emacs-lisp
-(use-package modus-themes)
-(setq modus-themes-bold-constructs t)
-(setq modus-themes-italic-constructs t)
-(setq modus-themes-mode-line '(3d))
-(load-theme 'modus-operandi t)
+  (use-package modus-themes)
+  (setq modus-themes-bold-constructs t)
+  (setq modus-themes-italic-constructs t)
+  (setq modus-themes-mode-line '(3d))
+  (load-theme 'modus-operandi t)
 #+end_src
 
 *** COMMENT Leuven
@@ -212,8 +212,8 @@
 
 ** Change Font
 #+begin_src emacs-lisp
-    ;; (set-face-font 'default "MonoLisa 12" nil)
-    ;; http://blog.vivekhaldar.com/post/4809065853/dotemacs-extract-interactively-change-font-size
+  ;; (set-face-font 'default "MonoLisa 12" nil)
+  ;; http://blog.vivekhaldar.com/post/4809065853/dotemacs-extract-interactively-change-font-size
 
   (set-face-attribute 'default nil :height 180)
 #+end_src
@@ -222,7 +222,7 @@
 
 ** Disable bell
 #+begin_src emacs-lisp
-(setq ring-bell-function 'ignore)
+  (setq ring-bell-function 'ignore)
 #+end_src
 
 ** Scrolling
@@ -240,10 +240,10 @@
 
 *** Highlighted current line
 #+begin_src emacs-lisp
-;; let's enable it for all programming major modes
-(add-hook 'prog-mode-hook #'hl-line-mode)
-;; and for all modes derived from text-mode
-(add-hook 'text-mode-hook #'hl-line-mode)
+  ;; let's enable it for all programming major modes
+  (add-hook 'prog-mode-hook #'hl-line-mode)
+  ;; and for all modes derived from text-mode
+  (add-hook 'text-mode-hook #'hl-line-mode)
 #+end_src
 
 *** Other
@@ -259,7 +259,7 @@
 * General Settings and Behavior
 ** Disable backup files
 #+begin_src emacs-lisp
-(setq make-backup-files nil)
+  (setq make-backup-files nil)
 #+end_src
 
 ** Golden Ratio scrolling
@@ -270,12 +270,12 @@
     :config
     (global-set-key [remap scroll-down-command] 'golden-ratio-scroll-screen-down)
     (global-set-key [remap scroll-up-command] 'golden-ratio-scroll-screen-up)
-  )
+    )
 #+end_src
 
 ** Follow symlinks
 #+begin_src emacs-lisp
-(setq vc-follow-symlinks t)
+  (setq vc-follow-symlinks t)
 #+end_src
 
 ** Expand-region
@@ -304,4 +304,11 @@
 	'((project-find-file "Find file" nil)
 	  (project-find-dir "Find directory" nil)
 	  (magit-project-status "Magit" 109)))
+#+end_src
+
+** Tabs
+#+begin_src emacs-lisp
+  (tab-bar-mode)
+  (setq tab-bar-new-tab-choice "*scratch*")
+
 #+end_src

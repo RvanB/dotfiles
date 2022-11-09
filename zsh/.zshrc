@@ -50,9 +50,8 @@ function exit_code_prompt {
   local EXIT_CODE=$?
   local COLOR="%{$fg[green]%}"
   if [[ $EXIT_CODE -ne 0 ]]; then
-    COLOR="%{$fg[red]%}"
+      echo "%{$fg[red]%}$EXIT_CODE%{$reset_color%}"
   fi
-  echo "$COLOR$EXIT_CODE%{$reset_color%}"
 }
 
 function git_prompt() {
@@ -62,8 +61,9 @@ function git_prompt() {
   fi
 }
 
-PROMPT=$'%n@%m $(exit_code_prompt) %{$fg[magenta]%}${PWD/#$HOME/~}%{$reset_color%} %{$fg[cyan]%}$ %{$reset_color%}'
-
+PROMPT=$'%F{yellow}⎧ %f%T %K{blue}%F{white}%n@%m%f%k %{$fg[magenta]%}${PWD/#$HOME/~}
+%{$fg[yellow]%}⎩ $ %{$reset_color%}'
+RPROMPT=$'$(exit_code_prompt)'
 ########## ALIASES ###########
 
 alias hg="history | grep"
@@ -71,7 +71,6 @@ alias v="nvim"
 alias vim="nvim"
 # alias tmux="TERM=xterm-256color tmux"
 alias t="tmux"
-alias ls="exa --group-directories-first -s ext"
 alias l='ls'
 alias ll='ls -l'
 alias la='ls -la'
