@@ -61,8 +61,8 @@ function git_prompt() {
   fi
 }
 
-PROMPT=$'%F{yellow}⎧ %f%T %K{blue}%F{white}%n@%m%f%k %{$fg[magenta]%}${PWD/#$HOME/~}
-%{$fg[yellow]%}⎩ $ %{$reset_color%}'
+PROMPT=$'%f%T %K{blue}%F{white}%n@%m%f%k %{$fg[magenta]%}${PWD/#$HOME/~}
+%{$fg[blue]%}$ %{$reset_color%}'
 RPROMPT=$'$(exit_code_prompt)'
 ########## ALIASES ###########
 
@@ -79,7 +79,7 @@ alias cda='conda deactivate'
 alias tt='tt -notheme -showwpm -blockcursor'
 
 # Configuration files
-alias cfemacs='vim ~/dotfiles/emacs/.emacs'
+alias cfemacs='vim ~/dotfiles/emacs/config.org'
 alias cfvim="vim ~/dotfiles/nvim/.config/nvim/init.vim"
 alias cfkitty='vim ~/dotfiles/kitty/.config/kitty/kitty.conf'
 alias cfalacritty='vim ~/dotfiles/alacritty/.config/alacritty/alacritty.yml'

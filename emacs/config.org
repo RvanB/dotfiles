@@ -1,6 +1,7 @@
 #+TITLE: Emacs Configuration
 #+AUTHOR: Raiden van Bronkhorst
 #+OPTIONS: toc:nil
+#+STARTUP: overview
 
 * Repos and main setup
 ** Set up package.el to work with MELPA
@@ -33,31 +34,23 @@
 
 * COMMENT Keybindings
 #+begin_src emacs-lisp
-(use-package general
-  :config
-  (general-create-definer rvb/leader-keys
-    :keymaps '(normal insert visual emacs)
-    :prefix "SPC"
-    :global-prefix "C-SPC")
+  (use-package general
+    :config
+    (general-create-definer rvb/leader-keys
+			    :keymaps '(normal insert visual emacs)
+			    :prefix "SPC"
+			    :global-prefix "C-SPC")
 
-  (rvb/leader-keys
-    "k"  'kill-buffer
-    "t"  'eshell-toggle
-    "c"  'comment-or-uncomment-region
-  ))
+    (rvb/leader-keys
+     "k"  'kill-buffer
+     "t"  'eshell-toggle
+     "c"  'comment-or-uncomment-region
+     ))
 #+end_src
 
-* COMMENT Projectile
+* CSV mode
 #+begin_src emacs-lisp
-  (use-package projectile
-    ;;:ensure t
-    :init
-    (setq projectile-switch-project-action 'counsel-git)
-    ;;(setq projectile-switch-project-action 'helm-projectile-find-file)
-    (projectile-mode +1)
-    :bind (:map projectile-mode-map
-		("s-p" . projectile-command-map)
-		("C-c p" . projectile-command-map)))
+  (use-package csv-mode)
 #+end_src
 
 * Vertico/ Consult
@@ -123,7 +116,7 @@
     :hook
     (embark-collect-mode . consult-preview-at-point-mode))
 
-    #+end_src
+#+end_src
 
 ** Marginalia
 #+begin_src emacs-lisp
@@ -145,21 +138,6 @@
 * Magit
 #+begin_src emacs-lisp
   (use-package magit)
-#+end_src
-* COMMENT Ivy
-#+begin_src emacs-lisp
-  (use-package counsel
-    :init
-    (ivy-mode)
-    :config
-    (setq ivy-use-virtual-buffers t)
-    (setq enable-recursive-minibuffers t)
-    (global-set-key (kbd "C-c C-r") 'ivy-resume)
-    (global-set-key (kbd "C-x C-f") 'counsel-find-file)
-    (global-set-key (kbd "C-c g") 'counsel-git)
-    (global-set-key (kbd "C-c j") 'counsel-git-grep)
-    (global-set-key (kbd "C-c k") 'counsel-ag)
-    )
 #+end_src
 
 * Org
@@ -188,8 +166,8 @@
       (setq beacon-color "#666600")))
 #+end_src
 
-** Change theme
-*** Modus Themes
+** COMMENT Change theme
+*** COMMENT Modus Themes
 #+begin_src emacs-lisp
   (use-package modus-themes)
   (setq modus-themes-bold-constructs t)
@@ -210,7 +188,7 @@
     (load-theme 'zenburn t))
 #+end_src
 
-** Change Font
+** COMMENT Change Font
 #+begin_src emacs-lisp
   ;; (set-face-font 'default "MonoLisa 12" nil)
   ;; http://blog.vivekhaldar.com/post/4809065853/dotemacs-extract-interactively-change-font-size
@@ -248,12 +226,19 @@
 
 *** Other
 #+begin_src emacs-lisp
-  ;;(global-display-line-numbers-mode 1)
+  (global-display-line-numbers-mode 1)
   (scroll-bar-mode -1)
   (set-default 'truncate-lines t)
   (global-auto-revert-mode t)
 
   (tool-bar-mode -1)
+#+end_src
+
+** Highlight indentation
+#+begin_src emacs-lisp
+  (use-package highlight-indent-guides)
+  (add-hook 'python-mode-hook 'highlight-indent-guides-mode)
+  (setq highlight-indent-guides-method 'column)
 #+end_src
 
 * General Settings and Behavior
@@ -291,7 +276,7 @@
     (which-key-mode))
 #+end_src
 
-** Hungry delete
+** COMMENT Hungry delete
 #+begin_src emacs-lisp
   (use-package hungry-delete
     :config
@@ -310,5 +295,15 @@
 #+begin_src emacs-lisp
   (tab-bar-mode)
   (setq tab-bar-new-tab-choice "*scratch*")
+#+end_src
+** Indentation
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C->") 'indent-rigidly-right-to-tab-stop)
+  (global-set-key (kbd "C-<") 'indent-rigidly-left-to-tab-stop)
+  (setq tab-width 4)
+#+end_src
 
+** Occur
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-c o") 'occur)
 #+end_src
