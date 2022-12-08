@@ -6,20 +6,11 @@ set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
 Plugin 'tpope/vim-fugitive'
 Plugin 'VundleVim/Vundle.vim'
-Plugin 'preservim/nerdtree'
 Plugin 'inkarkat/vim-visualrepeat'
-Plugin 'iamcco/markdown-preview.nvim'
-Plugin 'preservim/tagbar'
 Plugin 'othree/yajs.vim'
 Plugin 'maxmellon/vim-jsx-pretty'
 Plugin 'lervag/vimtex'
-Plugin 'tssm/c64-vim-color-scheme'
-Plugin 'NLKNguyen/papercolor-theme'
-Plugin 'morhetz/gruvbox'
-Plugin 'lifepillar/vim-solarized8'
 Plugin 'junegunn/fzf.vim'
-Plugin 'chrisbra/csv.vim'
-Plugin 'ishan9299/modus-theme-vim'
 call vundle#end()
 
 set scrolloff=10
@@ -54,17 +45,6 @@ augroup numbertoggle
   autocmd BufLeave,FocusLost,InsertEnter   * set norelativenumber
 augroup END
 
-" NerdTREE
-" autocmd vimenter * NERDTree
-autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
-map <C-n> :NERDTreeToggle<CR>
-let g:NERDTreeFileExtensionHighlightFullName=1
-let g:NERDTreeLimitedSyntax=1
-let NERDTreeMinimalUI=1
-
-" TagBar
-nmap <C-t> :TagbarToggle<CR>
-
 " EasyAlign
 xmap ga <Plug>(EasyAlign)
 nmap ga <Plug>(EasyAlign)
@@ -77,7 +57,7 @@ syntax enable
 
 " THEMING STUFF
 
-" set t_Co=256
+set t_Co=256
 let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
 let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
 set t_8f=[38;2;%lu;%lu;%lum  " Needed in tmux
@@ -99,10 +79,10 @@ endif
 let g:PaperColor_Theme_Options = {'theme': {'default': {'allow_italic': 1}}}
 let g:gruvbox_italic=1
 
-"set background=light
-"colorscheme modus-operandi
+set background=light
+" colorscheme modus-operandi
 
-color zellner
+" color inkpot
 
 " Italics
 set t_ZH=[3m

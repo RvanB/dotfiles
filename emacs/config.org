@@ -145,8 +145,14 @@
 #+begin_src emacs-lisp
   (setq org-agenda-files '("~/docs/tasks.org"))
 #+end_src
+
+** Open todo list on startup
+#+begin_src emacs-lisp
+  (setq inhibit-splash-screen t)
+  (org-todo-list)
+#+end_src
 * Appearance
-** COMMENT Git gutter
+** Git gutter
 #+begin_src emacs-lisp
   (use-package git-gutter
     :config
@@ -167,7 +173,7 @@
 #+end_src
 
 ** COMMENT Change theme
-*** COMMENT Modus Themes
+*** Modus Themes
 #+begin_src emacs-lisp
   (use-package modus-themes)
   (setq modus-themes-bold-constructs t)
@@ -226,7 +232,7 @@
 
 *** Other
 #+begin_src emacs-lisp
-  (global-display-line-numbers-mode 1)
+  ;; (global-display-line-numbers-mode 1)
   (scroll-bar-mode -1)
   (set-default 'truncate-lines t)
   (global-auto-revert-mode t)
@@ -234,7 +240,7 @@
   (tool-bar-mode -1)
 #+end_src
 
-** Highlight indentation
+** COMMENT Highlight indentation
 #+begin_src emacs-lisp
   (use-package highlight-indent-guides)
   (add-hook 'python-mode-hook 'highlight-indent-guides-mode)
@@ -296,13 +302,6 @@
   (tab-bar-mode)
   (setq tab-bar-new-tab-choice "*scratch*")
 #+end_src
-** Indentation
-#+begin_src emacs-lisp
-  (global-set-key (kbd "C->") 'indent-rigidly-right-to-tab-stop)
-  (global-set-key (kbd "C-<") 'indent-rigidly-left-to-tab-stop)
-  (setq tab-width 4)
-#+end_src
-
 ** Occur
 #+begin_src emacs-lisp
   (global-set-key (kbd "C-c o") 'occur)
