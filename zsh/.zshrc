@@ -71,9 +71,7 @@ alias v="nvim"
 alias vim="nvim"
 # alias tmux="TERM=xterm-256color tmux"
 alias t="tmux"
-alias l='ls'
-alias ll='ls -l'
-alias la='ls -la'
+alias ls="exa --group-directories-first"
 alias ca='conda activate'
 alias cda='conda deactivate'
 alias tt='tt -notheme -showwpm -blockcursor'

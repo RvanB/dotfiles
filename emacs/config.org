@@ -33,6 +33,7 @@
 #+end_src
 
 * COMMENT Keybindings
+** General
 #+begin_src emacs-lisp
   (use-package general
     :config
@@ -141,12 +142,23 @@
 #+end_src
 
 * Org
+
+** Set agenda keybinding
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-c a") 'org-agenda)
+#+end_src
+
 ** Set agenda files
 #+begin_src emacs-lisp
   (setq org-agenda-files '("~/docs/tasks.org"))
 #+end_src
 
-** Open todo list on startup
+** Open agenda on other frame
+#+begin_src emacs-lisp
+  (setq org-agenda-window-setup 'other-frame)
+#+end_src
+
+** COMMENT Open todo list on startup
 #+begin_src emacs-lisp
   (setq inhibit-splash-screen t)
   (org-todo-list)
@@ -172,7 +184,7 @@
       (setq beacon-color "#666600")))
 #+end_src
 
-** COMMENT Change theme
+** Change theme
 *** Modus Themes
 #+begin_src emacs-lisp
   (use-package modus-themes)
@@ -306,3 +318,4 @@
 #+begin_src emacs-lisp
   (global-set-key (kbd "C-c o") 'occur)
 #+end_src
+
