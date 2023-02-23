@@ -72,15 +72,10 @@ alias vim="nvim"
 # alias tmux="TERM=xterm-256color tmux"
 alias t="tmux"
 alias ls="exa --group-directories-first"
-alias ca='conda activate'
-alias cda='conda deactivate'
-alias tt='tt -notheme -showwpm -blockcursor'
 
 # Configuration files
 alias cfemacs='vim ~/dotfiles/emacs/config.org'
 alias cfvim="vim ~/dotfiles/nvim/.config/nvim/init.vim"
-alias cfkitty='vim ~/dotfiles/kitty/.config/kitty/kitty.conf'
-alias cfalacritty='vim ~/dotfiles/alacritty/.config/alacritty/alacritty.yml'
 alias cfzsh='vim ~/dotfiles/zsh/.zshrc'
 alias cftmux='vim ~/dotfiles/tmux/.tmux.conf'
 
@@ -102,19 +97,3 @@ export NVM_DIR="$HOME/.nvm"
 
 # FZF
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('$HOME/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
-        . "$HOME/miniconda3/etc/profile.d/conda.sh"
-    else
-        export PATH="$HOME/miniconda3/bin:$PATH"
-    fi
-fi
-unset __conda_setup
-# <<< conda initialize <<<
-

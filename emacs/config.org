@@ -185,7 +185,7 @@
 #+end_src
 
 ** Change theme
-*** Modus Themes
+*** COMMENT Modus Themes
 #+begin_src emacs-lisp
   (use-package modus-themes)
   (setq modus-themes-bold-constructs t)
@@ -259,6 +259,11 @@
   (setq highlight-indent-guides-method 'column)
 #+end_src
 
+** Font size
+#+begin_src emacs-lisp
+  (set-face-attribute 'default nil :height 140)
+#+end_src
+
 * General Settings and Behavior
 ** Disable backup files
 #+begin_src emacs-lisp
@@ -309,7 +314,7 @@
 	  (magit-project-status "Magit" 109)))
 #+end_src
 
-** Tabs
+** COMMENT Tabs
 #+begin_src emacs-lisp
   (tab-bar-mode)
   (setq tab-bar-new-tab-choice "*scratch*")
