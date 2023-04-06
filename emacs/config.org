@@ -192,6 +192,11 @@
   (setq modus-themes-italic-constructs t)
   (load-theme 'modus-vivendi-tinted t)
 #+end_src
+*** COMMENT EF Themes
+#+begin_src emacs-lisp
+  (use-package ef-themes)
+  (load-theme 'ef-spring t)
+#+end_src
 
 *** COMMENT Leuven
 #+begin_src emacs-lisp
@@ -207,10 +212,10 @@
 
 ** Change Font
 #+begin_src emacs-lisp
-  ;;(set-face-font 'default "MonoLisa 12" nil)
+  (set-face-font 'default "Monaco 14" nil)
   ;; http://blog.vivekhaldar.com/post/4809065853/dotemacs-extract-interactively-change-font-size
 
-  (set-face-attribute 'default nil :height 160)
+  ;;(set-face-attribute 'default nil :height 160)
 #+end_src
 
 #+RESULTS:
@@ -256,6 +261,11 @@
   (use-package highlight-indent-guides)
   (add-hook 'python-mode-hook 'highlight-indent-guides-mode)
   (setq highlight-indent-guides-method 'column)
+#+end_src
+
+** Cursor type
+#+begin_src emacs-lisp
+  (setq-default cursor-type 'bar) 
 #+end_src
 
 * General Settings and Behavior
