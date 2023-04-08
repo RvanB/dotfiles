@@ -183,7 +183,7 @@
   (use-package modus-themes)
   (setq modus-themes-bold-constructs t)
   (setq modus-themes-italic-constructs t)
-  (load-theme 'modus-vivendi-tinted t)
+  (load-theme 'modus-operandi t)
 #+end_src
 
 ** Disable bell
@@ -351,6 +351,11 @@
 
   ;; Number the candidates (use M-1, M-2 etc to select completions).
   (setq company-show-numbers t)
+#+end_src
+
+* EIN
+#+begin_src emacs-lisp
+  (use-package ein)
 #+end_src
 
 * Dashboard
