@@ -119,7 +119,7 @@
 
 #+end_src
 
-** Marginalia
+** COMMENT Marginalia
 #+begin_src emacs-lisp
   ;; Enable rich annotations using the Marginalia package
   (use-package marginalia
@@ -171,54 +171,20 @@
     (global-git-gutter-mode +1)
     )
 #+end_src
-
-** COMMENT Beacon
+** Change Font
 #+begin_src emacs-lisp
-  (use-package beacon
-    :ensure t
-    :config
-    (progn
-      (beacon-mode 1)
-      ;;(setq beacon-push-mark 35)
-      ;;(setq beacon-blink-when-point-moves-vertically 10)
-      (setq beacon-color "#666600")))
-#+end_src
+  (set-face-font 'default "Monaco 16" nil)
+  ;; http://blog.vivekhaldar.com/post/4809065853/dotemacs-extract-interactively-change-font-size
 
+  (set-face-attribute 'default nil :height 160)
+#+end_src
 ** Change theme
-*** Modus Themes
 #+begin_src emacs-lisp
   (use-package modus-themes)
   (setq modus-themes-bold-constructs t)
   (setq modus-themes-italic-constructs t)
   (load-theme 'modus-vivendi-tinted t)
 #+end_src
-*** COMMENT EF Themes
-#+begin_src emacs-lisp
-  (use-package ef-themes)
-  (load-theme 'ef-spring t)
-#+end_src
-
-*** COMMENT Leuven
-#+begin_src emacs-lisp
-  (load-theme 'leuven t)
-#+end_src
-
-*** COMMENT Zenburn
-#+begin_src emacs-lisp
-  (use-package zenburn-theme
-    :config
-    (load-theme 'zenburn t))
-#+end_src
-
-** Change Font
-#+begin_src emacs-lisp
-  (set-face-font 'default "Monaco 14" nil)
-  ;; http://blog.vivekhaldar.com/post/4809065853/dotemacs-extract-interactively-change-font-size
-
-  ;;(set-face-attribute 'default nil :height 160)
-#+end_src
-
-#+RESULTS:
 
 ** Disable bell
 #+begin_src emacs-lisp
@@ -304,31 +270,96 @@
 #+end_src
 
 ** COMMENT Hungry delete
+
 #+begin_src emacs-lisp
   (use-package hungry-delete
     :config
     (global-hungry-delete-mode))
 #+end_src
 
-** Project switching
-#+begin_src emacs-lisp
-  (setq project-switch-commands
-	'((project-find-file "Find file" nil)
-	  (project-find-dir "Find directory" nil)
-	  (magit-project-status "Magit" 109)))
-#+end_src
-
-** COMMENT Tabs
-#+begin_src emacs-lisp
-  (tab-bar-mode)
-  (setq tab-bar-new-tab-choice "*scratch*")
-#+end_src
-** Occur
-#+begin_src emacs-lisp
-  (global-set-key (kbd "C-c o") 'occur)
-#+end_src
 ** Window splitting
 #+begin_src emacs-lisp
   (setq split-width-threshold 1 )
 #+end_src
+** Vterm
+#+begin_src emacs-lisp
+  (use-package vterm)
+#+end_src
 
+** COMMENT Dim unfocused buffers
+#+begin_src emacs-lisp
+  (use-package auto-dim-other-buffers)
+  (add-hook 'after-init-hook (lambda ()
+    (when (fboundp 'auto-dim-other-buffers-mode)
+      (auto-dim-other-buffers-mode t))))
+#+end_src
+
+* Python virtual environments
+#+begin_src emacs-lisp
+  (use-package pyvenv)
+  (use-package pipenv)
+  (add-hook 'python-mode 'pipenv-mode)
+#+end_src
+* Projectile
+#+begin_src emacs-lisp
+  (use-package projectile
+    :config
+    (projectile-mode +1)
+    ;; Recommended keymap prefix on macOS
+    (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
+    ;; Recommended keymap prefix on Windows/Linux
+    (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map)
+    (setq projectile-switch-project-action 'projectile-dired)
+    (setq projectile-require-project-root t)
+    )
+#+end_src
+
+#+RESULTS:
+: t
+
+* COMMENT Project switching
+#+begin_src emacs-lisp
+  (setq project-switch-commands
+	'((project-find-file "Find file" nil)
+	  (project-find-dir "Find directory" nil)
+	  (magit-project-status "Magit" 109)
+	  (project-execute-extended-command "Execute Extended Command" 101)
+	))
+#+end_src
+
+* COMMENT Tabs
+#+begin_src emacs-lisp
+  (tab-bar-mode)
+  (setq tab-bar-new-tab-choice "*scratch*")
+#+end_src
+* Occur
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-c o") 'occur)
+#+end_src
+* COMMENT Company mode
+#+begin_src emacs-lisp
+  (use-package company
+    :bind (:map company-active-map
+		("C-n" . company-select-next)
+		("C-p" . company-select-previous))
+    :config
+    (global-company-mode t))
+  (use-package company-tabnine)
+  (add-to-list 'company-backends #'company-tabnine)
+  ;; Trigger completion immediately.
+  (setq company-idle-delay 0)
+
+  ;; Number the candidates (use M-1, M-2 etc to select completions).
+  (setq company-show-numbers t)
+#+end_src
+
+* Dashboard
+#+begin_src emacs-lisp
+  (use-package dashboard
+    :ensure t
+    :config
+    (dashboard-setup-startup-hook)
+    (setq dashboard-items '((recents  . 5)
+			    (projects . 5)))
+  )
+#+end_src

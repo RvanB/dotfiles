@@ -61,9 +61,8 @@ function git_prompt() {
   fi
 }
 
-PROMPT=$'%f%T %K{blue}%F{white}%n@%m%f%k %{$fg[magenta]%}${PWD/#$HOME/~}
-%{$fg[blue]%}$ %{$reset_color%}'
-RPROMPT=$'$(exit_code_prompt)'
+PROMPT=$'%f%T %n@%m%f%k %{$fg[magenta]%}${PWD/#$HOME/~} %{$fg[blue]%}$ %{$reset_color%}'
+# RPROMPT=$'$(exit_code_prompt)'
 ########## ALIASES ###########
 
 alias hg="history | grep"
