@@ -336,23 +336,6 @@
 #+begin_src emacs-lisp
   (global-set-key (kbd "C-c o") 'occur)
 #+end_src
-* COMMENT Company mode
-#+begin_src emacs-lisp
-  (use-package company
-    :bind (:map company-active-map
-		("C-n" . company-select-next)
-		("C-p" . company-select-previous))
-    :config
-    (global-company-mode t))
-  (use-package company-tabnine)
-  (add-to-list 'company-backends #'company-tabnine)
-  ;; Trigger completion immediately.
-  (setq company-idle-delay 0)
-
-  ;; Number the candidates (use M-1, M-2 etc to select completions).
-  (setq company-show-numbers t)
-#+end_src
-
 * EIN
 #+begin_src emacs-lisp
   (use-package ein)
@@ -368,3 +351,18 @@
 			    (projects . 5)))
   )
 #+end_src
+
+* Copilot
+#+begin_src emacs-lisp
+  (use-package s)
+  (use-package dash)
+  (use-package editorconfig)
+  (use-package copilot
+    :load-path (lambda () (expand-file-name "copilot.el" user-emacs-directory))
+    ;; don't show in mode line
+    :diminish)
+
+#+end_src
+
+#+RESULTS:
+: t
