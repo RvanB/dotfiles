@@ -1,12 +1,11 @@
 #+TITLE: Emacs Configuration
 #+AUTHOR: Raiden van Bronkhorst
 #+OPTIONS: toc:nil
-#+STARTUP: overview
 
 * Repos and main setup
+
 ** Set up package.el to work with MELPA
 #+begin_src emacs-lisp
-  
 (require 'package)
 (add-to-list 'package-archives
              '("melpa" . "https://melpa.org/packages/"))
@@ -32,29 +31,8 @@
   (exec-path-from-shell-initialize))  
 #+end_src
 
-* COMMENT Keybindings
-** General
-#+begin_src emacs-lisp
-  (use-package general
-    :config
-    (general-create-definer rvb/leader-keys
-			    :keymaps '(normal insert visual emacs)
-			    :prefix "SPC"
-			    :global-prefix "C-SPC")
-
-    (rvb/leader-keys
-     "k"  'kill-buffer
-     "t"  'eshell-toggle
-     "c"  'comment-or-uncomment-region
-     ))
-#+end_src
-
-* CSV mode
-#+begin_src emacs-lisp
-  (use-package csv-mode)
-#+end_src
-
 * Vertico/ Consult
+
 ** Vertico
 #+begin_src emacs-lisp
   (use-package vertico
@@ -119,7 +97,7 @@
 
 #+end_src
 
-** COMMENT Marginalia
+** Marginalia
 #+begin_src emacs-lisp
   ;; Enable rich annotations using the Marginalia package
   (use-package marginalia
@@ -137,6 +115,7 @@
 #+end_src
 
 * Magit
+
 #+begin_src emacs-lisp
   (use-package magit)
 #+end_src
@@ -163,27 +142,38 @@
   (setq inhibit-splash-screen t)
   (org-todo-list)
 #+end_src
+
+** Org bullets
+#+begin_src emacs-lisp
+  (use-package org-bullets
+    :config
+    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+#+end_src
+
 * Appearance
-** Git gutter
+
+** COMMENT Git gutter
 #+begin_src emacs-lisp
   (use-package git-gutter
     :config
     (global-git-gutter-mode +1)
     )
 #+end_src
-** Change Font
-#+begin_src emacs-lisp
-  (set-face-font 'default "Monaco 16" nil)
-  ;; http://blog.vivekhaldar.com/post/4809065853/dotemacs-extract-interactively-change-font-size
 
-  (set-face-attribute 'default nil :height 160)
+** Change Font
+#+begin_src emacs-lisp :results hidden
+  (set-face-font 'default "Iosevka 16" nil)
 #+end_src
+
+#+RESULTS:
+
 ** Change theme
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :results hidden
   (use-package modus-themes)
   (setq modus-themes-bold-constructs t)
   (setq modus-themes-italic-constructs t)
-  (load-theme 'modus-operandi t)
+
+  (load-theme 'modus-vivendi t)
 #+end_src
 
 ** Disable bell
@@ -214,11 +204,11 @@
 
 *** Other
 #+begin_src emacs-lisp
-  (global-display-line-numbers-mode 1)
+  ;;(global-display-line-numbers-mode 1)
+  ;;(global-hl-line-mode 1)
   (scroll-bar-mode -1)
   (set-default 'truncate-lines t)
   (global-auto-revert-mode t)
-
   (tool-bar-mode -1)
 #+end_src
 
@@ -294,30 +284,23 @@
       (auto-dim-other-buffers-mode t))))
 #+end_src
 
-* Python virtual environments
+#+end_src
+* Python
+** Settings
+#+begin_src emacs-lisp
+  ;;(setq python-shell-completion-native-enable nil)
+#+end_src
+** Virtual environments
 #+begin_src emacs-lisp
   (use-package pyvenv)
   (use-package pipenv)
   (add-hook 'python-mode 'pipenv-mode)
 #+end_src
-* Projectile
-#+begin_src emacs-lisp
-  (use-package projectile
-    :config
-    (projectile-mode +1)
-    ;; Recommended keymap prefix on macOS
-    (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
-    ;; Recommended keymap prefix on Windows/Linux
-    (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map)
-    (setq projectile-switch-project-action 'projectile-dired)
-    (setq projectile-require-project-root t)
-    )
-#+end_src
 
 #+RESULTS:
 : t
 
-* COMMENT Project switching
+* Project switching
 #+begin_src emacs-lisp
   (setq project-switch-commands
 	'((project-find-file "Find file" nil)
@@ -341,28 +324,49 @@
   (use-package ein)
 #+end_src
 
-* Dashboard
+* COMMENT Dashboard
 #+begin_src emacs-lisp
   (use-package dashboard
     :ensure t
     :config
     (dashboard-setup-startup-hook)
-    (setq dashboard-items '((recents  . 5)
-			    (projects . 5)))
+    (setq dashboard-items '((projects . 5)))
   )
 #+end_src
 
-* Copilot
+* Company mode
 #+begin_src emacs-lisp
-  (use-package s)
-  (use-package dash)
-  (use-package editorconfig)
-  (use-package copilot
-    :load-path (lambda () (expand-file-name "copilot.el" user-emacs-directory))
-    ;; don't show in mode line
-    :diminish)
-
+  (use-package company
+    :diminish company-mode)
+  (add-hook 'after-init-hook 'global-company-mode)
 #+end_src
 
 #+RESULTS:
-: t
+
+* Copilot
+#+begin_src emacs-lisp
+    (use-package s)
+    (use-package dash)
+    (use-package editorconfig)
+    (use-package copilot
+      :load-path (lambda () (expand-file-name "copilot.el" user-emacs-directory))
+      ;; don't show in mode line
+      :diminish copilot-mode)
+
+    (add-hook 'prog-mode-hook 'copilot-mode)
+
+      ;; (defun rvb/copilot-accept-completion ()
+      ;;   "Accept completion or indent."
+      ;;   (interactive)
+      ;;   (or (copilot-accept-completion)
+      ;;       (indent-for-tab-command)))
+
+      ;; (define-key global-map (kbd "C-M-<tab>") #'rvb/copilot-accept-completion)
+    (with-eval-after-load 'company
+      ;; disable inline previews
+      (delq 'company-preview-if-just-one-frontend company-frontends))
+
+    (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
+    (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
+
+#+end_src
