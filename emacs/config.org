@@ -24,6 +24,11 @@
 (setq use-package-always-ensure t)
 #+end_src
 
+** Diminish
+#+begin_src emacs-lisp :results hidden
+  (use-package diminish)
+#+end_src
+
 ** Use shell environment variables
 #+begin_src emacs-lisp
 (use-package exec-path-from-shell)
@@ -152,6 +157,13 @@
 
 * Appearance
 
+** Rainbow Delimiters
+#+begin_src emacs-lisp
+  (use-package rainbow-delimiters
+    :config
+    (add-hook 'prog-mode-hook #'rainbow-delimiters-mode))
+#+end_src
+
 ** COMMENT Git gutter
 #+begin_src emacs-lisp
   (use-package git-gutter
@@ -173,7 +185,7 @@
   (setq modus-themes-bold-constructs t)
   (setq modus-themes-italic-constructs t)
 
-  (load-theme 'modus-vivendi t)
+  (load-theme 'modus-operandi t)
 #+end_src
 
 ** Disable bell
@@ -230,7 +242,7 @@
   (setq make-backup-files nil)
 #+end_src
 
-** Golden Ratio scrolling
+** COMMENT Golden Ratio scrolling
 #+begin_src emacs-lisp
   (use-package golden-ratio-scroll-screen
     :init
@@ -288,7 +300,7 @@
 * Python
 ** Settings
 #+begin_src emacs-lisp
-  ;;(setq python-shell-completion-native-enable nil)
+  (setq python-shell-completion-native-enable nil)
 #+end_src
 ** Virtual environments
 #+begin_src emacs-lisp
@@ -296,9 +308,6 @@
   (use-package pipenv)
   (add-hook 'python-mode 'pipenv-mode)
 #+end_src
-
-#+RESULTS:
-: t
 
 * Project switching
 #+begin_src emacs-lisp
@@ -341,7 +350,13 @@
   (add-hook 'after-init-hook 'global-company-mode)
 #+end_src
 
-#+RESULTS:
+* Tree sitter
+#+begin_src emacs-lisp
+  (use-package tree-sitter)
+  (use-package tree-sitter-langs)
+  (global-tree-sitter-mode)
+  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
+#+end_src
 
 * Copilot
 #+begin_src emacs-lisp
@@ -370,3 +385,4 @@
     (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
 
 #+end_src
+
