@@ -242,7 +242,7 @@
   (setq make-backup-files nil)
 #+end_src
 
-** COMMENT Golden Ratio scrolling
+** Golden Ratio scrolling
 #+begin_src emacs-lisp
   (use-package golden-ratio-scroll-screen
     :init

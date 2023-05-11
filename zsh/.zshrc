@@ -71,6 +71,7 @@ alias vim="nvim"
 # alias tmux="TERM=xterm-256color tmux"
 alias t="tmux"
 alias ls="exa --group-directories-first"
+alias l="ls -la"
 
 # Configuration files
 alias cfemacs='vim ~/dotfiles/emacs/config.org'
