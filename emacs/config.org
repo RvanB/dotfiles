@@ -386,3 +386,10 @@
 
 #+end_src
 
+* Annotations
+#+begin_src emacs-lisp
+  (use-package annotate)
+  (add-hook 'prog-mode-hook 'annotate-mode)
+#+end_src
+
+
