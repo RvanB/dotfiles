@@ -410,3 +410,13 @@
 	(exec-path-from-shell-initialize))  
     #+end_src
 
+*** Back to indentation or beginning
+    Change the behavior of ~C-a~ to go to the beginning of the line or the first non-whitespace character.
+    #+begin_src emacs-lisp
+      (defun back-to-indentation-or-beginning () (interactive)
+	     (if (= (point) (progn (back-to-indentation) (point)))
+		 (beginning-of-line)))
+      (global-set-key [remap move-beginning-of-line]
+		      'back-to-indentation-or-beginning)
+    #+end_src
+
