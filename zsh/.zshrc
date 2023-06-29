@@ -63,7 +63,7 @@ function git_prompt() {
 
 PROMPT=$'%f%T %n@%m%f%k %{$fg[magenta]%}${PWD/#$HOME/~} %{$fg[blue]%}$ %{$reset_color%}'
 # RPROMPT=$'$(exit_code_prompt)'
-########## ALIASES ###########
+########## ALIASES AND UTILITY FUNCTIONS ###########
 
 alias hg="history | grep"
 alias v="nvim"
@@ -86,6 +86,25 @@ then
     unsetopt prompt_subst
     PS1='$ '
 fi
+
+function activate() {
+    # Get directory as first argument, error if not provided
+    if [ -z "$1" ]; then
+	echo "Usage: $0 <directory with Pipfile>"
+	return 1
+    fi
+    cd $1
+    # Check that there is a Pipfile in the directory
+    if [ ! -f "Pipfile" ]; then
+	echo "No Pipfile found in $1"
+	return 1
+    fi
+    # Get virtual environment location
+    venv=$(pipenv --venv)
+
+    # Activate the virtual environment
+    source $venv/bin/activate
+}
 
 ########## PROGRAM SETUP ##########
 
