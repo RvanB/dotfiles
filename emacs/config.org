@@ -347,13 +347,13 @@
 *** Themes
     The Modus themes are a set of themes that are designed to be
     accessible and easy on the eyes, while still being aesthetically
-    pleasing. We load the light theme ~modus-operandi~ by default.
+    pleasing. We load the dark theme ~modus-vivendi~ by default.
     #+begin_src emacs-lisp
       (use-package modus-themes)
       (setq modus-themes-bold-constructs t)
       (setq modus-themes-italic-constructs t)
 
-      (load-theme 'modus-operandi t)
+      (load-theme 'modus-vivendi t)
     #+end_src
 
 *** Disable bell
