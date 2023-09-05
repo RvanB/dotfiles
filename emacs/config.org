@@ -313,6 +313,15 @@
 	:config
 	(setq graphviz-dot-indent-width 4))
     #+end_src
+*** VLF (View Large Files)
+    VLF is a package for viewing, searching, and editing large files
+    in chunks to reduce lag.
+    #+begin_src emacs-lisp
+      (use-package vlf
+	:ensure t
+	:config
+	(require 'vlf-setup))
+    #+end_src
 ** Appearance
 *** Rainbow Delimiters
     Rainbow delimiters provides rainbow colors for delimiters like
@@ -347,13 +356,13 @@
 *** Themes
     The Modus themes are a set of themes that are designed to be
     accessible and easy on the eyes, while still being aesthetically
-    pleasing. We load the dark theme ~modus-vivendi~ by default.
+    pleasing. We load the light theme ~modus-operandi~ by default.
     #+begin_src emacs-lisp
       (use-package modus-themes)
       (setq modus-themes-bold-constructs t)
       (setq modus-themes-italic-constructs t)
 
-      (load-theme 'modus-vivendi t)
+      (load-theme 'modus-operandi t)
     #+end_src
 
 *** Disable bell
@@ -482,8 +491,8 @@
     These settings change the options when switching projects.
     #+begin_src emacs-lisp
       (setq project-switch-commands
-	    '((project-find-file "Find file" nil)
-	      (project-find-dir "Find directory" nil)
+	    '((dired "Dired" 111)
+	      (project-find-file "Find file" nil)
 	      (magit-project-status "Magit" 109)
 	      (project-execute-extended-command "Execute Extended Command" 101)
 	      ))
