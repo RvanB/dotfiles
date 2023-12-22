@@ -323,6 +323,13 @@
 	(require 'vlf-setup))
     #+end_src
 ** Appearance
+*** Show line numbers in prog mode
+    Enable line numbers when in programming mode.
+    #+begin_src emacs-lisp
+      (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+    #+end_src
+
+    
 *** Rainbow Delimiters
     Rainbow delimiters provides rainbow colors for delimiters like
     parentheses, brackets, and braces.
@@ -349,20 +356,20 @@
 
 *** Fonts
     #+begin_src emacs-lisp
-      (set-face-font 'default "Iosevka 16" nil)
-      (set-face-attribute 'default nil :height 160)
+      ;; (set-face-font 'default "Iosevka 16" nil)
+      ;; (set-face-attribute 'default nil :height 160)
     #+end_src
 
 *** Themes
     The Modus themes are a set of themes that are designed to be
     accessible and easy on the eyes, while still being aesthetically
-    pleasing. We load the light theme ~modus-operandi~ by default.
+    pleasing. We load the light theme ~modus-vivendi~ by default.
     #+begin_src emacs-lisp
       (use-package modus-themes)
       (setq modus-themes-bold-constructs t)
       (setq modus-themes-italic-constructs t)
 
-      (load-theme 'modus-operandi t)
+      (load-theme 'modus-vivendi t)
     #+end_src
 
 *** Disable bell
