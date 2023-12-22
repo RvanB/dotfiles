@@ -399,6 +399,10 @@
 	:config
 	(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
     #+end_src
+*** Org remove validation link
+    #+begin_src emacs-lisp
+      (setq org-html-validation-link nil)
+    #+end_src
 *** Marginalia
     Marginalia provides annotations for the Emacs minibuffer.
     #+begin_src emacs-lisp
