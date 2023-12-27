@@ -33,8 +33,8 @@
       scroll-preserve-screen-position t
       auto-window-vscroll nil)
 
-;; Load Prot's light theme
-(load-theme 'modus-vivendi t)
+;; Load theme
+(load-theme 'tango t)
 
 ;; Org indentation
 (setq org-adapt-indentation t)
@@ -88,7 +88,10 @@
 
 ;; Magit
 (use-package magit
-  :ensure t)
+  :ensure t
+  :init
+  ;; Show magit in fullscreen
+  (setq magit-display-buffer-function 'switch-to-buffer))
 
 ;; Which key
 (use-package which-key
