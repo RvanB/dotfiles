@@ -4,7 +4,6 @@
 (add-to-list 'load-path
 	     (concat user-emacs-directory
 		     (convert-standard-filename "lisp/")))
-
 ;; MELPA
 (require 'package)
 (add-to-list 'package-archives
@@ -15,16 +14,7 @@
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
 
-;; ---------- APPEARANCE/PREFS ----------
-
-;; Show line numbers in programming buffers
-(add-hook 'prog-mode-hook 'display-line-numbers-mode)
-
-;; Hide toolbar
-(tool-bar-mode -1)
-
-;; Hide scroll bar
-(scroll-bar-mode -1)
+;; ---------- PREFERENCES ----------
 
 ;; Scrolling behavior
 (setq scroll-conservatively 101
@@ -33,17 +23,18 @@
       scroll-preserve-screen-position t
       auto-window-vscroll nil)
 
-;; Load theme
-(load-theme 'tango t)
-
-;; Org indentation
-(setq org-adapt-indentation t)
-
-;; Org bullets
-(use-package org-bullets
+;; Golden ratio scrolling
+(use-package golden-ratio-scroll-screen
   :ensure t
+  :init
+  (setq golden-ratio-scroll-highlight-flag nil)
   :config
-  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+  (global-set-key [remap scroll-down-command] 'golden-ratio-scroll-screen-down)
+  (global-set-key [remap scroll-up-command] 'golden-ratio-scroll-screen-up)
+  )
+
+;; Disable bell
+(setq ring-bell-function 'ignore)
 
 ;; Follow symlinks
 (setq vc-follow-symlinks t)
@@ -75,6 +66,45 @@
 (global-set-key [remap move-beginning-of-line]
 		'back-to-indentation-or-beginning)
 
+;; ---------- APPEARANCE ----------
+
+
+
+;; Fonts
+(set-face-font 'default "SF Mono 16" nil)
+
+;; Count lines in buffer for line number width
+(setq display-line-numbers-width-start 1)
+
+;; Highlight current line
+(add-hook 'prog-mode-hook #'hl-line-mode)
+(add-hook 'text-mode-hook #'hl-line-mode)
+
+;; Show line numbers in programming buffers
+(add-hook 'prog-mode-hook 'display-line-numbers-mode)
+
+;; Hide toolbar
+(tool-bar-mode -1)
+
+;; Prot's themes
+(use-package standard-themes :ensure t)
+(use-package ef-themes :ensure t)
+
+;; Hide scroll bar
+(scroll-bar-mode -1)
+
+
+;; Org indentation
+(setq org-adapt-indentation t)
+
+;; Org bullets
+(use-package org-bullets
+  :ensure t
+  :config
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+
+;; Load theme
+(load-theme 'ef-symbiosis t)
 
 ;; ---------- UTILITIES ----------
 
@@ -91,7 +121,7 @@
   :ensure t
   :init
   ;; Show magit in fullscreen
-  (setq magit-display-buffer-function 'switch-to-buffer))
+  (setq magit-display-buffer-function 'display-buffer))
 
 ;; Which key
 (use-package which-key
@@ -142,16 +172,3 @@
 (use-package docker
   :ensure t
   :bind ("C-c d" . docker))
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   '(org-bullets magit tree-sitter-langs tree-sitter which-key beacon docker vertico use-package undo-fu orderless f expand-region evil ace-jump-mode)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
