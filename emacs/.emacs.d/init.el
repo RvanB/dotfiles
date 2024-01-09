@@ -16,6 +16,12 @@
 
 ;; ---------- PREFERENCES ----------
 
+;; Start up Emacs in a vterm buffer
+(setq initial-buffer-choice #'multi-vterm)
+
+;; Replace Buffer List with ibuffer
+(global-set-key (kbd "C-x C-b") 'ibuffer)
+
 ;; Scrolling behavior
 (setq scroll-conservatively 101
       scroll-up-aggressively 0.01
@@ -68,10 +74,11 @@
 
 ;; ---------- APPEARANCE ----------
 
-
+;; Spacious padding
+(use-package spacious-padding :ensure t)
 
 ;; Fonts
-(set-face-font 'default "SF Mono 16" nil)
+(set-face-font 'default "SF Mono 18" nil)
 
 ;; Count lines in buffer for line number width
 (setq display-line-numbers-width-start 1)
@@ -93,7 +100,6 @@
 ;; Hide scroll bar
 (scroll-bar-mode -1)
 
-
 ;; Org indentation
 (setq org-adapt-indentation t)
 
@@ -104,9 +110,36 @@
   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
 ;; Load theme
-(load-theme 'ef-symbiosis t)
+;; (load-theme 'ef-symbiosis t)
+(load-theme 'tango t)
 
 ;; ---------- UTILITIES ----------
+
+;; Company
+(use-package company
+  :ensure t
+  :diminish company-mode)
+(add-hook 'after-init-hook 'global-company-mode)
+
+;; Copilot
+(use-package s :ensure t)
+(use-package dash :ensure t)
+(use-package editorconfig :ensure t)
+(use-package copilot
+  :load-path (lambda () (expand-file-name "copilot.el" user-emacs-directory))
+  :diminish copilot-mode)
+(add-hook 'prog-mode-hook 'copilot-mode)
+
+(define-key copilot-completion-map (kbd "C-<tab>") 'copilot-accept-completion)
+(define-key copilot-completion-map (kbd "C-TAB") 'copilot-accept-completion)
+
+
+;; multi-vterm
+(use-package multi-vterm :ensure t)
+
+;; vterm
+(use-package vterm
+  :ensure t)
 
 ;; Tree sitter
 (use-package tree-sitter
@@ -137,10 +170,8 @@
 
 ;; npy
 ;; Python stuff
-(use-package f
-  :ensure t)
-(use-package s
-  :ensure t)
+(use-package f :ensure t)
+(use-package s :ensure t)
 (require 'nalist)
 (require 'gpc)
 (require 'npy)
@@ -172,3 +203,19 @@
 (use-package docker
   :ensure t
   :bind ("C-c d" . docker))
+
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   '("184d32f815d68d6aadf7dde7d4f7b8d8059fdd177630e501a4a52989a568d785" default))
+ '(package-selected-packages
+   '(copilot editorconfig company multi-vterm which-key vterm vertico use-package tree-sitter-langs standard-themes spacious-padding org-bullets orderless neotree magit golden-ratio-scroll-screen f expand-region exec-path-from-shell evil ef-themes docker default-text-scale centered-window ace-jump-mode)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
