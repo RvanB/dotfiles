@@ -65,19 +65,7 @@ PROMPT=$'%f%T %n@%m%f%k %{$fg[magenta]%}${PWD/#$HOME/~} %{$fg[blue]%}$ %{$reset_
 # RPROMPT=$'$(exit_code_prompt)'
 ########## ALIASES AND UTILITY FUNCTIONS ###########
 
-alias hg="history | grep"
-alias v="nvim"
-alias vim="nvim"
 # alias tmux="TERM=xterm-256color tmux"
-alias t="tmux"
-alias ls="exa --group-directories-first"
-alias l="ls -la"
-
-# Configuration files
-alias cfemacs='vim ~/dotfiles/emacs/config.org'
-alias cfvim="vim ~/dotfiles/nvim/.config/nvim/init.vim"
-alias cfzsh='vim ~/dotfiles/zsh/.zshrc'
-alias cftmux='vim ~/dotfiles/tmux/.tmux.conf'
 
 if [[ "$TERM" == "dumb" ]]
 then
@@ -87,32 +75,13 @@ then
     PS1='$ '
 fi
 
-function activate() {
-    # Get directory as first argument, error if not provided
-    if [ -z "$1" ]; then
-	echo "Usage: $0 <directory with Pipfile>"
-	return 1
-    fi
-    cd $1
-    # Check that there is a Pipfile in the directory
-    if [ ! -f "Pipfile" ]; then
-	echo "No Pipfile found in $1"
-	return 1
-    fi
-    # Get virtual environment location
-    venv=$(pipenv --venv)
-
-    # Activate the virtual environment
-    source $venv/bin/activate
-}
-
 ########## PROGRAM SETUP ##########
 
 # echo "Loading nvm..."
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh" # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-# echo "Now using node $(nvm current)"
 
 # FZF
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+export FZF_DEFAULT_COMMAND='find .'
