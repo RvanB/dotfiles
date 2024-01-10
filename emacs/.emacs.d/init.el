@@ -74,11 +74,10 @@
 
 ;; ---------- APPEARANCE ----------
 
-;; Spacious padding
-(use-package spacious-padding :ensure t)
 
-;; Fonts
-(set-face-font 'default "SF Mono 18" nil)
+;; Font
+(set-face-attribute 'default nil :font "Monaco 14")
+
 
 ;; Count lines in buffer for line number width
 (setq display-line-numbers-width-start 1)
@@ -110,10 +109,19 @@
   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
 ;; Load theme
-;; (load-theme 'ef-symbiosis t)
-(load-theme 'tango t)
+(use-package zenburn-theme :ensure t)
+(load-theme 'zenburn t)
 
 ;; ---------- UTILITIES ----------
+
+;; Keycast
+(use-package keycast :ensure t)
+
+;; Rainbow delimiters
+(use-package rainbow-delimiters
+  :ensure t
+  :config
+  (add-hook 'prog-mode-hook #'rainbow-delimiters-mode))
 
 ;; Company
 (use-package company
@@ -130,8 +138,8 @@
   :diminish copilot-mode)
 (add-hook 'prog-mode-hook 'copilot-mode)
 
-(define-key copilot-completion-map (kbd "C-<tab>") 'copilot-accept-completion)
-(define-key copilot-completion-map (kbd "C-TAB") 'copilot-accept-completion)
+(define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
+(define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
 
 
 ;; multi-vterm
@@ -210,9 +218,9 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("184d32f815d68d6aadf7dde7d4f7b8d8059fdd177630e501a4a52989a568d785" default))
+   '("e6b0ec96166bb3bb2843d83e56c0292308aab10ee5b79fb921d16ad2dbea5d5f" "45e409674661674c12070af5f8ef71741599eeb9fccd84557f1b822509f3b100" "51f3fb81f9233280cb28ee3023e43e82c9307d59d158626881ca14f964d2abeb" "2cc1ac47eed7ac51d79d1aaf6218d52ec84d9c6eb8a448f221f592bddfe51550" "8390abb2cc504d44f0c9dfdaf79d4e943f0328a933e20ceec74c74d17d65834f" "78be54fed89551db18cbeb645ab807c99181555a51405aaba366b56d913b6040" "260ed5a03b9ed35b1ab1eb51cb06887870221490e0c5c91940dd2203b48ce60f" "31804a8ea314e76b68f8b1c454212c3d9710c4294b8cfbaa008dd338c8d91773" "7f34e5ab75ec580aff579b3b0f40379d280f8441e424b7a04322524ed7f348b6" "eb0f822891b90a730f3331959311439f01bb39da3cdf998b5693ecec877858d0" "6cff32351bcb1726accf9dcf9c400367971eaa8bb1d163409b78ea9c9a6ae8d0" "1b8df5c4f3364ebfbe9c0d3d859f6c31ab652ba518612ec27b12e462ce677731" "0340489fa0ccbfa05661bc5c8c19ee0ff95ab1d727e4cc28089b282d30df8fc8" "a0997c8cd72b848c675e66531265b68845cfdb222b32762ac8773c1dc957d10a" "17bd04719213ed7482ce37d8207f3618f55a81babe56484851ea5951ced383ef" "88267200889975d801f6c667128301af0bc183f3450c4b86138bfb23e8a78fb1" "c171012778b7cf795ac215b91e1ecab8e3946738d03095397a790ed41e0a3386" "8122fb61548fe36171d9cf24cdb9b5f24d053b626d4cda739c3815e080623209" "f5661fd54b1e60a4ae373850447efc4158c23b1c7c9d65aa1295a606278da0f8" "50bb891011dfe0c30cd463c65e898523788d4ac4e6df141eed75030a33da1135" "d0f3adfe292c9d633930e35c3458cda77796073bb25af852689f999bbb3d9398" "4f6dc03105f64cd7e5a3f555ea7c6bac7d9447141473ef9ff3c23b63858066da" "184d32f815d68d6aadf7dde7d4f7b8d8059fdd177630e501a4a52989a568d785" default))
  '(package-selected-packages
-   '(copilot editorconfig company multi-vterm which-key vterm vertico use-package tree-sitter-langs standard-themes spacious-padding org-bullets orderless neotree magit golden-ratio-scroll-screen f expand-region exec-path-from-shell evil ef-themes docker default-text-scale centered-window ace-jump-mode)))
+   '(mixed-pitch zenburn-theme rainbow-delimiters keycast copilot editorconfig company multi-vterm which-key vterm vertico use-package tree-sitter-langs standard-themes spacious-padding org-bullets orderless neotree magit golden-ratio-scroll-screen f expand-region exec-path-from-shell evil ef-themes docker default-text-scale centered-window ace-jump-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
