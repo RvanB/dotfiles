@@ -65,15 +65,15 @@ PROMPT=$'%f%T %n@%m%f%k %{$fg[magenta]%}${PWD/#$HOME/~} %{$fg[blue]%}$ %{$reset_
 # RPROMPT=$'$(exit_code_prompt)'
 ########## ALIASES AND UTILITY FUNCTIONS ###########
 
-# alias tmux="TERM=xterm-256color tmux"
+alias tmux="TERM=xterm-256color tmux"
 
-if [[ "$TERM" == "dumb" ]]
-then
-    unsetopt zle
-    unsetopt prompt_cr
-    unsetopt prompt_subst
-    PS1='$ '
-fi
+# if [[ "$TERM" == "dumb" ]]
+# then
+    # unsetopt zle
+    # unsetopt prompt_cr
+    # unsetopt prompt_subst
+    # PS1='$ '
+# fi
 
 ########## PROGRAM SETUP ##########
 
