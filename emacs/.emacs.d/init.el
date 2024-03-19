@@ -19,8 +19,10 @@
 ;; Make org agenda take up the whole window
 (setq org-agenda-window-setup 'current-window)
 
-;; Start up Emacs in Org Agenda
-(setq initial-buffer-choice #'(lambda () (org-agenda nil "n")))
+;; Start up Emacs in Org Agenda with serif font
+(setq initial-buffer-choice #'(lambda () (progn (org-agenda nil "n") (buffer-set-serif))))
+
+;;(setq initial-buffer-choice #'(lambda () (org-agenda nil "n")))
 
 ;; Replace Buffer List with ibuffer
 (global-set-key (kbd "C-x C-b") 'ibuffer)
