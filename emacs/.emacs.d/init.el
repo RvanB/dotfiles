@@ -86,6 +86,20 @@
   "Set font to a variable width (proportional) fonts in current buffer"
   (interactive)
   (setq buffer-face-mode-face '(:family "Times New Roman"))
+  "Change cursor type to line"
+  (setq cursor-type 'bar)
+  "Don't highlight the current line"
+  (hl-line-mode -1)
+  (buffer-face-mode))
+
+(defun buffer-set-sans-serif ()
+  "Set font to a variable width (proportional) fonts in current buffer"
+  (interactive)
+  (setq buffer-face-mode-face '(:family "Iosevka"))
+  "Change cursor type to box"
+  (setq cursor-type 'box)
+  "Highlight the current line"
+  (hl-line-mode 1)
   (buffer-face-mode))
 
 ;; Count lines in buffer for line number width
