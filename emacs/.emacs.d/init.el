@@ -20,7 +20,7 @@
 (setq org-agenda-window-setup 'current-window)
 
 ;; Start up Emacs in Org Agenda with serif font
-(setq initial-buffer-choice #'(lambda () (progn (org-agenda nil "n") (buffer-set-serif))))
+;; (setq initial-buffer-choice #'(lambda () (progn (org-agenda nil "n") (buffer-set-serif))))
 
 ;;(setq initial-buffer-choice #'(lambda () (org-agenda nil "n")))
 
@@ -71,33 +71,36 @@
   (exec-path-from-shell-initialize))
 
 ;; Better C-a
-(defun back-to-indentation-or-beginning () (interactive)
-       (if (= (point) (progn (back-to-indentation) (point)))
-	   (beginning-of-line)))
+(defun back-to-indentation-or-beginning ()
+  "Move point to the first non-whitespace character on the line."
+  (interactive)
+  (if (= (point) (progn (back-to-indentation) (point)))
+      (beginning-of-line)))
 (global-set-key [remap move-beginning-of-line]
 		'back-to-indentation-or-beginning)
 
 ;; ---------- APPEARANCE ----------
 
-
 ;; Font
-(set-face-attribute 'default nil :font "Iosevka 16")
+(set-face-attribute 'default nil :font "Hack 14")
 
 ;; Use variable width font faces in current buffer
 (defun buffer-set-serif ()
   "Set font to a variable width (proportional) fonts in current buffer"
   (interactive)
-  (setq buffer-face-mode-face '(:family "Times New Roman"))
+  (setq buffer-face-mode-face '(:family "Palatino" :height 180))
   "Change cursor type to line"
   (setq cursor-type 'bar)
   "Don't highlight the current line"
   (hl-line-mode -1)
+  " Disable line numbers"
+  (display-line-numbers-mode -1)
   (buffer-face-mode))
 
 (defun buffer-set-sans-serif ()
   "Set font to a variable width (proportional) fonts in current buffer"
   (interactive)
-  (setq buffer-face-mode-face '(:family "Iosevka"))
+  (setq buffer-face-mode-face '(:family "Hack"))
   "Change cursor type to box"
   (setq cursor-type 'box)
   "Highlight the current line"
@@ -147,10 +150,10 @@
   :config
   (add-hook 'prog-mode-hook #'rainbow-delimiters-mode))
 
-;; Company
+;; ;; Company
 (use-package company
-  :ensure t
-  :diminish company-mode)
+  :ensure t)
+  
 (add-hook 'after-init-hook 'global-company-mode)
 
 ;; Copilot
@@ -158,8 +161,7 @@
 (use-package dash :ensure t)
 (use-package editorconfig :ensure t)
 (use-package copilot
-  :load-path (lambda () (expand-file-name "copilot.el" user-emacs-directory))
-  :diminish copilot-mode)
+  :load-path (lambda () (expand-file-name "copilot.el" user-emacs-directory)))
 (add-hook 'prog-mode-hook 'copilot-mode)
 
 (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
@@ -169,7 +171,7 @@
 ;; multi-vterm
 (use-package multi-vterm
   :ensure t
-  :bind ("C-c t" . multi-vterm))
+  :bind ("C-s-t" . multi-vterm))
 
 ;; vterm
 (use-package vterm
@@ -195,12 +197,30 @@
   :ensure t
   :config
   (which-key-mode))
+  
 
 ;; ace-jump-mode
 ;; Cool jumping
 (use-package ace-jump-mode
   :ensure t
   :bind ("C-c C-SPC" . ace-jump-mode))
+
+;; LSP mode
+(use-package lsp-mode
+  :ensure t
+  :init
+  (setq lsp-keymap-prefix "C-c l")
+  :hook (python-mode . lsp)
+  (lsp-mode . lsp-enable-which-key-integration)
+  :commands lsp)
+
+;; LSP pyright
+(use-package lsp-pyright
+  :ensure t
+  :hook (python-mode . (lambda ()
+			 (require 'lsp-pyright)
+			 (lsp))))
+
 
 ;; npy
 ;; Python stuff
@@ -211,6 +231,18 @@
 (require 'npy)
 (npy-initialize)
 
+
+;; flycheck
+(use-package flycheck
+  :ensure t
+  :init
+  (global-flycheck-mode))
+
+;; (add-hook 'python-mode-hook 'eglot-ensure)
+
+;; Make python flymake use ruff
+;; (setq python-flymake-command '("ruff" "--quiet" "--stdin-filename=stdin" "-"))
+
 ;; vertico
 ;; Nicer completion UI
 (use-package vertico
@@ -219,6 +251,23 @@
   (vertico-cycle t)
   :config
   (vertico-mode))
+
+;; Enable rich annotations using the Marginalia package
+(use-package marginalia
+  :ensure t
+  ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
+  ;; available in the *Completions* buffer, add it to the
+  ;; `completion-list-mode-map'.
+  :bind (:map minibuffer-local-map
+         ("M-A" . marginalia-cycle))
+
+  ;; The :init section is always executed.
+  :init
+
+  ;; Marginalia must be activated in the :init section of use-package such that
+  ;; the mode gets enabled right away. Note that this forces loading the
+  ;; package.
+  (marginalia-mode))
 
 ;; orderless
 ;; Partial completions
@@ -238,17 +287,27 @@
   :ensure t
   :bind ("C-c d" . docker))
 
+;; diminish
+(use-package diminish
+  :ensure t
+  :config
+  (diminish 'eldoc-mode)
+  (diminish 'auto-revert-mode)
+  (diminish 'abbrev-mode)
+  (diminish 'which-key-mode)
+  (diminish 'company-mode)
+  (diminish 'copilot-mode)
+  (diminish 'lsp-mode)
+  (diminish 'tree-sitter-mode))
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(auth-source-save-behavior nil)
  '(custom-safe-themes
-   '("0018c218377a0f234066cd01eb9b636d3739b0b614c7b2c0b8e37a306b7bf8ef" "82b43e48862ecc7e3af29838ed843227e331b187865828dc4915021c5a74baa1" "e871f44a640f98523876f77dccdbf0e20747ca7e111f9f147fe23c9d5f4937c1" "242f33ba517c05f45e075d8ed3d13c0a7b7d1392e0c95d66830029e561607085" "38457f8afb329ce87e1a41d31e155acb4dcdf5ee6a1ea703d401f2042747a69f" "d8bcb88ef0a3259a38d6deba78e569c0750ebfede82ad3e6da16573419fef48c" "2459d6e7e96aefaed9cebaf7fde590f64e76c96f48632d8310cfea5d10ec2bb1" "18cf5d20a45ea1dff2e2ffd6fbcd15082f9aa9705011a3929e77129a971d1cb3" "e6b0ec96166bb3bb2843d83e56c0292308aab10ee5b79fb921d16ad2dbea5d5f" "45e409674661674c12070af5f8ef71741599eeb9fccd84557f1b822509f3b100" "51f3fb81f9233280cb28ee3023e43e82c9307d59d158626881ca14f964d2abeb" "2cc1ac47eed7ac51d79d1aaf6218d52ec84d9c6eb8a448f221f592bddfe51550" "8390abb2cc504d44f0c9dfdaf79d4e943f0328a933e20ceec74c74d17d65834f" "78be54fed89551db18cbeb645ab807c99181555a51405aaba366b56d913b6040" "260ed5a03b9ed35b1ab1eb51cb06887870221490e0c5c91940dd2203b48ce60f" "31804a8ea314e76b68f8b1c454212c3d9710c4294b8cfbaa008dd338c8d91773" "7f34e5ab75ec580aff579b3b0f40379d280f8441e424b7a04322524ed7f348b6" "eb0f822891b90a730f3331959311439f01bb39da3cdf998b5693ecec877858d0" "6cff32351bcb1726accf9dcf9c400367971eaa8bb1d163409b78ea9c9a6ae8d0" "1b8df5c4f3364ebfbe9c0d3d859f6c31ab652ba518612ec27b12e462ce677731" "0340489fa0ccbfa05661bc5c8c19ee0ff95ab1d727e4cc28089b282d30df8fc8" "a0997c8cd72b848c675e66531265b68845cfdb222b32762ac8773c1dc957d10a" "17bd04719213ed7482ce37d8207f3618f55a81babe56484851ea5951ced383ef" "88267200889975d801f6c667128301af0bc183f3450c4b86138bfb23e8a78fb1" "c171012778b7cf795ac215b91e1ecab8e3946738d03095397a790ed41e0a3386" "8122fb61548fe36171d9cf24cdb9b5f24d053b626d4cda739c3815e080623209" "f5661fd54b1e60a4ae373850447efc4158c23b1c7c9d65aa1295a606278da0f8" "50bb891011dfe0c30cd463c65e898523788d4ac4e6df141eed75030a33da1135" "d0f3adfe292c9d633930e35c3458cda77796073bb25af852689f999bbb3d9398" "4f6dc03105f64cd7e5a3f555ea7c6bac7d9447141473ef9ff3c23b63858066da" "184d32f815d68d6aadf7dde7d4f7b8d8059fdd177630e501a4a52989a568d785" default))
- '(org-agenda-files '("/Users/rvanbron/.todo"))
+   '("be73fbde027b9df15a98a044bcfff4d46906b653cb6eef0d98ebccb7f8425dc9" "2459d6e7e96aefaed9cebaf7fde590f64e76c96f48632d8310cfea5d10ec2bb1" "51f3fb81f9233280cb28ee3023e43e82c9307d59d158626881ca14f964d2abeb" "e871f44a640f98523876f77dccdbf0e20747ca7e111f9f147fe23c9d5f4937c1" "50bb891011dfe0c30cd463c65e898523788d4ac4e6df141eed75030a33da1135" "1b8df5c4f3364ebfbe9c0d3d859f6c31ab652ba518612ec27b12e462ce677731" "4ae2387bb3bcfb3419d88f586b41c1fef3ff8620b80d06d53f98ec30df469407" "eb0f822891b90a730f3331959311439f01bb39da3cdf998b5693ecec877858d0" "2cc1ac47eed7ac51d79d1aaf6218d52ec84d9c6eb8a448f221f592bddfe51550" "82b43e48862ecc7e3af29838ed843227e331b187865828dc4915021c5a74baa1" "e6b0ec96166bb3bb2843d83e56c0292308aab10ee5b79fb921d16ad2dbea5d5f" "38457f8afb329ce87e1a41d31e155acb4dcdf5ee6a1ea703d401f2042747a69f" "4f6dc03105f64cd7e5a3f555ea7c6bac7d9447141473ef9ff3c23b63858066da" default))
  '(package-selected-packages
-   '(yaml-mode mixed-pitch zenburn-theme rainbow-delimiters keycast copilot editorconfig company multi-vterm which-key vterm vertico use-package tree-sitter-langs standard-themes spacious-padding org-bullets orderless neotree magit golden-ratio-scroll-screen f expand-region exec-path-from-shell evil ef-themes docker default-text-scale centered-window ace-jump-mode)))
+   '(flatui-theme zenburn-theme yaml-mode which-key vertico use-package undo-fu tree-sitter-langs standard-themes spacious-padding rainbow-delimiters org-bullets orderless multi-vterm marginalia magit lsp-pyright keycast golden-ratio-scroll-screen flycheck expand-region exec-path-from-shell evil elpy ef-themes editorconfig docker diminish ace-jump-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
