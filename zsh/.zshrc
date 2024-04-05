@@ -66,6 +66,7 @@ PROMPT=$'%f%T %n@%m%f%k %{$fg[magenta]%}${PWD/#$HOME/~} %{$fg[blue]%}$ %{$reset_
 ########## ALIASES AND UTILITY FUNCTIONS ###########
 
 alias tmux="TERM=xterm-256color tmux"
+alias ls="exa"
 
 # if [[ "$TERM" == "dumb" ]]
 # then
