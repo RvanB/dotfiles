@@ -54,7 +54,7 @@
 (setq make-backup-files nil)
 
 ;; Default to horizontal split
-(setq split-width-threshold 1 )
+(setq split-width-threshold 200 )
 
 ;; Searching
 ;; Add lazy count to isearch
@@ -141,6 +141,21 @@
 
 ;; ---------- UTILITIES ----------
 
+;; Project ruff
+(defun ruff-check-project ()
+  ;; get project root with (when-let ((project (project-current))) (project-root project))
+  (interactive)
+  ;; Run "NO_COLOR=1 ruff check -q <project root>" and display in a buffer in compilation mode
+  (let ((output-buffer (get-buffer-create "*ruff-check*")))
+	(with-current-buffer output-buffer
+	  (erase-buffer)
+	  (insert (shell-command-to-string (format "NO_COLOR=1 ruff check -q %s" (when-let ((project (project-current))) (project-root project)))))
+	  (compilation-mode)
+	  (local-set-key "q" (lambda () (interactive) (quit-window t))))
+	(display-buffer output-buffer)))
+(global-set-key (kbd "C-c r") 'ruff-check-project)
+
+
 ;; Keycast
 (use-package keycast :ensure t)
 
@@ -206,13 +221,16 @@
   :bind ("C-c C-SPC" . ace-jump-mode))
 
 ;; LSP mode
-(use-package lsp-mode
-  :ensure t
-  :init
-  (setq lsp-keymap-prefix "C-c l")
-  :hook (python-mode . lsp)
-  (lsp-mode . lsp-enable-which-key-integration)
-  :commands lsp)
+;; (use-package lsp-mode
+;;   :ensure t
+;;   :init
+;;   (setq lsp-keymap-prefix "C-c l")
+;;   :hook (python-mode . lsp)
+;;   (lsp-mode . lsp-enable-which-key-integration)
+;;   :commands lsp)
+
+;; Eglot
+(add-hook 'python-mode-hook 'eglot-ensure)
 
 ;; LSP pyright
 (use-package lsp-pyright
@@ -231,12 +249,6 @@
 (require 'npy)
 (npy-initialize)
 
-
-;; flycheck
-(use-package flycheck
-  :ensure t
-  :init
-  (global-flycheck-mode))
 
 ;; (add-hook 'python-mode-hook 'eglot-ensure)
 
@@ -304,10 +316,9 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-   '("be73fbde027b9df15a98a044bcfff4d46906b653cb6eef0d98ebccb7f8425dc9" "2459d6e7e96aefaed9cebaf7fde590f64e76c96f48632d8310cfea5d10ec2bb1" "51f3fb81f9233280cb28ee3023e43e82c9307d59d158626881ca14f964d2abeb" "e871f44a640f98523876f77dccdbf0e20747ca7e111f9f147fe23c9d5f4937c1" "50bb891011dfe0c30cd463c65e898523788d4ac4e6df141eed75030a33da1135" "1b8df5c4f3364ebfbe9c0d3d859f6c31ab652ba518612ec27b12e462ce677731" "4ae2387bb3bcfb3419d88f586b41c1fef3ff8620b80d06d53f98ec30df469407" "eb0f822891b90a730f3331959311439f01bb39da3cdf998b5693ecec877858d0" "2cc1ac47eed7ac51d79d1aaf6218d52ec84d9c6eb8a448f221f592bddfe51550" "82b43e48862ecc7e3af29838ed843227e331b187865828dc4915021c5a74baa1" "e6b0ec96166bb3bb2843d83e56c0292308aab10ee5b79fb921d16ad2dbea5d5f" "38457f8afb329ce87e1a41d31e155acb4dcdf5ee6a1ea703d401f2042747a69f" "4f6dc03105f64cd7e5a3f555ea7c6bac7d9447141473ef9ff3c23b63858066da" default))
  '(package-selected-packages
-   '(flatui-theme zenburn-theme yaml-mode which-key vertico use-package undo-fu tree-sitter-langs standard-themes spacious-padding rainbow-delimiters org-bullets orderless multi-vterm marginalia magit lsp-pyright keycast golden-ratio-scroll-screen flycheck expand-region exec-path-from-shell evil elpy ef-themes editorconfig docker diminish ace-jump-mode)))
+   '(lsp-pyright zenburn-theme yaml-mode which-key vertico use-package undo-fu tree-sitter-langs standard-themes spacious-padding rainbow-delimiters org-bullets orderless multi-vterm marginalia magit keycast golden-ratio-scroll-screen flycheck flatui-theme expand-region exec-path-from-shell evil elpy ef-themes editorconfig docker diminish ace-jump-mode))
+ '(project-switch-commands 'project-dired))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
