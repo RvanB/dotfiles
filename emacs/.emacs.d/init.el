@@ -54,7 +54,7 @@
 (setq make-backup-files nil)
 
 ;; Default to horizontal split
-(setq split-width-threshold 200 )
+;; (setq split-width-threshold 160)
 
 ;; Searching
 ;; Add lazy count to isearch
@@ -221,16 +221,14 @@
   :bind ("C-c C-SPC" . ace-jump-mode))
 
 ;; LSP mode
-;; (use-package lsp-mode
-;;   :ensure t
-;;   :init
-;;   (setq lsp-keymap-prefix "C-c l")
-;;   :hook (python-mode . lsp)
-;;   (lsp-mode . lsp-enable-which-key-integration)
-;;   :commands lsp)
-
-;; Eglot
-(add-hook 'python-mode-hook 'eglot-ensure)
+(use-package lsp-mode
+  :ensure t
+  :init
+  (setq lsp-keymap-prefix "C-c l")
+  :hook (python-mode . lsp)
+  :hook (html-mode . lsp)
+  (lsp-mode . lsp-enable-which-key-integration)
+  :commands lsp)
 
 ;; LSP pyright
 (use-package lsp-pyright
@@ -238,7 +236,6 @@
   :hook (python-mode . (lambda ()
 			 (require 'lsp-pyright)
 			 (lsp))))
-
 
 ;; npy
 ;; Python stuff
@@ -248,12 +245,6 @@
 (require 'gpc)
 (require 'npy)
 (npy-initialize)
-
-
-;; (add-hook 'python-mode-hook 'eglot-ensure)
-
-;; Make python flymake use ruff
-;; (setq python-flymake-command '("ruff" "--quiet" "--stdin-filename=stdin" "-"))
 
 ;; vertico
 ;; Nicer completion UI
@@ -316,6 +307,8 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   '("2459d6e7e96aefaed9cebaf7fde590f64e76c96f48632d8310cfea5d10ec2bb1" "0af489efe6c0d33b6e9b02c6690eb66ab12998e2649ea85ab7cfedfb39dd4ac9" default))
  '(package-selected-packages
    '(lsp-pyright zenburn-theme yaml-mode which-key vertico use-package undo-fu tree-sitter-langs standard-themes spacious-padding rainbow-delimiters org-bullets orderless multi-vterm marginalia magit keycast golden-ratio-scroll-screen flycheck flatui-theme expand-region exec-path-from-shell evil elpy ef-themes editorconfig docker diminish ace-jump-mode))
  '(project-switch-commands 'project-dired))
