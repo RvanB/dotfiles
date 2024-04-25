@@ -141,6 +141,15 @@
 
 ;; ---------- UTILITIES ----------
 
+;; Spacious padding mode
+(use-package spacious-padding
+  :ensure t
+  :config
+  (spacious-padding-mode 1))
+
+;; Bind Command-P to project-switch-project
+(global-set-key (kbd "s-p") 'project-switch-project)
+
 ;; Project ruff
 (defun ruff-check-project ()
   ;; get project root with (when-let ((project (project-current))) (project-root project))
