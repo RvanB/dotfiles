@@ -186,10 +186,11 @@
 (use-package editorconfig :ensure t)
 (use-package copilot
   :load-path (lambda () (expand-file-name "copilot.el" user-emacs-directory)))
-(add-hook 'prog-mode-hook 'copilot-mode)
 
 (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
 (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
+;; (define-key copilot-completion-map (kbd "C-g") 'copilot-clear-overlay)
+(global-set-key (kbd "C-c c") 'copilot-complete)
 
 
 ;; multi-vterm
@@ -311,19 +312,37 @@
   (diminish 'copilot-mode)
   (diminish 'lsp-mode)
   (diminish 'tree-sitter-mode))
+
+(use-package poetry
+  :ensure t)
+
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("2459d6e7e96aefaed9cebaf7fde590f64e76c96f48632d8310cfea5d10ec2bb1" "0af489efe6c0d33b6e9b02c6690eb66ab12998e2649ea85ab7cfedfb39dd4ac9" default))
+   '("0340489fa0ccbfa05661bc5c8c19ee0ff95ab1d727e4cc28089b282d30df8fc8" "a0997c8cd72b848c675e66531265b68845cfdb222b32762ac8773c1dc957d10a" "2459d6e7e96aefaed9cebaf7fde590f64e76c96f48632d8310cfea5d10ec2bb1" "0af489efe6c0d33b6e9b02c6690eb66ab12998e2649ea85ab7cfedfb39dd4ac9" default))
  '(package-selected-packages
-   '(lsp-pyright zenburn-theme yaml-mode which-key vertico use-package undo-fu tree-sitter-langs standard-themes spacious-padding rainbow-delimiters org-bullets orderless multi-vterm marginalia magit keycast golden-ratio-scroll-screen flycheck flatui-theme expand-region exec-path-from-shell evil elpy ef-themes editorconfig docker diminish ace-jump-mode))
+   '(poetry lsp-pyright zenburn-theme yaml-mode which-key vertico use-package undo-fu tree-sitter-langs standard-themes spacious-padding rainbow-delimiters org-bullets orderless multi-vterm marginalia magit keycast golden-ratio-scroll-screen flycheck flatui-theme expand-region exec-path-from-shell evil elpy ef-themes editorconfig docker diminish ace-jump-mode))
  '(project-switch-commands 'project-dired))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ '(fringe ((t :background "#fbf7f0")))
+ '(header-line ((t :box (:line-width 4 :color "#efe9dd" :style nil))))
+ '(header-line-highlight ((t :box (:color "#000000"))))
+ '(keycast-key ((t)))
+ '(line-number ((t :background "#fbf7f0")))
+ '(mode-line ((t :box (:line-width 6 :color "#cab9b2" :style nil))))
+ '(mode-line-active ((t :box (:line-width 6 :color "#cab9b2" :style nil))))
+ '(mode-line-highlight ((t :box (:color "#000000"))))
+ '(mode-line-inactive ((t :box (:line-width 6 :color "#dfd9cf" :style nil))))
+ '(tab-bar-tab ((t :box (:line-width 4 :color "#fbf7f0" :style nil))))
+ '(tab-bar-tab-inactive ((t :box (:line-width 4 :color "#c8b8b2" :style nil))))
+ '(window-divider ((t :background "#fbf7f0" :foreground "#fbf7f0")))
+ '(window-divider-first-pixel ((t :background "#fbf7f0" :foreground "#fbf7f0")))
+ '(window-divider-last-pixel ((t :background "#fbf7f0" :foreground "#fbf7f0"))))
