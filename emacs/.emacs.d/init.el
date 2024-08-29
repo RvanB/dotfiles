@@ -14,7 +14,33 @@
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
 
+;; Straight
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name
+        "straight/repos/straight.el/bootstrap.el"
+        (or (bound-and-true-p straight-base-dir)
+            user-emacs-directory)))
+      (bootstrap-version 7))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+
 ;; ---------- PREFERENCES ----------
+
+;; Current window only
+(use-package current-window-only
+  :straight (current-window-only
+             :type git
+             :host github
+             :repo "FrostyX/current-window-only")
+  :config
+  (current-window-only-mode))
 
 ;; Make org agenda take up the whole window
 (setq org-agenda-window-setup 'current-window)
@@ -23,6 +49,11 @@
 ;; (setq initial-buffer-choice #'(lambda () (progn (org-agenda nil "n") (buffer-set-serif))))
 
 ;;(setq initial-buffer-choice #'(lambda () (org-agenda nil "n")))
+;; Splitting behavior
+(setq display-buffer-reuse-frames t)
+
+;; Use ibuffer-vc
+(use-package ibuffer-vc :ensure t)
 
 ;; Replace Buffer List with ibuffer
 (global-set-key (kbd "C-x C-b") 'ibuffer)
@@ -82,7 +113,7 @@
 ;; ---------- APPEARANCE ----------
 
 ;; Font
-(set-face-attribute 'default nil :font "Hack 14")
+(set-face-attribute 'default nil :font "Iosevka 16")
 
 ;; Use variable width font faces in current buffer
 (defun buffer-set-serif ()
@@ -100,7 +131,7 @@
 (defun buffer-set-sans-serif ()
   "Set font to a variable width (proportional) fonts in current buffer"
   (interactive)
-  (setq buffer-face-mode-face '(:family "Hack"))
+  (setq buffer-face-mode-face '(:family "Iosevka"))
   "Change cursor type to box"
   (setq cursor-type 'box)
   "Highlight the current line"
@@ -137,15 +168,15 @@
   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
 ;; Load theme
-(load-theme 'modus-operandi t)
+(load-theme 'ef-maris-dark t)
 
 ;; ---------- UTILITIES ----------
 
 ;; Spacious padding mode
-(use-package spacious-padding
-  :ensure t
-  :config
-  (spacious-padding-mode 1))
+;; (use-package spacious-padding
+;;   :ensure t
+;;   :config
+;;   (spacious-padding-mode 1))
 
 ;; Bind Command-P to project-switch-project
 (global-set-key (kbd "s-p") 'project-switch-project)
@@ -313,11 +344,16 @@
 
 (use-package poetry
   :ensure t)
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   '("2459d6e7e96aefaed9cebaf7fde590f64e76c96f48632d8310cfea5d10ec2bb1" default))
+ '(package-selected-packages
+   '(ibuffer-vc poetry zenburn-theme yaml-mode which-key vertico use-package undo-fu tree-sitter-langs standard-themes spacious-padding rainbow-delimiters org-bullets orderless nordic-night-theme multi-vterm modus-themes material-theme marginalia magit lsp-pyright kuronami-theme keycast golden-ratio-scroll-screen flycheck flatui-theme expand-region exec-path-from-shell evil elpy ef-themes editorconfig dockerfile-mode docker diminish ace-jump-mode))
  '(project-switch-commands
    '((project-find-file "Find file" nil)
      (project-find-regexp "Find regexp" nil)
