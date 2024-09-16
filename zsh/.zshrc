@@ -76,6 +76,28 @@ alias ls="exa"
     # PS1='$ '
 # fi
 
+export SESSION_SCRIPT_DIR=~/.cdl-ssm-util
+
+# Start a session on an instance by name. Searches within every SSO profile defined in
+# ~/.aws/config for the instance name (with a cache for speed).
+#
+# Usage e.g. `session pub-aws2-ops`
+session() {
+    "$SESSION_SCRIPT_DIR/session.py" "$@"
+}
+
+# Auto-completion for 'session' (thanks chatgpt)
+#
+# Usage e.g `session pub-TAB`
+autoload -Uz compinit
+compinit
+_session() {
+    local words
+    words=($(cut -f2 ~/.aws/cdl-inst-cache/*))
+    _describe 'hosts' words
+}
+compdef _session session
+
 ########## PROGRAM SETUP ##########
 
 # echo "Loading nvm..."

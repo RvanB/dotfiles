@@ -55,6 +55,24 @@
 ;; Use ibuffer-vc
 (use-package ibuffer-vc :ensure t)
 
+;; Set up ibuffer saved filter groups
+(require 'ibuffer) 
+(setq ibuffer-saved-filter-groups
+      (quote (("default"
+	       ("Dired" (mode . dired-mode))
+               ("Org" (mode . org-mode))
+	       ("Shell" (mode . shell-mode))
+               ("Programming" (or
+			       (mode . c-mode)
+			       (mode . perl-mode)
+			       (mode . python-mode)
+			       (mode . emacs-lisp-mode)))))))
+	       
+               
+(add-hook 'ibuffer-mode-hook
+	  (lambda ()
+	    (ibuffer-switch-to-saved-filter-groups "default")))
+
 ;; Replace Buffer List with ibuffer
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 
@@ -168,7 +186,7 @@
   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
 ;; Load theme
-(load-theme 'ef-maris-dark t)
+(load-theme 'modus-operandi t)
 
 ;; ---------- UTILITIES ----------
 
@@ -351,9 +369,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("2459d6e7e96aefaed9cebaf7fde590f64e76c96f48632d8310cfea5d10ec2bb1" default))
- '(package-selected-packages
-   '(ibuffer-vc poetry zenburn-theme yaml-mode which-key vertico use-package undo-fu tree-sitter-langs standard-themes spacious-padding rainbow-delimiters org-bullets orderless nordic-night-theme multi-vterm modus-themes material-theme marginalia magit lsp-pyright kuronami-theme keycast golden-ratio-scroll-screen flycheck flatui-theme expand-region exec-path-from-shell evil elpy ef-themes editorconfig dockerfile-mode docker diminish ace-jump-mode))
+   '("b29ba9bfdb34d71ecf3322951425a73d825fb2c002434282d2e0e8c44fce8185" default))
  '(project-switch-commands
    '((project-find-file "Find file" nil)
      (project-find-regexp "Find regexp" nil)
@@ -366,17 +382,4 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(fringe ((t :background "#ffffff")))
- '(header-line ((t :box (:line-width 4 :color "#f2f2f2" :style nil))))
- '(header-line-highlight ((t :box (:color "#000000"))))
- '(keycast-key ((t)))
- '(line-number ((t :background "#ffffff")))
- '(mode-line ((t :box (:line-width 6 :color "#c8c8c8" :style nil))))
- '(mode-line-active ((t :box (:line-width 6 :color "#c8c8c8" :style nil))))
- '(mode-line-highlight ((t :box (:color "#000000"))))
- '(mode-line-inactive ((t :box (:line-width 6 :color "#e6e6e6" :style nil))))
- '(tab-bar-tab ((t :box (:line-width 4 :color "#ffffff" :style nil))))
- '(tab-bar-tab-inactive ((t :box (:line-width 4 :color "#c2c2c2" :style nil))))
- '(window-divider ((t :background "#ffffff" :foreground "#ffffff")))
- '(window-divider-first-pixel ((t :background "#ffffff" :foreground "#ffffff")))
- '(window-divider-last-pixel ((t :background "#ffffff" :foreground "#ffffff"))))
+ )
