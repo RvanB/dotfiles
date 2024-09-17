@@ -34,13 +34,17 @@
 ;; ---------- PREFERENCES ----------
 
 ;; Current window only
-(use-package current-window-only
-  :straight (current-window-only
-             :type git
-             :host github
-             :repo "FrostyX/current-window-only")
-  :config
-  (current-window-only-mode))
+;; (use-package current-window-only
+;;   :straight (current-window-only
+;;              :type git
+;;              :host github
+;;              :repo "FrostyX/current-window-only")
+;;   :config
+;;   (current-window-only-mode))
+
+(windmove-default-keybindings)
+
+(winner-mode 1)
 
 ;; Make org agenda take up the whole window
 (setq org-agenda-window-setup 'current-window)
