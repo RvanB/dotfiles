@@ -135,30 +135,8 @@
 ;; ---------- APPEARANCE ----------
 
 ;; Font
-(set-face-attribute 'default nil :font "Iosevka 16")
 
-;; Use variable width font faces in current buffer
-(defun buffer-set-serif ()
-  "Set font to a variable width (proportional) fonts in current buffer"
-  (interactive)
-  (setq buffer-face-mode-face '(:family "Palatino" :height 180))
-  "Change cursor type to line"
-  (setq cursor-type 'bar)
-  "Don't highlight the current line"
-  (hl-line-mode -1)
-  " Disable line numbers"
-  (display-line-numbers-mode -1)
-  (buffer-face-mode))
-
-(defun buffer-set-sans-serif ()
-  "Set font to a variable width (proportional) fonts in current buffer"
-  (interactive)
-  (setq buffer-face-mode-face '(:family "Iosevka"))
-  "Change cursor type to box"
-  (setq cursor-type 'box)
-  "Highlight the current line"
-  (hl-line-mode 1)
-  (buffer-face-mode))
+(set-face-attribute 'default nil :font "Terminus 16 16")
 
 ;; Count lines in buffer for line number width
 (setq display-line-numbers-width-start 1)
@@ -190,7 +168,7 @@
   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
 ;; Load theme
-(load-theme 'modus-operandi t)
+(load-theme 'modus-vivendi-tritanopia t)
 
 ;; ---------- UTILITIES ----------
 
@@ -373,7 +351,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("b29ba9bfdb34d71ecf3322951425a73d825fb2c002434282d2e0e8c44fce8185" default))
+   '("c171012778b7cf795ac215b91e1ecab8e3946738d03095397a790ed41e0a3386" "b29ba9bfdb34d71ecf3322951425a73d825fb2c002434282d2e0e8c44fce8185" default))
  '(project-switch-commands
    '((project-find-file "Find file" nil)
      (project-find-regexp "Find regexp" nil)
