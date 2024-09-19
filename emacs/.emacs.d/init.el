@@ -343,11 +343,6 @@
   :ensure t
   :bind ("C-=" . er/expand-region))
 
-;; docker
-(use-package docker
-  :ensure t
-  :bind ("C-c d" . docker))
-
 ;; diminish
 (use-package diminish
   :ensure t
