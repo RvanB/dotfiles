@@ -136,7 +136,12 @@
 
 ;; Font
 
-(set-face-attribute 'default nil :font "Terminus 16 16")
+(set-face-attribute 'default nil :font "Iosevka Comfy Motion 16")
+
+;; Use italics for comments
+(set-face-attribute 'font-lock-comment-face nil :slant 'italic)
+;; Use bold for keywords
+;; (set-face-attribute 'font-lock-keyword-face nil :weight 'bold)
 
 ;; Count lines in buffer for line number width
 (setq display-line-numbers-width-start 1)
@@ -168,7 +173,8 @@
   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
 ;; Load theme
-(load-theme 'modus-vivendi-tritanopia t)
+(ef-themes-load-random)
+;; (load-theme 'modus-operandi t)
 
 ;; ---------- UTILITIES ----------
 
@@ -224,9 +230,9 @@
 
 
 ;; multi-vterm
-;; (use-package multi-vterm
-;;   :ensure t
-;;   :bind ("C-s-t" . multi-vterm))
+(use-package multi-vterm
+  :ensure t
+  :bind ("C-s-t" . multi-vterm))
 
 ;; vterm
 ;; (use-package vterm
@@ -285,6 +291,13 @@
 (require 'npy)
 (npy-initialize)
 
+;; Consult
+(use-package consult
+  :ensure t
+  :bind (
+	 ("C-x b" . consult-buffer)
+	 ))
+
 ;; vertico
 ;; Nicer completion UI
 (use-package vertico
@@ -293,6 +306,12 @@
   (vertico-cycle t)
   :config
   (vertico-mode))
+
+(use-package vertico-posframe
+  :ensure t
+  :config
+  (vertico-posframe-mode 1))
+
 
 ;; Enable rich annotations using the Marginalia package
 (use-package marginalia
@@ -351,7 +370,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("c171012778b7cf795ac215b91e1ecab8e3946738d03095397a790ed41e0a3386" "b29ba9bfdb34d71ecf3322951425a73d825fb2c002434282d2e0e8c44fce8185" default))
+   '("0013cec68d42e640266e700c09ea4eb55e18668f72da7a5b92f0c22b80581204" "4f03e70554a58349740973c69e73aefd8ce761a77b22a9dc52a19e708532084a" "9ddb83c12595e789e9abd04a5c0705661748776223a794a6f64669352b956e79" "aa04c854054e8d43245bd67ca619a7bede9171e2a2efb1b2c26caf1d031497eb" "90a6f96a4665a6a56e36dec873a15cbedf761c51ec08dd993d6604e32dd45940" "f149d9986497e8877e0bd1981d1bef8c8a6d35be7d82cba193ad7e46f0989f6a" "77f1e155387d355fbbb3b382a28da41cc709b2a1cc71e7ede03ee5c1859468d2" "c171012778b7cf795ac215b91e1ecab8e3946738d03095397a790ed41e0a3386" "b29ba9bfdb34d71ecf3322951425a73d825fb2c002434282d2e0e8c44fce8185" default))
  '(project-switch-commands
    '((project-find-file "Find file" nil)
      (project-find-regexp "Find regexp" nil)
