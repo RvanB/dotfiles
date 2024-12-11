@@ -14,33 +14,7 @@
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
 
-;; Straight
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name
-        "straight/repos/straight.el/bootstrap.el"
-        (or (bound-and-true-p straight-base-dir)
-            user-emacs-directory)))
-      (bootstrap-version 7))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
-
 ;; ---------- PREFERENCES ----------
-
-;; Current window only
-;; (use-package current-window-only
-;;   :straight (current-window-only
-;;              :type git
-;;              :host github
-;;              :repo "FrostyX/current-window-only")
-;;   :config
-;;   (current-window-only-mode))
 
 (windmove-default-keybindings)
 
@@ -178,6 +152,10 @@
 
 ;; ---------- UTILITIES ----------
 
+;; VLF (view large files)
+(use-package vlf
+  :ensure t)
+
 ;; Spacious padding mode
 ;; (use-package spacious-padding
 ;;   :ensure t
@@ -225,18 +203,18 @@
 
 (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
 (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
-;; (define-key copilot-completion-map (kbd "C-g") 'copilot-clear-overlay)
-(global-set-key (kbd "C-c c") 'copilot-complete)
+(define-key copilot-completion-map (kbd "C-g") 'copilot-clear-overlay)
+;; (global-set-key (kbd "C-c c") 'copilot-complete)
+(global-copilot-mode)
 
+;; vterm
+(use-package vterm
+  :ensure t)
 
 ;; multi-vterm
 (use-package multi-vterm
   :ensure t
   :bind ("C-s-t" . multi-vterm))
-
-;; vterm
-;; (use-package vterm
-;;   :ensure t)
 
 ;; Tree sitter
 (use-package tree-sitter
@@ -245,6 +223,12 @@
   :ensure t)
 (global-tree-sitter-mode)
 (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
+
+(use-package treesit-auto
+  :ensure t
+  :demand t
+  :config
+  (global-treesit-auto-mode))
 
 ;; Magit
 (use-package magit
@@ -275,12 +259,12 @@
   (lsp-mode . lsp-enable-which-key-integration)
   :commands lsp)
 
-;; LSP pyright
-(use-package lsp-pyright
-  :ensure t
-  :hook (python-mode . (lambda ()
-			 (require 'lsp-pyright)
-			 (lsp))))
+;; ;; LSP pyright
+;; (use-package lsp-pyright
+;;   :ensure t
+;;   :hook (python-mode . (lambda ()
+;; 			 (require 'lsp-pyright)
+;; 			 (lsp))))
 
 ;; npy
 ;; Python stuff
@@ -366,6 +350,8 @@
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
    '("0013cec68d42e640266e700c09ea4eb55e18668f72da7a5b92f0c22b80581204" "4f03e70554a58349740973c69e73aefd8ce761a77b22a9dc52a19e708532084a" "9ddb83c12595e789e9abd04a5c0705661748776223a794a6f64669352b956e79" "aa04c854054e8d43245bd67ca619a7bede9171e2a2efb1b2c26caf1d031497eb" "90a6f96a4665a6a56e36dec873a15cbedf761c51ec08dd993d6604e32dd45940" "f149d9986497e8877e0bd1981d1bef8c8a6d35be7d82cba193ad7e46f0989f6a" "77f1e155387d355fbbb3b382a28da41cc709b2a1cc71e7ede03ee5c1859468d2" "c171012778b7cf795ac215b91e1ecab8e3946738d03095397a790ed41e0a3386" "b29ba9bfdb34d71ecf3322951425a73d825fb2c002434282d2e0e8c44fce8185" default))
+ '(package-selected-packages
+   '(bash-language-server vlf treesit-auto multi-vterm poetry diminish expand-region orderless marginalia vertico-posframe vertico consult lsp-pyright lsp-mode ace-jump-mode which-key magit tree-sitter-langs tree-sitter editorconfig dash s company rainbow-delimiters keycast ef-themes standard-themes org-bullets ibuffer-vc golden-ratio-scroll-screen exec-path-from-shell))
  '(project-switch-commands
    '((project-find-file "Find file" nil)
      (project-find-regexp "Find regexp" nil)
