@@ -147,14 +147,16 @@
   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
 ;; Load theme
-(ef-themes-load-random)
-;; (load-theme 'modus-operandi t)
+;; (ef-themes-load-random)
+(load-theme 'ef-rosa t)
 
 ;; ---------- UTILITIES ----------
 
 ;; VLF (view large files)
 (use-package vlf
-  :ensure t)
+  :ensure t
+  :config
+  (custom-set-variables '(vlf-tune-enabled nil)))
 
 ;; Spacious padding mode
 ;; (use-package spacious-padding
@@ -205,7 +207,9 @@
 (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
 (define-key copilot-completion-map (kbd "C-g") 'copilot-clear-overlay)
 ;; (global-set-key (kbd "C-c c") 'copilot-complete)
-(global-copilot-mode)
+
+;; Hook copilot-mode into programming buffers
+(add-hook 'prog-mode-hook #'copilot-mode)
 
 ;; vterm
 (use-package vterm
@@ -254,7 +258,8 @@
   :ensure t
   :init
   (setq lsp-keymap-prefix "C-c l")
-  :hook (python-mode . lsp)
+  :hook (python-ts-mode . lsp)
+  :hook (bash-ts-mode . lsp)
   :hook (html-mode . lsp)
   (lsp-mode . lsp-enable-which-key-integration)
   :commands lsp)
