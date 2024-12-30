@@ -148,7 +148,7 @@
 
 ;; Load theme
 ;; (ef-themes-load-random)
-(load-theme 'ef-rosa t)
+(load-theme 'ef-cyprus t)
 
 ;; ---------- UTILITIES ----------
 
