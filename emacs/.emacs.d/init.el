@@ -39,14 +39,16 @@
       (quote (("default"
 	       ("Dired" (mode . dired-mode))
                ("Org" (mode . org-mode))
-	       ("Shell" (mode . shell-mode))
+	       ("Shell" (or
+			 (mode . shell-mode)
+			 (mode . vterm-mode)))
                ("Programming" (or
-			       (mode . c-mode)
+			       (mode . c-ts-mode)
 			       (mode . perl-mode)
-			       (mode . python-mode)
+			       (mode . python-ts-mode)
+			       (mode . bash-ts-mode)
 			       (mode . emacs-lisp-mode)))))))
-	       
-               
+
 (add-hook 'ibuffer-mode-hook
 	  (lambda ()
 	    (ibuffer-switch-to-saved-filter-groups "default")))
@@ -354,7 +356,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("0013cec68d42e640266e700c09ea4eb55e18668f72da7a5b92f0c22b80581204" "4f03e70554a58349740973c69e73aefd8ce761a77b22a9dc52a19e708532084a" "9ddb83c12595e789e9abd04a5c0705661748776223a794a6f64669352b956e79" "aa04c854054e8d43245bd67ca619a7bede9171e2a2efb1b2c26caf1d031497eb" "90a6f96a4665a6a56e36dec873a15cbedf761c51ec08dd993d6604e32dd45940" "f149d9986497e8877e0bd1981d1bef8c8a6d35be7d82cba193ad7e46f0989f6a" "77f1e155387d355fbbb3b382a28da41cc709b2a1cc71e7ede03ee5c1859468d2" "c171012778b7cf795ac215b91e1ecab8e3946738d03095397a790ed41e0a3386" "b29ba9bfdb34d71ecf3322951425a73d825fb2c002434282d2e0e8c44fce8185" default))
+   '("f019002925408f081e767c515e4fb4b1d7f1462228d6cd32ff66f06a43671527" "97283a649cf1ffd7be84dde08b45a41faa2a77c34a4832d3884c7f7bba53f3f5" "0013cec68d42e640266e700c09ea4eb55e18668f72da7a5b92f0c22b80581204" "4f03e70554a58349740973c69e73aefd8ce761a77b22a9dc52a19e708532084a" "9ddb83c12595e789e9abd04a5c0705661748776223a794a6f64669352b956e79" "aa04c854054e8d43245bd67ca619a7bede9171e2a2efb1b2c26caf1d031497eb" "90a6f96a4665a6a56e36dec873a15cbedf761c51ec08dd993d6604e32dd45940" "f149d9986497e8877e0bd1981d1bef8c8a6d35be7d82cba193ad7e46f0989f6a" "77f1e155387d355fbbb3b382a28da41cc709b2a1cc71e7ede03ee5c1859468d2" "c171012778b7cf795ac215b91e1ecab8e3946738d03095397a790ed41e0a3386" "b29ba9bfdb34d71ecf3322951425a73d825fb2c002434282d2e0e8c44fce8185" default))
  '(package-selected-packages
    '(bash-language-server vlf treesit-auto multi-vterm poetry diminish expand-region orderless marginalia vertico-posframe vertico consult lsp-pyright lsp-mode ace-jump-mode which-key magit tree-sitter-langs tree-sitter editorconfig dash s company rainbow-delimiters keycast ef-themes standard-themes org-bullets ibuffer-vc golden-ratio-scroll-screen exec-path-from-shell))
  '(project-switch-commands
@@ -363,7 +365,8 @@
      (project-find-dir "Find directory" nil)
      (magit-project-status "Git Status" 109)
      (project-eshell "Eshell" nil)))
- '(project-switch-use-entire-map t))
+ '(project-switch-use-entire-map t)
+ '(vlf-tune-enabled nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
