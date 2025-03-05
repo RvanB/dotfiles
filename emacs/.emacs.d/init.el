@@ -150,9 +150,13 @@
 
 ;; Load theme
 ;; (ef-themes-load-random)
-(load-theme 'ef-cyprus t)
+;;(load-theme 'ef-cyprus t)
+(standard-themes-load-light)
+;; (load-theme 'modus-vivendi t)
 
 ;; ---------- UTILITIES ----------
+
+
 
 ;; VLF (view large files)
 (use-package vlf
@@ -298,12 +302,6 @@
   :config
   (vertico-mode))
 
-(use-package vertico-posframe
-  :ensure t
-  :config
-  (vertico-posframe-mode 1))
-
-
 ;; Enable rich annotations using the Marginalia package
 (use-package marginalia
   :ensure t
@@ -320,6 +318,42 @@
   ;; the mode gets enabled right away. Note that this forces loading the
   ;; package.
   (marginalia-mode))
+
+(use-package embark
+  :ensure t
+
+  :bind
+  (("C-." . embark-act)         ;; pick some comfortable binding
+   ("C-;" . embark-dwim)        ;; good alternative: M-.
+   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+
+  :init
+
+  ;; Optionally replace the key help with a completing-read interface
+  (setq prefix-help-command #'embark-prefix-help-command)
+
+  ;; Show the Embark target at point via Eldoc. You may adjust the
+  ;; Eldoc strategy, if you want to see the documentation from
+  ;; multiple providers. Beware that using this can be a little
+  ;; jarring since the message shown in the minibuffer can be more
+  ;; than one line, causing the modeline to move up and down:
+
+  ;; (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
+  ;; (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
+
+  :config
+
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+
+;; Consult users will also want the embark-consult package.
+(use-package embark-consult
+  :ensure t ; only need to install it, embark loads it after consult if found
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
 
 ;; orderless
 ;; Partial completions
@@ -356,9 +390,9 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("f019002925408f081e767c515e4fb4b1d7f1462228d6cd32ff66f06a43671527" "97283a649cf1ffd7be84dde08b45a41faa2a77c34a4832d3884c7f7bba53f3f5" "0013cec68d42e640266e700c09ea4eb55e18668f72da7a5b92f0c22b80581204" "4f03e70554a58349740973c69e73aefd8ce761a77b22a9dc52a19e708532084a" "9ddb83c12595e789e9abd04a5c0705661748776223a794a6f64669352b956e79" "aa04c854054e8d43245bd67ca619a7bede9171e2a2efb1b2c26caf1d031497eb" "90a6f96a4665a6a56e36dec873a15cbedf761c51ec08dd993d6604e32dd45940" "f149d9986497e8877e0bd1981d1bef8c8a6d35be7d82cba193ad7e46f0989f6a" "77f1e155387d355fbbb3b382a28da41cc709b2a1cc71e7ede03ee5c1859468d2" "c171012778b7cf795ac215b91e1ecab8e3946738d03095397a790ed41e0a3386" "b29ba9bfdb34d71ecf3322951425a73d825fb2c002434282d2e0e8c44fce8185" default))
+   '("dc96af3e6aaa9c96aa83d1a73a28a6d1dab58e376df1e51980b4fa9b256e9d7f" "f019002925408f081e767c515e4fb4b1d7f1462228d6cd32ff66f06a43671527" "97283a649cf1ffd7be84dde08b45a41faa2a77c34a4832d3884c7f7bba53f3f5" "0013cec68d42e640266e700c09ea4eb55e18668f72da7a5b92f0c22b80581204" "4f03e70554a58349740973c69e73aefd8ce761a77b22a9dc52a19e708532084a" "9ddb83c12595e789e9abd04a5c0705661748776223a794a6f64669352b956e79" "aa04c854054e8d43245bd67ca619a7bede9171e2a2efb1b2c26caf1d031497eb" "90a6f96a4665a6a56e36dec873a15cbedf761c51ec08dd993d6604e32dd45940" "f149d9986497e8877e0bd1981d1bef8c8a6d35be7d82cba193ad7e46f0989f6a" "77f1e155387d355fbbb3b382a28da41cc709b2a1cc71e7ede03ee5c1859468d2" "c171012778b7cf795ac215b91e1ecab8e3946738d03095397a790ed41e0a3386" "b29ba9bfdb34d71ecf3322951425a73d825fb2c002434282d2e0e8c44fce8185" default))
  '(package-selected-packages
-   '(bash-language-server vlf treesit-auto multi-vterm poetry diminish expand-region orderless marginalia vertico-posframe vertico consult lsp-pyright lsp-mode ace-jump-mode which-key magit tree-sitter-langs tree-sitter editorconfig dash s company rainbow-delimiters keycast ef-themes standard-themes org-bullets ibuffer-vc golden-ratio-scroll-screen exec-path-from-shell))
+   '(embark-consult embark csv-mode bash-language-server vlf treesit-auto multi-vterm poetry diminish expand-region orderless marginalia vertico consult lsp-pyright lsp-mode ace-jump-mode which-key magit tree-sitter-langs tree-sitter editorconfig dash s company rainbow-delimiters keycast ef-themes standard-themes org-bullets ibuffer-vc golden-ratio-scroll-screen exec-path-from-shell))
  '(project-switch-commands
    '((project-find-file "Find file" nil)
      (project-find-regexp "Find regexp" nil)
