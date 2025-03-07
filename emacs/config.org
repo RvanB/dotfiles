@@ -3,178 +3,158 @@
 #+OPTIONS: toc:nil num:nil
 #+PROPERTY: header-args :results none
 
+* Startup Performance
+#+BEGIN_SRC emacs-lisp
+;; The default is 800 kilobytes.  Measured in bytes.
+(setq gc-cons-threshold (* 50 1000 1000))
+
+(defun efs/display-startup-time ()
+  (message "Emacs loaded in %s with %d garbage collections."
+           (format "%.2f seconds"
+                   (float-time
+                     (time-subtract after-init-time before-init-time)))
+           gcs-done))
+
+(add-hook 'emacs-startup-hook #'efs/display-startup-time)
+#+END_SRC
+
 * Setup Package Archives
-  #+BEGIN_SRC emacs-lisp
-    (require 'package)
-    (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
-    (package-refresh-contents)  ;; Refresh package contents
-  #+END_SRC
+#+BEGIN_SRC emacs-lisp
+  (require 'package)
+  (setq package-archives '(("melpa" . "https://melpa.org/packages/")
+			   ("org" . "https://orgmode.org/elpa/")
+			   ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+			   ("elpa" . "https://elpa.gnu.org/packages/")))
 
-* Install Packages
-  #+BEGIN_SRC emacs-lisp
-    (dolist (pkg '(vertico orderless embark savehist expand-region hungry-delete
-                           which-key vterm vterm-toggle company annotate magit rainbow-delimiters
-                           git-gutter modus-themes org-bullets marginalia golden-ratio-scroll-screen))
-      (unless (package-installed-p pkg)
-        (package-install pkg)))
-  #+END_SRC
+  (package-initialize)
+  (unless package-archive-contents
+    (package-refresh-contents t))
 
-* Configure Packages
-** Vertico
-   #+BEGIN_SRC emacs-lisp
-     (require 'vertico)
-     (vertico-mode)
-     (setq vertico-cycle t)
-   #+END_SRC
+  ;; Install use-package if not already installed
+  (unless (package-installed-p 'use-package)
+    (package-install 'use-package))
 
-** Orderless Completion Style
-   #+BEGIN_SRC emacs-lisp
-     (setq completion-styles '(orderless basic))
-     (setq completion-category-defaults nil)
-     (setq completion-category-overrides '((file (styles partial-completion))))
-   #+END_SRC
+  (require 'use-package)
+  (setq use-package-always-ensure t) ;; Always ensure packages are installed
+#+END_SRC
 
-** Embark
-   #+BEGIN_SRC emacs-lisp
-     (require 'embark)
-     (global-set-key (kbd "C-.") 'embark-act)
-   #+END_SRC
+* Core Packages
+#+BEGIN_SRC emacs-lisp
+  (use-package eat)
 
-** Save History
-   #+BEGIN_SRC emacs-lisp
-     (require 'savehist)
-     (savehist-mode)
-   #+END_SRC
+  (use-package vertico
+    :init
+    (vertico-mode)
+    :custom
+    (vertico-cycle t))
 
-** Expand Region
-   #+BEGIN_SRC emacs-lisp
-     (require 'expand-region)
-     (global-set-key (kbd "C-=") 'er/expand-region)
-   #+END_SRC
+  (use-package orderless
+    :custom
+    (completion-styles '(orderless basic))
+    (completion-category-defaults nil)
+    (completion-category-overrides '((file (styles partial-completion)))))
 
-** Hungry Delete
-   #+BEGIN_SRC emacs-lisp
-     (require 'hungry-delete)
-     (global-hungry-delete-mode)
-   #+END_SRC
+  (use-package embark
+    :bind
+    ("C-." . embark-act))
 
-** Which-key
-   #+BEGIN_SRC emacs-lisp
-     (require 'which-key)
-     (which-key-mode)
-   #+END_SRC
+  (use-package savehist
+    :init
+    (savehist-mode))
 
-** Vterm
-   #+BEGIN_SRC emacs-lisp
-     (require 'vterm)
+  (use-package expand-region
+    :bind
+    ("C-=" . er/expand-region))
 
-     ;; vterm toggle
-     (require 'vterm-toggle)
-     (keymap-global-set "<f2>" 'vterm-toggle)
-     (keymap-set vterm-mode-map "C-<return>" 'vterm-toggle-insert-cd)
-     (keymap-unset vterm-mode-map "<f2>" t)
-   #+END_SRC
+  (use-package which-key
+    :init
+    (which-key-mode))
 
-** Company
-   #+BEGIN_SRC emacs-lisp
-     (require 'company)
-     (global-company-mode)
-   #+END_SRC
+  (use-package company
+    :init
+    (global-company-mode))
 
-** Annotate
-   #+BEGIN_SRC emacs-lisp
-     (require 'annotate)
-     (add-hook 'prog-mode-hook 'annotate-mode)
-   #+END_SRC
+  (use-package annotate
+    :hook
+    (prog-mode . annotate-mode))
 
-** Magit
-   #+BEGIN_SRC emacs-lisp
-     (require 'magit)
-   #+END_SRC
+  (use-package magit)
 
-** Rainbow Delimiters
-   #+BEGIN_SRC emacs-lisp
-     (require 'rainbow-delimiters)
-     (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
-   #+END_SRC
+  (use-package rainbow-delimiters
+    :hook
+    (prog-mode . rainbow-delimiters-mode))
+
+  (use-package olivetti)
+
+  (use-package modus-themes
+    :init
+    (setq modus-themes-bold-constructs t
+	  modus-themes-italic-constructs t)
+    :config
+    (load-theme 'modus-vivendi t))
+
+  (use-package org-bullets
+    :hook
+    (org-mode . org-bullets-mode))
+
+  (use-package marginalia
+    :bind
+    ("M-A" . marginalia-cycle)
+    :init
+    (marginalia-mode))
+
+  (use-package golden-ratio-scroll-screen
+    :custom
+    (golden-ratio-scroll-highlight-flag nil)
+    :bind
+    ([remap scroll-down-command] . golden-ratio-scroll-screen-down)
+    ([remap scroll-up-command] . golden-ratio-scroll-screen-up))
+#+END_SRC
 
 * UI Tweaks
-  #+BEGIN_SRC emacs-lisp
-    (scroll-bar-mode -1)
-    (tool-bar-mode -1)
-  #+END_SRC
-
-* Theme Settings
-  #+BEGIN_SRC emacs-lisp
-    (require 'modus-themes)
-    (setq modus-themes-bold-constructs t)
-    (setq modus-themes-italic-constructs t)
-    (load-theme 'modus-vivendi t)
-  #+END_SRC
+#+BEGIN_SRC emacs-lisp
+(scroll-bar-mode -1)
+(tool-bar-mode -1)
+(fringe-mode 0)
+#+END_SRC
 
 * Misc Settings
-  #+BEGIN_SRC emacs-lisp
-    (setq ring-bell-function 'ignore)
-    (setq org-adapt-indentation t)
-    (setq org-html-validation-link nil)
-    (setq default-cursor-type 'bar)
-    (setq scroll-margin 10
-          scroll-conservatively 101
-          scroll-up-aggressively 0.01
-          scroll-down-aggressively 0.01
-          scroll-preserve-screen-position t
-          auto-window-vscroll nil)
-    (setq make-backup-files nil)
-    (setq vc-follow-symlinks t)
-    (setq split-width-threshold 1)
-    (setq isearch-lazy-count t)
-    (setq lazy-count-prefix-format "(%s/%s) ")
-    (setq lazy-count-suffix-format nil)
-    (setq search-whitespace-regexp ".*?")
-    (setq python-shell-completion-native-enable nil)
-  #+END_SRC
+#+BEGIN_SRC emacs-lisp
+  (setq ring-bell-function 'ignore)
+  (setq org-adapt-indentation t)
+  (setq org-html-validation-link nil)
+  (setq default-cursor-type 'bar)
+  (setq scroll-margin 10
+	scroll-conservatively 101
+	scroll-up-aggressively 0.01
+	scroll-down-aggressively 0.01
+	scroll-preserve-screen-position t
+	auto-window-vscroll nil)
+  (setq make-backup-files nil)
+  (setq vc-follow-symlinks t)
+  (setq split-width-threshold 1)
+  (setq isearch-lazy-count t)
+  (setq lazy-count-prefix-format "(%s/%s) ")
+  (setq lazy-count-suffix-format nil)
+  (setq search-whitespace-regexp ".*?")
+  (setq python-shell-completion-native-enable nil)
 
-* Enable Golden Ratio Scroll Screen
-  #+BEGIN_SRC emacs-lisp
-    (require 'golden-ratio-scroll-screen)
-    (setq golden-ratio-scroll-highlight-flag nil)
-    (global-set-key [remap scroll-down-command] 'golden-ratio-scroll-screen-down)
-    (global-set-key [remap scroll-up-command] 'golden-ratio-scroll-screen-up)
-  #+END_SRC
+  (global-auto-revert-mode t)
+#+END_SRC
 
-* Auto-revert
-  #+BEGIN_SRC emacs-lisp
-    (global-auto-revert-mode t)
-  #+END_SRC
+* Mode Hooks
+#+BEGIN_SRC emacs-lisp
+(add-hook 'prog-mode-hook 'display-line-numbers-mode)
+(add-hook 'prog-mode-hook #'hl-line-mode)
+(add-hook 'text-mode-hook #'hl-line-mode)
+#+END_SRC
 
-* Hooks
-  #+BEGIN_SRC emacs-lisp
-    (add-hook 'prog-mode-hook 'display-line-numbers-mode)
-    (add-hook 'prog-mode-hook #'hl-line-mode)
-    (add-hook 'text-mode-hook #'hl-line-mode)
-  #+END_SRC
-
-* Org Mode Setup
-  #+BEGIN_SRC emacs-lisp
-    (require 'org-bullets)
-    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
-    (setq org-adapt-indentation t)
-    (setq org-html-validation-link nil)
-  #+END_SRC
-
-* Marginalia
-  #+BEGIN_SRC emacs-lisp
-    (require 'marginalia)
-    (global-set-key (kbd "M-A") 'marginalia-cycle)
-    (marginalia-mode)
-  #+END_SRC
-
-* Back to Indentation or Beginning of Line
-  #+BEGIN_SRC emacs-lisp
-    (defun back-to-indentation-or-beginning ()
-      (interactive)
-      (if (= (point) (progn (back-to-indentation) (point)))
-          (beginning-of-line)))
-    (global-set-key [remap move-beginning-of-line] 'back-to-indentation-or-beginning)
-    (global-set-key [remap org-beginning-of-line] 'back-to-indentation-or-beginning)
-  #+END_SRC
+* Custom Functions
+#+BEGIN_SRC emacs-lisp
+(defun back-to-indentation-or-beginning ()
+  (interactive)
+  (if (= (point) (progn (back-to-indentation) (point)))
+      (beginning-of-line)))
+(global-set-key [remap move-beginning-of-line] 'back-to-indentation-or-beginning)
+(global-set-key [remap org-beginning-of-line] 'back-to-indentation-or-beginning)
+#+END_SRC
