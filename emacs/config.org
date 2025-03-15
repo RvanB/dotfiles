@@ -10,10 +10,10 @@
 
     (defun efs/display-startup-time ()
       (message "Emacs loaded in %s with %d garbage collections."
-	       (format "%.2f seconds"
-		       (float-time
-			(time-subtract after-init-time before-init-time)))
-	       gcs-done))
+    	   (format "%.2f seconds"
+    		   (float-time
+    		    (time-subtract after-init-time before-init-time)))
+    	   gcs-done))
 
     (add-hook 'emacs-startup-hook #'efs/display-startup-time)
   #+end_src
@@ -22,9 +22,9 @@
   #+begin_src emacs-lisp
     (require 'package)
     (setq package-archives '(("melpa" . "https://melpa.org/packages/")
-			     ("org" . "https://orgmode.org/elpa/")
-			     ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-			     ("elpa" . "https://elpa.gnu.org/packages/")))
+    			 ("org" . "https://orgmode.org/elpa/")
+    			 ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+    			 ("elpa" . "https://elpa.gnu.org/packages/")))
 
     (unless package-archive-contents
       (package-refresh-contents t))
@@ -78,48 +78,43 @@
 
     (use-package corfu
       ;; Optional customizations
-      ;; :custom
-      ;; (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
+      :custom
+      (corfu-auto t)
+      (corfu-auto-prefix 2)
+      (corfu-quit-no-match 'separator) ;; or t
+      (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
       ;; (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
       ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
       ;; (corfu-preview-current nil)    ;; Disable current candidate preview
       ;; (corfu-preselect 'prompt)      ;; Preselect the prompt
       ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
 
-      ;; Enable Corfu only for certain modes. See also `global-corfu-modes'.
-      ;; :hook ((prog-mode . corfu-mode)
-      ;;        (shell-mode . corfu-mode)
-      ;;        (eshell-mode . corfu-mode))
-
       ;; Recommended: Enable Corfu globally.  This is recommended since Dabbrev can
       ;; be used globally (M-/).  See also the customization variable
       ;; `global-corfu-modes' to exclude certain modes.
       :init
-      ;; Enable auto completion and configure quitting
-      (setq corfu-auto t
-	    corfu-quit-no-match 'separator) ;; or t
       (global-corfu-mode))
 
     ;; A few more useful configurations...
-    (use-package emacs
-      :custom
-      ;; TAB cycle if there are only few candidates
-      ;; (completion-cycle-threshold 3)
+    ;; (use-package emacs
+    ;;   :custom
+    ;;   ;; TAB cycle if there are only few candidates
+    ;;   ;; (completion-cycle-threshold 3)
 
-      ;; Enable indentation+completion using the TAB key.
-      ;; `completion-at-point' is often bound to M-TAB.
-      (tab-always-indent 'complete)
+    ;;   ;; Enable indentation+completion using the TAB key.
+    ;;   ;; `completion-at-point' is often bound to M-TAB.
+    ;;   (tab-always-indent 'complete)
 
-      ;; Emacs 30 and newer: Disable Ispell completion function.
-      ;; Try `cape-dict' as an alternative.
-      (text-mode-ispell-word-completion nil)
+    ;;   ;; Emacs 30 and newer: Disable Ispell completion function.
+    ;;   ;; Try `cape-dict' as an alternative.
+    ;;   (text-mode-ispell-word-completion nil)
 
-      ;; Hide commands in M-x which do not apply to the current mode.  Corfu
-      ;; commands are hidden, since they are not used via M-x. This setting is
-      ;; useful beyond Corfu.
-      (read-extended-command-predicate #'command-completion-default-include-p))
+    ;;   ;; Hide commands in M-x which do not apply to the current mode.  Corfu
+    ;;   ;; commands are hidden, since they are not used via M-x. This setting is
+    ;;   ;; useful beyond Corfu.
+    ;;   (read-extended-command-predicate #'command-completion-default-include-p))
   #+end_src
-
+  
 * User Experience Enhancements  
   #+begin_src emacs-lisp
     ;; User Experience Enhancements
@@ -175,18 +170,18 @@
     (use-package modus-themes
       :init
       (setq modus-themes-bold-constructs t
-	    modus-themes-italic-constructs t))
+    	    modus-themes-italic-constructs t))
 
     (use-package powerline
       :init
       (powerline-default-theme))
 
-    (use-package ef-themes)
-
     ;; Switch to bar cursor in non-programming modes
     (add-hook 'text-mode-hook (lambda () (setq cursor-type 'bar)))
     (add-hook 'org-mode-hook (lambda () (setq cursor-type 'bar)))
     (add-hook 'markdown-mode-hook (lambda () (setq cursor-type 'bar)))
+
+    (load-theme 'modus-operandi-tinted t)
 
     (use-package auto-dark
       :custom
@@ -197,12 +192,12 @@
       :hook
       (auto-dark-dark-mode
        . (lambda ()
-	   (load-theme 'modus-vivendi t)
-	   ))
+    	   (load-theme 'modus-vivendi t)
+    	   ))
       (auto-dark-light-mode
        . (lambda ()
-	   (load-theme 'modus-operandi-tinted t)
-	   ))
+    	   (load-theme 'modus-operandi-tinted t)
+    	   ))
       :init (auto-dark-mode))
   #+end_src
 
