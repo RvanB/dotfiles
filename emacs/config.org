@@ -3,261 +3,422 @@
 #+OPTIONS: toc:nil num:nil
 #+PROPERTY: header-args :results none
 
-* Startup Performance
-  #+begin_src emacs-lisp
-    ;; The default is 800 kilobytes.  Measured in bytes.
-    (setq gc-cons-threshold (* 50 1000 1000))
+* Performance
+#+begin_src emacs-lisp
+  ;; The default is 800 kilobytes.  Measured in bytes.
+  (setq gc-cons-threshold (* 50 1000 1000))
 
-    (defun efs/display-startup-time ()
-      (message "Emacs loaded in %s with %d garbage collections."
-    	   (format "%.2f seconds"
-    		   (float-time
-    		    (time-subtract after-init-time before-init-time)))
-    	   gcs-done))
+  (defun efs/display-startup-time ()
+    (message "Emacs loaded in %s with %d garbage collections."
+  	   (format "%.2f seconds"
+  		   (float-time
+  		    (time-subtract after-init-time before-init-time)))
+  	   gcs-done))
 
-    (add-hook 'emacs-startup-hook #'efs/display-startup-time)
-  #+end_src
+  (add-hook 'emacs-startup-hook #'efs/display-startup-time)
+
+  (use-package vlf)
+  (require 'vlf-setup)
+  (setq vlf-application 'dont-ask)
+#+end_src
 
 * Package Management
-  #+begin_src emacs-lisp
-    (require 'package)
-    (setq package-archives '(("melpa" . "https://melpa.org/packages/")
-    			 ("org" . "https://orgmode.org/elpa/")
-    			 ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-    			 ("elpa" . "https://elpa.gnu.org/packages/")))
+#+begin_src emacs-lisp
+  (require 'package)
+  (setq package-archives '(("melpa" . "https://melpa.org/packages/")
+  			 ("org" . "https://orgmode.org/elpa/")
+  			 ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+  			 ("elpa" . "https://elpa.gnu.org/packages/")))
 
-    (unless package-archive-contents
-      (package-refresh-contents t))
+  (unless package-archive-contents
+    (package-refresh-contents t))
 
-    ;; Install use-package if not already installed
-    (unless (package-installed-p 'use-package)
-      (package-install 'use-package))
+  ;; Install use-package if not already installed
+  (unless (package-installed-p 'use-package)
+    (package-install 'use-package))
 
-    (require 'use-package)
-    (setq use-package-always-ensure t) ;; Always ensure packages are installed
-  #+end_src
+  (require 'use-package)
+  (setq use-package-always-ensure t) ;; Always ensure packages are installed
+#+end_src
 
 * Terminals
-  #+begin_src emacs-lisp
-    (use-package vterm)
-    (keymap-unset vterm-mode-map "<f2>")
+#+begin_src emacs-lisp
+  (use-package vterm)
+  (keymap-unset vterm-mode-map "<f2>")
 
-    (use-package multi-vterm
-      :ensure t
-      :bind ("C-x t" . multi-vterm))
+  (use-package multi-vterm
+    :ensure t
+    :bind ("C-s-t" . multi-vterm))
 
-    (use-package toggle-term
-      :bind ("<f2>" . 'toggle-term-vterm)
-      :config
-      (setq toggle-term-size 25)
-      (setq toggle-term-switch-upon-toggle t))
-  #+end_src
+  (use-package toggle-term
+    :bind ("<f2>" . 'toggle-term-vterm)
+    :config
+    (setq toggle-term-size 25)
+    (setq toggle-term-switch-upon-toggle t))
+#+end_src
 
 * Completion and Selection
-  #+begin_src emacs-lisp
-    (use-package vertico
-      :init
-      (vertico-mode)
-      :custom
-      (vertico-cycle t))
+#+begin_src emacs-lisp
+  (use-package vertico
+    :init
+    (vertico-mode)
+    :custom
+    (vertico-cycle t))
 
-    (use-package orderless
-      :custom
-      (completion-styles '(orderless basic))
-      (completion-category-defaults nil)
-      (completion-category-overrides '((file (styles partial-completion)))))
+  ;; Example configuration for Consult
+  (use-package consult
+    ;; Replace bindings. Lazily loaded by `use-package'.
+    :bind (;; C-c bindings in `mode-specific-map'
+           ("C-c M-x" . consult-mode-command)
+           ("C-c h" . consult-history)
+           ("C-c k" . consult-kmacro)
+           ("C-c m" . consult-man)
+           ("C-c i" . consult-info)
+           ([remap Info-search] . consult-info)
+           ;; C-x bindings in `ctl-x-map'
+           ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
+           ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
+           ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
+           ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
+           ("C-x t b" . consult-buffer-other-tab)    ;; orig. switch-to-buffer-other-tab
+           ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
+           ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
+           ;; Custom M-# bindings for fast register access
+           ("M-#" . consult-register-load)
+           ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
+           ("C-M-#" . consult-register)
+           ;; Other custom bindings
+           ("M-y" . consult-yank-pop)                ;; orig. yank-pop
+           ;; M-g bindings in `goto-map'
+           ("M-g e" . consult-compile-error)
+           ("M-g f" . consult-flymake)               ;; Alternative: consult-flycheck
+           ("M-g g" . consult-goto-line)             ;; orig. goto-line
+           ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
+           ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
+           ("M-g m" . consult-mark)
+           ("M-g k" . consult-global-mark)
+           ("M-g i" . consult-imenu)
+           ("M-g I" . consult-imenu-multi)
+           ;; M-s bindings in `search-map'
+           ("M-s d" . consult-find)                  ;; Alternative: consult-fd
+           ("M-s c" . consult-locate)
+           ("M-s g" . consult-grep)
+           ("M-s G" . consult-git-grep)
+           ("M-s r" . consult-ripgrep)
+           ("M-s l" . consult-line)
+           ("M-s L" . consult-line-multi)
+           ("M-s k" . consult-keep-lines)
+           ("M-s u" . consult-focus-lines)
+           ;; Isearch integration
+           ("M-s e" . consult-isearch-history)
+           :map isearch-mode-map
+           ("M-e" . consult-isearch-history)         ;; orig. isearch-edit-string
+           ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
+           ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
+           ("M-s L" . consult-line-multi)            ;; needed by consult-line to detect isearch
+           ;; Minibuffer history
+           :map minibuffer-local-map
+           ("M-s" . consult-history)                 ;; orig. next-matching-history-element
+           ("M-r" . consult-history))                ;; orig. previous-matching-history-element
 
-    (use-package embark
-      :bind
-      ("C-." . embark-act))
+    ;; Enable automatic preview at point in the *Completions* buffer. This is
+    ;; relevant when you use the default completion UI.
+    :hook (completion-list-mode . consult-preview-at-point-mode)
 
-    (use-package marginalia
-      :bind
-      ("M-A" . marginalia-cycle)
-      :init
-      (marginalia-mode))
+    ;; The :init configuration is always executed (Not lazy)
+    :init
 
-    (use-package corfu
-      ;; Optional customizations
-      :custom
-      (corfu-auto t)
-      (corfu-auto-prefix 2)
-      (corfu-quit-no-match 'separator) ;; or t
-      (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
-      ;; (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
-      ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
-      ;; (corfu-preview-current nil)    ;; Disable current candidate preview
-      ;; (corfu-preselect 'prompt)      ;; Preselect the prompt
-      ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
+    ;; Tweak the register preview for `consult-register-load',
+    ;; `consult-register-store' and the built-in commands.  This improves the
+    ;; register formatting, adds thin separator lines, register sorting and hides
+    ;; the window mode line.
+    (advice-add #'register-preview :override #'consult-register-window)
+    (setq register-preview-delay 0.5)
 
-      ;; Recommended: Enable Corfu globally.  This is recommended since Dabbrev can
-      ;; be used globally (M-/).  See also the customization variable
-      ;; `global-corfu-modes' to exclude certain modes.
-      :init
-      (global-corfu-mode))
+    ;; Use Consult to select xref locations with preview
+    (setq xref-show-xrefs-function #'consult-xref
+          xref-show-definitions-function #'consult-xref)
 
-    ;; A few more useful configurations...
-    ;; (use-package emacs
-    ;;   :custom
-    ;;   ;; TAB cycle if there are only few candidates
-    ;;   ;; (completion-cycle-threshold 3)
+    ;; Configure other variables and modes in the :config section,
+    ;; after lazily loading the package.
+    :config
 
-    ;;   ;; Enable indentation+completion using the TAB key.
-    ;;   ;; `completion-at-point' is often bound to M-TAB.
-    ;;   (tab-always-indent 'complete)
+    ;; Optionally configure preview. The default value
+    ;; is 'any, such that any key triggers the preview.
+    ;; (setq consult-preview-key 'any)
+    ;; (setq consult-preview-key "M-.")
+    ;; (setq consult-preview-key '("S-<down>" "S-<up>"))
+    ;; For some commands and buffer sources it is useful to configure the
+    ;; :preview-key on a per-command basis using the `consult-customize' macro.
+    (consult-customize
+     consult-theme :preview-key '(:debounce 0.2 any)
+     consult-ripgrep consult-git-grep consult-grep consult-man
+     consult-bookmark consult-recent-file consult-xref
+     consult--source-bookmark consult--source-file-register
+     consult--source-recent-file consult--source-project-recent-file
+     ;; :preview-key "M-."
+     :preview-key '(:debounce 0.4 any))
 
-    ;;   ;; Emacs 30 and newer: Disable Ispell completion function.
-    ;;   ;; Try `cape-dict' as an alternative.
-    ;;   (text-mode-ispell-word-completion nil)
+    ;; Optionally configure the narrowing key.
+    ;; Both < and C-+ work reasonably well.
+    (setq consult-narrow-key "<") ;; "C-+"
 
-    ;;   ;; Hide commands in M-x which do not apply to the current mode.  Corfu
-    ;;   ;; commands are hidden, since they are not used via M-x. This setting is
-    ;;   ;; useful beyond Corfu.
-    ;;   (read-extended-command-predicate #'command-completion-default-include-p))
-  #+end_src
+    ;; Optionally make narrowing help available in the minibuffer.
+    ;; You may want to use `embark-prefix-help-command' or which-key instead.
+    ;; (keymap-set consult-narrow-map (concat consult-narrow-key " ?") #'consult-narrow-help)
+    )
+
+  (use-package embark
+    :ensure t
+
+    :bind
+    (("C-." . embark-act)         ;; pick some comfortable binding
+     ("C-;" . embark-dwim)        ;; good alternative: M-.
+     ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+
+    :init
+
+    ;; Optionally replace the key help with a completing-read interface
+    (setq prefix-help-command #'embark-prefix-help-command)
+
+    ;; Show the Embark target at point via Eldoc. You may adjust the
+    ;; Eldoc strategy, if you want to see the documentation from
+    ;; multiple providers. Beware that using this can be a little
+    ;; jarring since the message shown in the minibuffer can be more
+    ;; than one line, causing the modeline to move up and down:
+
+    ;; (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
+    ;; (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
+
+    :config
+
+    ;; Hide the mode line of the Embark live/completions buffers
+    (add-to-list 'display-buffer-alist
+                 '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                   nil
+                   (window-parameters (mode-line-format . none)))))
+
+  ;; Consult users will also want the embark-consult package.
+  (use-package embark-consult
+    :ensure t ; only need to install it, embark loads it after consult if found
+    :hook
+    (embark-collect-mode . consult-preview-at-point-mode))
+
+  (use-package orderless
+    :custom
+    (completion-styles '(orderless basic))
+    (completion-category-defaults nil)
+    (completion-category-overrides '((file (styles partial-completion)))))
+
+
+
+  (use-package marginalia
+    :bind
+    ("M-A" . marginalia-cycle)
+    :init
+    (marginalia-mode))
+
+  (use-package corfu
+    ;; Optional customizations
+    :custom
+    (corfu-auto t)
+    (corfu-auto-prefix 2)
+    (corfu-quit-no-match 'separator) ;; or t
+    (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
+    ;; (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
+    ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
+    ;; (corfu-preview-current nil)    ;; Disable current candidate preview
+    ;; (corfu-preselect 'prompt)      ;; Preselect the prompt
+    ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
+
+    ;; Recommended: Enable Corfu globally.  This is recommended since Dabbrev can
+    ;; be used globally (M-/).  See also the customization variable
+    ;; `global-corfu-modes' to exclude certain modes.
+    :init
+    (global-corfu-mode))
+
+  ;; A few more useful configurations...
+  (use-package emacs
+    :custom
+    ;; TAB cycle if there are only few candidates
+    (completion-cycle-threshold 3)
+
+    ;; Enable indentation+completion using the TAB key.
+    ;; `completion-at-point' is often bound to M-TAB.
+    (tab-always-indent 'complete)
+
+    ;; Emacs 30 and newer: Disable Ispell completion function.
+    ;; Try `cape-dict' as an alternative.
+    (text-mode-ispell-word-completion nil)
+
+    ;; Hide commands in M-x which do not apply to the current mode.  Corfu
+    ;; commands are hidden, since they are not used via M-x. This setting is
+    ;; useful beyond Corfu.
+    (read-extended-command-predicate #'command-completion-default-include-p))
+#+end_src
   
 * User Experience Enhancements  
-  #+begin_src emacs-lisp
-    ;; User Experience Enhancements
-    (use-package which-key
-      :init
-      (which-key-mode))
+#+begin_src emacs-lisp
+  ;; User Experience Enhancements
+  (use-package which-key
+    :init
+    (which-key-mode))
 
-    (use-package expand-region
-      :bind
-      ("C-=" . er/expand-region))
+  (use-package expand-region
+    :bind
+    ("C-=" . er/expand-region))
 
-    (use-package golden-ratio-scroll-screen
-      :custom
-      (golden-ratio-scroll-highlight-flag nil)
-      :bind
-      ([remap scroll-down-command] . golden-ratio-scroll-screen-down)
-      ([remap scroll-up-command] . golden-ratio-scroll-screen-up))
+  (use-package golden-ratio-scroll-screen
+    :custom
+    (golden-ratio-scroll-highlight-flag nil)
+    :bind
+    ([remap scroll-down-command] . golden-ratio-scroll-screen-down)
+    ([remap scroll-up-command] . golden-ratio-scroll-screen-up))
 
-    (use-package savehist
-      :init
-      (savehist-mode))
+  (use-package savehist
+    :init
+    (savehist-mode))
 
 
-  #+end_src
+#+end_src
 
 * Programming Support  
-  #+begin_src emacs-lisp
-    ;; Programming Support
-    (use-package annotate
-      :hook
-      (prog-mode . annotate-mode))
+#+begin_src emacs-lisp
+  ;; Programming Support
+  (use-package annotate
+    :hook
+    (prog-mode . annotate-mode))
 
-    (use-package rainbow-delimiters
-      :hook
-      (prog-mode . rainbow-delimiters-mode))
+  (use-package rainbow-delimiters
+    :hook
+    (prog-mode . rainbow-delimiters-mode))
 
-    (use-package magit)
+  (use-package magit)
 
-    (use-package olivetti
-      :bind (("C-c o" . olivetti-mode)))
+  (use-package olivetti
+    :bind (("C-c o" . olivetti-mode)))
 
-    (use-package org-bullets
-      :hook
-      (org-mode . org-bullets-mode))
+  (use-package org-bullets
+    :hook
+    (org-mode . org-bullets-mode))
 
-    (use-package gptel
-      :bind
-      (("C-c g s" . gptel-send)))
-  #+end_src
+  (use-package gptel
+    :bind
+    (("C-c g s" . gptel-send)))
+
+  ;; Use eglot when available
+  (use-package eglot
+    :hook
+    (prog-mode . eglot-ensure))
+
+  ;; Create a major mode for .mrk files called MRK
+  (define-derived-mode mrk-mode text-mode "MRK"
+    "Major mode for editing .mrk files.")
+
+  (add-to-list 'auto-mode-alist '("\\.mrk\\'" . mrk-mode))
+
+  (require 'eglot)
+  (add-to-list 'eglot-server-programs '(mrk-mode . ("/Users/rvanbron/test-lsp/.venv/bin/python" "/Users/rvanbron/test-lsp/test.py")))
+  (add-hook 'mrk-mode-hook 'eglot-ensure)
+#+end_src
 
 * Appearance
-  #+begin_src emacs-lisp
-    (use-package modus-themes
-      :init
-      (setq modus-themes-bold-constructs t
-    	    modus-themes-italic-constructs t))
+#+begin_src emacs-lisp
+  (use-package modus-themes
+    :init
+    (setq modus-themes-bold-constructs t
+  	modus-themes-italic-constructs t))
 
-    (use-package powerline
-      :init
-      (powerline-default-theme))
+  (use-package powerline
+    :init
+    (powerline-default-theme))
 
-    ;; Switch to bar cursor in non-programming modes
-    (add-hook 'text-mode-hook (lambda () (setq cursor-type 'bar)))
-    (add-hook 'org-mode-hook (lambda () (setq cursor-type 'bar)))
-    (add-hook 'markdown-mode-hook (lambda () (setq cursor-type 'bar)))
+  ;; Switch to bar cursor in non-programming modes
+  (add-hook 'text-mode-hook (lambda () (setq cursor-type 'bar)))
+  (add-hook 'org-mode-hook (lambda () (setq cursor-type 'bar)))
+  (add-hook 'markdown-mode-hook (lambda () (setq cursor-type 'bar)))
 
-    (load-theme 'modus-operandi-tinted t)
+  (load-theme 'modus-operandi-tinted t)
 
-    (use-package auto-dark
-      :custom
-      (auto-dark-themes '(nil nil))
-      (auto-dark-polling-interval-seconds 5)
-      (auto-dark-allow-osascript t)
-      (auto-dark-allow-powershell t)
-      :hook
-      (auto-dark-dark-mode
-       . (lambda ()
-    	   (load-theme 'modus-vivendi t)
-    	   ))
-      (auto-dark-light-mode
-       . (lambda ()
-    	   (load-theme 'modus-operandi-tinted t)
-    	   ))
-      :init (auto-dark-mode))
-  #+end_src
+  (use-package auto-dark
+    :custom
+    (auto-dark-themes '(nil nil))
+    (auto-dark-polling-interval-seconds 5)
+    (auto-dark-allow-osascript t)
+    (auto-dark-allow-powershell t)
+    :hook
+    (auto-dark-dark-mode
+     . (lambda ()
+         (load-theme 'modus-vivendi t)
+         ))
+    (auto-dark-light-mode
+     . (lambda ()
+         (load-theme 'modus-operandi-tinted t)
+         ))
+    :init (auto-dark-mode))
+
+  ;; Make xit count lines for correct line number width
+  (setq display-line-numbers-width-start t)
+
+  ;; Truncate lines
+  (setq truncate-lines t)
+#+end_src
 
 * UI Tweaks
-  #+begin_src emacs-lisp
-    (scroll-bar-mode -1)
-    (tool-bar-mode -1)
-    (fringe-mode 0)
-  #+end_src
+#+begin_src emacs-lisp
+  (scroll-bar-mode -1)
+  (tool-bar-mode -1)
+  (fringe-mode 0)
+#+end_src
 
 * Error Fixes
-  #+begin_src emacs-lisp
-    (when (string= system-type "darwin")       
-      (setq dired-use-ls-dired nil))
-  #+end_src
+#+begin_src emacs-lisp
+  (when (string= system-type "darwin")       
+    (setq dired-use-ls-dired nil))
+#+end_src
 
 * Misc Settings
-  #+begin_src emacs-lisp
-    (use-package exec-path-from-shell
-      :ensure t)
-    (when (memq window-system '(mac ns x))
-      (exec-path-from-shell-initialize))
-  #+end_src
-  #+begin_src emacs-lisp
-    (setq ring-bell-function 'ignore)
-    (setq org-adapt-indentation t)
-    (setq org-html-validation-link nil)
-    (setq default-cursor-type 'bar)
-    (setq scroll-margin 0
-	  scroll-conservatively 101
-	  scroll-up-aggressively 0.01
-	  scroll-down-aggressively 0.01
-	  scroll-preserve-screen-position t
-	  auto-window-vscroll nil)
-    (setq make-backup-files nil)
-    (setq vc-follow-symlinks t)
-    (setq split-width-threshold 1)
-    (setq isearch-lazy-count t)
-    (setq lazy-count-prefix-format "(%s/%s) ")
-    (setq lazy-count-suffix-format nil)
-    (setq search-whitespace-regexp ".*?")
-    (setq python-shell-completion-native-enable nil)
+#+begin_src emacs-lisp
+  (use-package exec-path-from-shell
+    :ensure t)
+  (when (memq window-system '(mac ns x))
+    (exec-path-from-shell-initialize))
+#+end_src
+#+begin_src emacs-lisp
+  (setq ring-bell-function 'ignore)
+  (setq org-html-validation-link nil)
+  (setq default-cursor-type 'bar)
+  (setq scroll-margin 0
+        scroll-conservatively 101
+        scroll-up-aggressively 0.01
+        scroll-down-aggressively 0.01
+        scroll-preserve-screen-position t
+        auto-window-vscroll nil)
+  (setq make-backup-files nil)
+  (setq vc-follow-symlinks t)
+  (setq split-width-threshold 1)
+  (setq isearch-lazy-count t)
+  (setq lazy-count-prefix-format "(%s/%s) ")
+  (setq lazy-count-suffix-format nil)
+  (setq search-whitespace-regexp ".*?")
+  (setq python-shell-completion-native-enable nil)
 
-    (global-auto-revert-mode t)
-  #+end_src
+  (global-auto-revert-mode t)
+#+end_src
 
 * Mode Hooks
-  #+begin_src emacs-lisp
-    (add-hook 'prog-mode-hook 'display-line-numbers-mode)
-    (add-hook 'prog-mode-hook #'hl-line-mode)
-    (add-hook 'text-mode-hook #'hl-line-mode)
-  #+end_src
+#+begin_src emacs-lisp
+  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+  (add-hook 'prog-mode-hook #'hl-line-mode)
+  (add-hook 'text-mode-hook #'hl-line-mode)
+#+end_src
 
 * Custom Functions
-  #+begin_src emacs-lisp
-    (defun rvb/back-to-indentation-or-beginning ()
-      (interactive)
-      (if (= (point) (progn (back-to-indentation) (point)))
-	  (beginning-of-line)))
-    (global-set-key [remap move-beginning-of-line] 'rvb/back-to-indentation-or-beginning)
-    (global-set-key [remap org-beginning-of-line] 'rvb/back-to-indentation-or-beginning)
-  #+end_src
+#+begin_src emacs-lisp
+  (defun rvb/back-to-indentation-or-beginning ()
+    (interactive)
+    (if (= (point) (progn (back-to-indentation) (point)))
+        (beginning-of-line)))
+  (global-set-key [remap move-beginning-of-line] 'rvb/back-to-indentation-or-beginning)
+  (global-set-key [remap org-beginning-of-line] 'rvb/back-to-indentation-or-beginning)
+#+end_src
