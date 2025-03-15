@@ -20,6 +20,7 @@
   (use-package vlf)
   (require 'vlf-setup)
   (setq vlf-application 'dont-ask)
+
 #+end_src
 
 * Package Management
@@ -210,51 +211,15 @@
     (completion-category-defaults nil)
     (completion-category-overrides '((file (styles partial-completion)))))
 
-
-
   (use-package marginalia
     :bind
     ("M-A" . marginalia-cycle)
     :init
     (marginalia-mode))
 
-  (use-package corfu
-    ;; Optional customizations
-    :custom
-    (corfu-auto t)
-    (corfu-auto-prefix 2)
-    (corfu-quit-no-match 'separator) ;; or t
-    (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
-    ;; (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
-    ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
-    ;; (corfu-preview-current nil)    ;; Disable current candidate preview
-    ;; (corfu-preselect 'prompt)      ;; Preselect the prompt
-    ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
+  (use-package company)
+  (add-hook 'after-init-hook 'global-company-mode)
 
-    ;; Recommended: Enable Corfu globally.  This is recommended since Dabbrev can
-    ;; be used globally (M-/).  See also the customization variable
-    ;; `global-corfu-modes' to exclude certain modes.
-    :init
-    (global-corfu-mode))
-
-  ;; A few more useful configurations...
-  (use-package emacs
-    :custom
-    ;; TAB cycle if there are only few candidates
-    (completion-cycle-threshold 3)
-
-    ;; Enable indentation+completion using the TAB key.
-    ;; `completion-at-point' is often bound to M-TAB.
-    (tab-always-indent 'complete)
-
-    ;; Emacs 30 and newer: Disable Ispell completion function.
-    ;; Try `cape-dict' as an alternative.
-    (text-mode-ispell-word-completion nil)
-
-    ;; Hide commands in M-x which do not apply to the current mode.  Corfu
-    ;; commands are hidden, since they are not used via M-x. This setting is
-    ;; useful beyond Corfu.
-    (read-extended-command-predicate #'command-completion-default-include-p))
 #+end_src
   
 * User Experience Enhancements  
@@ -278,6 +243,24 @@
   (use-package savehist
     :init
     (savehist-mode))
+
+
+  ;; Window Splitting
+  (setq split-height-threshold 120
+        split-width-threshold 160)
+
+  (defun my-split-window-sensibly (&optional window)
+      "replacement `split-window-sensibly' function which prefers vertical splits"
+      (interactive)
+      (let ((window (or window (selected-window))))
+          (or (and (window-splittable-p window t)
+                   (with-selected-window window
+                       (split-window-right)))
+              (and (window-splittable-p window)
+                   (with-selected-window window
+                       (split-window-below))))))
+
+  (setq split-window-preferred-function #'my-split-window-sensibly)
 
 
 #+end_src
@@ -313,7 +296,14 @@
 
   ;; Create a major mode for .mrk files called MRK
   (define-derived-mode mrk-mode text-mode "MRK"
-    "Major mode for editing .mrk files.")
+    "Major mode for editing .mrk files."
+    ;; Define the syntax highlighting rules
+    (font-lock-add-keywords
+     nil
+     '(("^=[0-9A-Z][0-9A-Z][0-9A-Z]" . font-lock-keyword-face) ;; Tags
+       ("$[a-z0-9]" . font-lock-variable-name-face))) ;; Subfields
+
+    (setq font-lock-defaults '(nil)))
 
   (add-to-list 'auto-mode-alist '("\\.mrk\\'" . mrk-mode))
 
@@ -421,4 +411,45 @@
         (beginning-of-line)))
   (global-set-key [remap move-beginning-of-line] 'rvb/back-to-indentation-or-beginning)
   (global-set-key [remap org-beginning-of-line] 'rvb/back-to-indentation-or-beginning)
+
+
+  (defun rvb/pyright-config ()
+    "Create a JSON configuration file for Python using a specified package manager to find the venv."
+    (interactive)
+    (let* ((directory (read-directory-name "Choose directory: "))
+           (package-manager (completing-read "Choose package manager: " '("pipenv" "poetry" "uv")))
+           (venv-path nil)
+           (venv nil))
+      (cond
+       ((string-equal package-manager "pipenv")
+        (with-temp-buffer
+          (cd directory)
+          (let ((full-path (shell-command-to-string "pipenv --venv")))
+  	  (setq venv-path (file-name-directory (directory-file-name (string-trim full-path))))
+            (setq venv (file-name-nondirectory (directory-file-name (string-trim full-path)))))))
+       ((string-equal package-manager "poetry")
+        (with-temp-buffer
+          (cd directory)
+          (let ((full-path (shell-command-to-string "poetry run poetry env info --path 2> /dev/null")))
+            (setq venv-path (file-name-directory (directory-file-name (string-trim full-path))))
+            (setq venv (file-name-nondirectory (directory-file-name (string-trim full-path)))))))
+       ((string-equal package-manager "uv")
+        (with-temp-buffer
+          (cd directory)
+          (setq venv-path (shell-command-to-string "uv env")))))
+      (setq venv-path (string-trim venv-path))  ; Trim whitespace
+      (let ((json-content
+             (json-encode `((venvPath . ,venv-path)
+                            (venv . ,venv)
+                            (exclude . ["**/__pycache__/**/*"
+                                        "**/*.pyc"
+                                        "**/*.pyo"])
+                            (reportMissingImports . t)
+                            (reportMissingTypeStubs . t)
+                            (typeCheckingMode . "basic")))))
+        (let ((file-path (expand-file-name "pyrightconfig.json" directory)))
+          (with-temp-file file-path
+            (insert json-content))
+          (message "Configuration file saved to %s" file-path)))))
+
 #+end_src
