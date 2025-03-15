@@ -4,183 +4,264 @@
 #+PROPERTY: header-args :results none
 
 * Startup Performance
-#+begin_src emacs-lisp
-;; The default is 800 kilobytes.  Measured in bytes.
-(setq gc-cons-threshold (* 50 1000 1000))
+  #+begin_src emacs-lisp
+    ;; The default is 800 kilobytes.  Measured in bytes.
+    (setq gc-cons-threshold (* 50 1000 1000))
 
-(defun efs/display-startup-time ()
-  (message "Emacs loaded in %s with %d garbage collections."
-           (format "%.2f seconds"
-                   (float-time
-                     (time-subtract after-init-time before-init-time)))
-           gcs-done))
+    (defun efs/display-startup-time ()
+      (message "Emacs loaded in %s with %d garbage collections."
+	       (format "%.2f seconds"
+		       (float-time
+			(time-subtract after-init-time before-init-time)))
+	       gcs-done))
 
-(add-hook 'emacs-startup-hook #'efs/display-startup-time)
-#+end_src
+    (add-hook 'emacs-startup-hook #'efs/display-startup-time)
+  #+end_src
 
-* Setup Package Archives
-#+begin_src emacs-lisp
-  (require 'package)
-  (setq package-archives '(("melpa" . "https://melpa.org/packages/")
-			   ("org" . "https://orgmode.org/elpa/")
-			   ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-			   ("elpa" . "https://elpa.gnu.org/packages/")))
+* Package Management
+  #+begin_src emacs-lisp
+    (require 'package)
+    (setq package-archives '(("melpa" . "https://melpa.org/packages/")
+			     ("org" . "https://orgmode.org/elpa/")
+			     ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+			     ("elpa" . "https://elpa.gnu.org/packages/")))
 
-  (unless package-archive-contents
-    (package-refresh-contents t))
+    (unless package-archive-contents
+      (package-refresh-contents t))
 
-  ;; Install use-package if not already installed
-  (unless (package-installed-p 'use-package)
-    (package-install 'use-package))
+    ;; Install use-package if not already installed
+    (unless (package-installed-p 'use-package)
+      (package-install 'use-package))
 
-  (require 'use-package)
-  (setq use-package-always-ensure t) ;; Always ensure packages are installed
-#+end_src
+    (require 'use-package)
+    (setq use-package-always-ensure t) ;; Always ensure packages are installed
+  #+end_src
 
-* Core Packages
-#+begin_src emacs-lisp
-  (use-package eat
-    :bind ("C-s-t" . 'eat-other-window))
+* Terminals
+  #+begin_src emacs-lisp
+    (use-package vterm)
 
-  (use-package toggle-term
-    :bind ("<f2>" . 'toggle-term-eat)
+    (use-package multi-vterm
+      :ensure t
+      :bind ("C-x t" . multi-vterm))
 
-    :config
-    (setq toggle-term-size 25)
-    (setq toggle-term-switch-upon-toggle t))
+    (use-package toggle-term
+      :bind ("<f2>" . 'toggle-term-vterm)
+      :config
+      (setq toggle-term-size 25)
+      (setq toggle-term-switch-upon-toggle t))
+  #+end_src
 
-  (use-package vertico
-    :init
-    (vertico-mode)
-    :custom
-    (vertico-cycle t))
+* Completion and Selection
+  #+begin_src emacs-lisp
+    (use-package vertico
+      :init
+      (vertico-mode)
+      :custom
+      (vertico-cycle t))
 
-  (use-package orderless
-    :custom
-    (completion-styles '(orderless basic))
-    (completion-category-defaults nil)
-    (completion-category-overrides '((file (styles partial-completion)))))
+    (use-package orderless
+      :custom
+      (completion-styles '(orderless basic))
+      (completion-category-defaults nil)
+      (completion-category-overrides '((file (styles partial-completion)))))
 
-  (use-package embark
-    :bind
-    ("C-." . embark-act))
+    (use-package embark
+      :bind
+      ("C-." . embark-act))
 
-  (use-package savehist
-    :init
-    (savehist-mode))
+    (use-package marginalia
+      :bind
+      ("M-A" . marginalia-cycle)
+      :init
+      (marginalia-mode))
 
-  (use-package expand-region
-    :bind
-    ("C-=" . er/expand-region))
+    (use-package corfu
+      ;; Optional customizations
+      ;; :custom
+      ;; (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
+      ;; (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
+      ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
+      ;; (corfu-preview-current nil)    ;; Disable current candidate preview
+      ;; (corfu-preselect 'prompt)      ;; Preselect the prompt
+      ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
 
-  (use-package which-key
-    :init
-    (which-key-mode))
+      ;; Enable Corfu only for certain modes. See also `global-corfu-modes'.
+      ;; :hook ((prog-mode . corfu-mode)
+      ;;        (shell-mode . corfu-mode)
+      ;;        (eshell-mode . corfu-mode))
 
-  (use-package company
-    :init
-    (global-company-mode))
+      ;; Recommended: Enable Corfu globally.  This is recommended since Dabbrev can
+      ;; be used globally (M-/).  See also the customization variable
+      ;; `global-corfu-modes' to exclude certain modes.
+      :init
+      ;; Enable auto completion and configure quitting
+      (setq corfu-auto t
+	    corfu-quit-no-match 'separator) ;; or t
+      (global-corfu-mode))
 
-  (use-package annotate
-    :hook
-    (prog-mode . annotate-mode))
+    ;; A few more useful configurations...
+    (use-package emacs
+      :custom
+      ;; TAB cycle if there are only few candidates
+      ;; (completion-cycle-threshold 3)
 
-  (use-package magit)
+      ;; Enable indentation+completion using the TAB key.
+      ;; `completion-at-point' is often bound to M-TAB.
+      (tab-always-indent 'complete)
 
-  (use-package rainbow-delimiters
-    :hook
-    (prog-mode . rainbow-delimiters-mode))
+      ;; Emacs 30 and newer: Disable Ispell completion function.
+      ;; Try `cape-dict' as an alternative.
+      (text-mode-ispell-word-completion nil)
 
-  (use-package olivetti)
+      ;; Hide commands in M-x which do not apply to the current mode.  Corfu
+      ;; commands are hidden, since they are not used via M-x. This setting is
+      ;; useful beyond Corfu.
+      (read-extended-command-predicate #'command-completion-default-include-p))
+  #+end_src
 
-  (use-package modus-themes
-    :init
-    (setq modus-themes-bold-constructs t
-	  modus-themes-italic-constructs t)
-    :config
-    (load-theme 'modus-operandi-tinted t))
+* User Experience Enhancements  
+  #+begin_src emacs-lisp
+    ;; User Experience Enhancements
+    (use-package which-key
+      :init
+      (which-key-mode))
 
-  (use-package powerline
-    :init
-    (powerline-default-theme))
+    (use-package expand-region
+      :bind
+      ("C-=" . er/expand-region))
 
-  (use-package ef-themes)
+    (use-package golden-ratio-scroll-screen
+      :custom
+      (golden-ratio-scroll-highlight-flag nil)
+      :bind
+      ([remap scroll-down-command] . golden-ratio-scroll-screen-down)
+      ([remap scroll-up-command] . golden-ratio-scroll-screen-up))
 
-  (use-package org-bullets
-    :hook
-    (org-mode . org-bullets-mode))
+    (use-package savehist
+      :init
+      (savehist-mode))
 
-  (use-package marginalia
-    :bind
-    ("M-A" . marginalia-cycle)
-    :init
-    (marginalia-mode))
 
-  (use-package golden-ratio-scroll-screen
-    :custom
-    (golden-ratio-scroll-highlight-flag nil)
-    :bind
-    ([remap scroll-down-command] . golden-ratio-scroll-screen-down)
-    ([remap scroll-up-command] . golden-ratio-scroll-screen-up))
-#+end_src
+  #+end_src
+
+* Programming Support  
+  #+begin_src emacs-lisp
+    ;; Programming Support
+    (use-package annotate
+      :hook
+      (prog-mode . annotate-mode))
+
+    (use-package rainbow-delimiters
+      :hook
+      (prog-mode . rainbow-delimiters-mode))
+
+    (use-package magit)
+
+    (use-package olivetti
+      :bind (("C-c o" . olivetti-mode)))
+
+    (use-package org-bullets
+      :hook
+      (org-mode . org-bullets-mode))
+
+    (use-package gptel
+      :bind
+      (("C-c g s" . gptel-send)))
+  #+end_src
+
+* Appearance
+  #+begin_src emacs-lisp
+    (use-package modus-themes
+      :init
+      (setq modus-themes-bold-constructs t
+	    modus-themes-italic-constructs t))
+
+    (use-package powerline
+      :init
+      (powerline-default-theme))
+
+    (use-package ef-themes)
+
+    ;; Switch to bar cursor in non-programming modes
+    (add-hook 'text-mode-hook (lambda () (setq cursor-type 'bar)))
+    (add-hook 'org-mode-hook (lambda () (setq cursor-type 'bar)))
+    (add-hook 'markdown-mode-hook (lambda () (setq cursor-type 'bar)))
+
+    (use-package auto-dark
+      :custom
+      (auto-dark-themes '(nil nil))
+      (auto-dark-polling-interval-seconds 5)
+      (auto-dark-allow-osascript t)
+      (auto-dark-allow-powershell t)
+      :hook
+      (auto-dark-dark-mode
+       . (lambda ()
+	   (load-theme 'modus-vivendi t)
+	   ))
+      (auto-dark-light-mode
+       . (lambda ()
+	   (load-theme 'modus-operandi-tinted t)
+	   ))
+      :init (auto-dark-mode))
+  #+end_src
 
 * UI Tweaks
-#+begin_src emacs-lisp
-(scroll-bar-mode -1)
-(tool-bar-mode -1)
-(fringe-mode 0)
-#+end_src
+  #+begin_src emacs-lisp
+    (scroll-bar-mode -1)
+    (tool-bar-mode -1)
+    (fringe-mode 0)
+  #+end_src
+
+* Error Fixes
+  #+begin_src emacs-lisp
+    (when (string= system-type "darwin")       
+      (setq dired-use-ls-dired nil))
+  #+end_src
 
 * Misc Settings
-#+begin_src emacs-lisp
-  (use-package exec-path-from-shell
-    :ensure t)
-  (when (memq window-system '(mac ns x))
-    (exec-path-from-shell-initialize))
-#+end_src
+  #+begin_src emacs-lisp
+    (use-package exec-path-from-shell
+      :ensure t)
+    (when (memq window-system '(mac ns x))
+      (exec-path-from-shell-initialize))
+  #+end_src
+  #+begin_src emacs-lisp
+    (setq ring-bell-function 'ignore)
+    (setq org-adapt-indentation t)
+    (setq org-html-validation-link nil)
+    (setq default-cursor-type 'bar)
+    (setq scroll-margin 0
+	  scroll-conservatively 101
+	  scroll-up-aggressively 0.01
+	  scroll-down-aggressively 0.01
+	  scroll-preserve-screen-position t
+	  auto-window-vscroll nil)
+    (setq make-backup-files nil)
+    (setq vc-follow-symlinks t)
+    (setq split-width-threshold 1)
+    (setq isearch-lazy-count t)
+    (setq lazy-count-prefix-format "(%s/%s) ")
+    (setq lazy-count-suffix-format nil)
+    (setq search-whitespace-regexp ".*?")
+    (setq python-shell-completion-native-enable nil)
 
-Fix dired error on MacOS
-#+begin_src emacs-lisp
-  (when (string= system-type "darwin")       
-    (setq dired-use-ls-dired nil))
-#+end_src
-  
-#+begin_src emacs-lisp
-      (setq ring-bell-function 'ignore)
-      (setq org-adapt-indentation t)
-      (setq org-html-validation-link nil)
-      (setq default-cursor-type 'bar)
-      (setq scroll-margin 10
-	    scroll-conservatively 101
-	    scroll-up-aggressively 0.01
-	    scroll-down-aggressively 0.01
-	    scroll-preserve-screen-position t
-	    auto-window-vscroll nil)
-      (setq make-backup-files nil)
-      (setq vc-follow-symlinks t)
-      (setq split-width-threshold 1)
-      (setq isearch-lazy-count t)
-      (setq lazy-count-prefix-format "(%s/%s) ")
-      (setq lazy-count-suffix-format nil)
-      (setq search-whitespace-regexp ".*?")
-      (setq python-shell-completion-native-enable nil)
-
-      (global-auto-revert-mode t)
-#+end_src
+    (global-auto-revert-mode t)
+  #+end_src
 
 * Mode Hooks
-#+begin_src emacs-lisp
-(add-hook 'prog-mode-hook 'display-line-numbers-mode)
-(add-hook 'prog-mode-hook #'hl-line-mode)
-(add-hook 'text-mode-hook #'hl-line-mode)
-#+end_src
+  #+begin_src emacs-lisp
+    (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+    (add-hook 'prog-mode-hook #'hl-line-mode)
+    (add-hook 'text-mode-hook #'hl-line-mode)
+  #+end_src
 
 * Custom Functions
-#+begin_src emacs-lisp
-(defun back-to-indentation-or-beginning ()
-  (interactive)
-  (if (= (point) (progn (back-to-indentation) (point)))
-      (beginning-of-line)))
-(global-set-key [remap move-beginning-of-line] 'back-to-indentation-or-beginning)
-(global-set-key [remap org-beginning-of-line] 'back-to-indentation-or-beginning)
-#+end_src
+  #+begin_src emacs-lisp
+    (defun rvb/back-to-indentation-or-beginning ()
+      (interactive)
+      (if (= (point) (progn (back-to-indentation) (point)))
+	  (beginning-of-line)))
+    (global-set-key [remap move-beginning-of-line] 'rvb/back-to-indentation-or-beginning)
+    (global-set-key [remap org-beginning-of-line] 'rvb/back-to-indentation-or-beginning)
+  #+end_src
