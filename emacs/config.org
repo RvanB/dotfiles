@@ -10,14 +10,15 @@
 
   (defun efs/display-startup-time ()
     (message "Emacs loaded in %s with %d garbage collections."
-    	   (format "%.2f seconds"
-    		   (float-time
-    		    (time-subtract after-init-time before-init-time)))
-    	   gcs-done))
+	   (format "%.2f seconds"
+		   (float-time
+		    (time-subtract after-init-time before-init-time)))
+	   gcs-done))
 
   (add-hook 'emacs-startup-hook #'efs/display-startup-time)
 
   (use-package vlf
+    :ensure t
     :config
     (require 'vlf-setup)
     (setq vlf-application 'dont-ask))
@@ -45,17 +46,10 @@
 * Terminals
 #+begin_src emacs-lisp
   (use-package vterm)
-  (keymap-unset vterm-mode-map "<f2>")
 
   (use-package multi-vterm
     :ensure t
     :bind ("C-s-t" . multi-vterm))
-
-  (use-package toggle-term
-    :bind ("<f2>" . 'toggle-term-vterm)
-    :config
-    (setq toggle-term-size 25)
-    (setq toggle-term-switch-upon-toggle t))
 #+end_src
 
 * Completion and Selection
@@ -233,41 +227,55 @@
     :bind
     ("C-=" . er/expand-region))
 
-  (use-package golden-ratio-scroll-screen
-    :custom
-    (golden-ratio-scroll-highlight-flag nil)
-    :bind
-    ([remap scroll-down-command] . golden-ratio-scroll-screen-down)
-    ([remap scroll-up-command] . golden-ratio-scroll-screen-up))
+  ;; (use-package golden-ratio-scroll-screen
+  ;;   :custom
+  ;;   (golden-ratio-scroll-highlight-flag nil)
+  ;;   :bind
+  ;;   ([remap scroll-down-command] . golden-ratio-scroll-screen-down)
+  ;;   ([remap scroll-up-command] . golden-ratio-scroll-screen-up))
 
   (use-package savehist
     :init
     (savehist-mode))
 
 
-  ;; Window Splitting
-  (setq split-height-threshold 120
-        split-width-threshold 160)
+  ;; ;; Window Splitting
+  ;; (setq split-height-threshold 120
+  ;;       split-width-threshold 160)
 
-  (defun my-split-window-sensibly (&optional window)
-      "replacement `split-window-sensibly' function which prefers vertical splits"
-      (interactive)
-      (let ((window (or window (selected-window))))
-          (or (and (window-splittable-p window t)
-                   (with-selected-window window
-                       (split-window-right)))
-              (and (window-splittable-p window)
-                   (with-selected-window window
-                       (split-window-below))))))
+  ;; (defun my-split-window-sensibly (&optional window)
+  ;;     "replacement `split-window-sensibly' function which prefers vertical splits"
+  ;;     (interactive)
+  ;;     (let ((window (or window (selected-window))))
+  ;;         (or (and (window-splittable-p window t)
+  ;;                  (with-selected-window window
+  ;;                      (split-window-right)))
+  ;;             (and (window-splittable-p window)
+  ;;                  (with-selected-window window
+  ;;                      (split-window-below))))))
 
-  (setq split-window-preferred-function #'my-split-window-sensibly)
+  ;; (setq split-window-preferred-function #'my-split-window-sensibly)
 
 
 #+end_src
 
-* Programming Support  
+* Functionality
 #+begin_src emacs-lisp
-  ;; Programming Support
+
+  (use-package evil
+    :init
+    (setq evil-want-C-u-scroll t)
+    (setq evil-want-C-w-in-emacs-state t)
+    :config
+    (evil-set-initial-state 'vterm-mode 'emacs)
+    (evil-set-initial-state 'dired-mode 'emacs)
+
+    (evil-mode 1))
+
+  (use-package avy)
+  (global-set-key (kbd "C-`") 'avy-goto-char-2)
+  (global-set-key (kbd "C-~") 'avy-goto-line)
+
   (use-package annotate
     :hook
     (prog-mode . annotate-mode))
@@ -314,44 +322,61 @@
 
 * Appearance
 #+begin_src emacs-lisp
+  ;; Remove background on org source blocks
+  (custom-set-faces
+   '(org-block ((t (:background nil))))
+   '(org-block-beg ((t (:background nil))))
+   '(org-block-end ((t (:background nil))))
+   '(org-block-begin-line ((t (:inherit org-meta-line :slant italic :background nil))))
+   '(org-block-end-line ((t (:inherit org-meta-line :slant italic :background nil)))))
+
+  (use-package spacious-padding)
+  (require 'spacious-padding)
+
+  ;; These are the default values, but I keep them here for visibility.
+  (setq spacious-padding-widths
+	'( :internal-border-width 15
+	   :header-line-width 4
+	   :mode-line-width 6
+	   :tab-width 4
+	   :right-divider-width 30
+	   :scroll-bar-width 8
+	   :fringe-width 8))
+
+  ;; Read the doc string of `spacious-padding-subtle-mode-line' as it
+  ;; is very flexible and provides several examples.
+  (setq spacious-padding-subtle-mode-line
+	`( :mode-line-active 'default
+	   :mode-line-inactive vertical-border))
+
+  (spacious-padding-mode 1)
+
+  ;; Set a key binding if you need to toggle spacious padding.
+  (define-key global-map (kbd "<f8>") #'spacious-padding-mode)
+
   (use-package modus-themes
     :init
     (setq modus-themes-bold-constructs t
-  	modus-themes-italic-constructs t))
-
-  (use-package powerline
-    :init
-    (powerline-default-theme))
+	  modus-themes-italic-constructs t))
 
   ;; Switch to bar cursor in non-programming modes
   (add-hook 'text-mode-hook (lambda () (setq cursor-type 'bar)))
   (add-hook 'org-mode-hook (lambda () (setq cursor-type 'bar)))
   (add-hook 'markdown-mode-hook (lambda () (setq cursor-type 'bar)))
 
-  (load-theme 'modus-operandi-tinted t)
-
-  (use-package auto-dark
-    :custom
-    (auto-dark-themes '(nil nil))
-    (auto-dark-polling-interval-seconds 5)
-    (auto-dark-allow-osascript t)
-    (auto-dark-allow-powershell t)
-    :hook
-    (auto-dark-dark-mode
-     . (lambda ()
-         (load-theme 'modus-vivendi t)
-         ))
-    (auto-dark-light-mode
-     . (lambda ()
-         (load-theme 'modus-operandi-tinted t)
-         ))
-    :init (auto-dark-mode))
+  (load-theme 'ef-cyprus t)
 
   ;; Make xit count lines for correct line number width
   (setq display-line-numbers-width-start t)
 
   ;; Truncate lines
   (setq truncate-lines t)
+
+  (set-face-attribute 'default nil :font "Aporetic Sans Mono 14")
+
+  ;; Increase line height
+  (setq line-spacing 0.15)
+
 #+end_src
 
 * UI Tweaks
@@ -386,7 +411,6 @@
         auto-window-vscroll nil)
   (setq make-backup-files nil)
   (setq vc-follow-symlinks t)
-  (setq split-width-threshold 1)
   (setq isearch-lazy-count t)
   (setq lazy-count-prefix-format "(%s/%s) ")
   (setq lazy-count-suffix-format nil)
