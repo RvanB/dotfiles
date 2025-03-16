@@ -364,7 +364,10 @@
   (add-hook 'org-mode-hook (lambda () (setq cursor-type 'bar)))
   (add-hook 'markdown-mode-hook (lambda () (setq cursor-type 'bar)))
 
-  (load-theme 'ef-cyprus t)
+  (load-theme 'modus-operandi t)
+
+  ;; Bind a key to ef-themes-load-random
+  (keymap-global-set "<f3>" 'ef-themes-load-random)
 
   ;; Make xit count lines for correct line number width
   (setq display-line-numbers-width-start t)
