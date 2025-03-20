@@ -45,11 +45,7 @@
 
 * Terminals
 #+begin_src emacs-lisp
-  (use-package vterm)
-
-  (use-package multi-vterm
-    :ensure t
-    :bind ("C-s-t" . multi-vterm))
+  (use-package eat)
 #+end_src
 
 * Completion and Selection
@@ -219,6 +215,14 @@
 * User Experience Enhancements  
 #+begin_src emacs-lisp
   ;; User Experience Enhancements
+
+  (use-package tree-sitter)
+  (use-package tree-sitter-langs)
+  (require 'tree-sitter)
+  (require 'tree-sitter-langs)
+  (global-tree-sitter-mode)
+  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
+
   (use-package which-key
     :init
     (which-key-mode))
@@ -261,16 +265,6 @@
 
 * Functionality
 #+begin_src emacs-lisp
-
-  (use-package evil
-    :init
-    (setq evil-want-C-u-scroll t)
-    (setq evil-want-C-w-in-emacs-state t)
-    :config
-    (evil-set-initial-state 'vterm-mode 'emacs)
-    (evil-set-initial-state 'dired-mode 'emacs)
-
-    (evil-mode 1))
 
   (use-package avy)
   (global-set-key (kbd "C-`") 'avy-goto-char-2)
@@ -322,63 +316,19 @@
 
 * Appearance
 #+begin_src emacs-lisp
-  ;; Remove background on org source blocks
-  (custom-set-faces
-   '(org-block ((t (:background nil))))
-   '(org-block-beg ((t (:background nil))))
-   '(org-block-end ((t (:background nil))))
-   '(org-block-begin-line ((t (:inherit org-meta-line :slant italic :background nil))))
-   '(org-block-end-line ((t (:inherit org-meta-line :slant italic :background nil)))))
 
-  (use-package spacious-padding)
-  (require 'spacious-padding)
+  (use-package base16-theme
+    :config
+    (load-theme 'base16-default-dark t))
 
-  ;; These are the default values, but I keep them here for visibility.
-  (setq spacious-padding-widths
-	'( :internal-border-width 15
-	   :header-line-width 4
-	   :mode-line-width 6
-	   :tab-width 4
-	   :right-divider-width 30
-	   :scroll-bar-width 8
-	   :fringe-width 8))
-
-  ;; Read the doc string of `spacious-padding-subtle-mode-line' as it
-  ;; is very flexible and provides several examples.
-  (setq spacious-padding-subtle-mode-line
-	`( :mode-line-active 'default
-	   :mode-line-inactive vertical-border))
-
-  (spacious-padding-mode 1)
-
-  ;; Set a key binding if you need to toggle spacious padding.
-  (define-key global-map (kbd "<f8>") #'spacious-padding-mode)
-
-  (use-package modus-themes
-    :init
-    (setq modus-themes-bold-constructs t
-	  modus-themes-italic-constructs t))
-
-  ;; Switch to bar cursor in non-programming modes
-  (add-hook 'text-mode-hook (lambda () (setq cursor-type 'bar)))
-  (add-hook 'org-mode-hook (lambda () (setq cursor-type 'bar)))
-  (add-hook 'markdown-mode-hook (lambda () (setq cursor-type 'bar)))
-
-  (load-theme 'modus-operandi t)
-
-  ;; Bind a key to ef-themes-load-random
-  (keymap-global-set "<f3>" 'ef-themes-load-random)
+  (setq org-hide-emphasis-markers t)
+  (set-face-attribute 'default nil :font "Menlo" :height 140)
 
   ;; Make xit count lines for correct line number width
   (setq display-line-numbers-width-start t)
 
   ;; Truncate lines
   (setq truncate-lines t)
-
-  (set-face-attribute 'default nil :font "Aporetic Sans Mono 14")
-
-  ;; Increase line height
-  (setq line-spacing 0.15)
 
 #+end_src
 
