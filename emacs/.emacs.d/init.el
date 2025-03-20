@@ -1,3 +1,13 @@
+;; ========== Set up package archives ==========
+(require 'package)
+(setq package-archives '(("melpa" . "https://melpa.org/packages/")
+                         ("org" . "https://orgmode.org/elpa/")
+                         ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+                         ("elpa" . "https://elpa.gnu.org/packages/")))
+
+(unless package-archive-contents
+  (package-refresh-contents t))
+
 ; Disable bell
 (setq ring-bell-function 'ignore)
 
@@ -19,9 +29,10 @@
 ;; Mac OS X Settings
 (when (string= system-type "darwin")       
   (setq dired-use-ls-dired nil))
+
 (use-package exec-path-from-shell
-  :ensure t)
-(when (memq window-system '(mac ns x))
+  :ensure t
+  :config
   (exec-path-from-shell-initialize))
 
 ;; Misc settings
@@ -40,15 +51,11 @@
 ;; Make it count lines for correct line number width
 (setq display-line-numbers-width-start t)
 
-;; ========== Set up package archives ==========
-(require 'package)
-(setq package-archives '(("melpa" . "https://melpa.org/packages/")
-                         ("org" . "https://orgmode.org/elpa/")
-                         ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-                         ("elpa" . "https://elpa.gnu.org/packages/")))
-
-(unless package-archive-contents
-  (package-refresh-contents t))
+;; ========== Theming ==========
+(use-package standard-themes
+  :ensure t
+  :config
+  (load-theme 'standard-light t))
 
 ;; ========== Completions ==========
 
@@ -79,10 +86,14 @@
   (completion-category-overrides '((file (styles partial-completion)))))
 
 ;; ========== Tree sitter ==========
-(use-package tree-sitter :ensure t)
-(use-package tree-sitter-langs :ensure t)
-(global-tree-sitter-mode)
-(add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
+(use-package tree-sitter
+  :ensure t)
+(use-package tree-sitter-langs
+  :ensure t
+  :after tree-sitter
+  :config
+  (global-tree-sitter-mode)
+  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
 
 ;; ========== Magit ==========
 (use-package magit
