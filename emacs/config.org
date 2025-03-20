@@ -5,18 +5,6 @@
 
 * Performance
 #+begin_src emacs-lisp
-  ;; The default is 800 kilobytes.  Measured in bytes.
-  (setq gc-cons-threshold (* 50 1000 1000))
-
-  (defun efs/display-startup-time ()
-    (message "Emacs loaded in %s with %d garbage collections."
-	   (format "%.2f seconds"
-		   (float-time
-		    (time-subtract after-init-time before-init-time)))
-	   gcs-done))
-
-  (add-hook 'emacs-startup-hook #'efs/display-startup-time)
-
   (use-package vlf
     :ensure t
     :config
@@ -45,12 +33,13 @@
 
 * Terminals
 #+begin_src emacs-lisp
-  (use-package eat)
+  (use-package eat :ensure t)
 #+end_src
 
 * Completion and Selection
 #+begin_src emacs-lisp
   (use-package vertico
+    :ensure t
     :init
     (vertico-mode)
     :custom
@@ -58,6 +47,7 @@
 
   ;; Example configuration for Consult
   (use-package consult
+    :ensure t
     ;; Replace bindings. Lazily loaded by `use-package'.
     :bind (;; C-c bindings in `mode-specific-map'
            ("C-c M-x" . consult-mode-command)
@@ -196,19 +186,24 @@
     (embark-collect-mode . consult-preview-at-point-mode))
 
   (use-package orderless
+    :ensure t
     :custom
     (completion-styles '(orderless basic))
     (completion-category-defaults nil)
     (completion-category-overrides '((file (styles partial-completion)))))
 
   (use-package marginalia
+    :ensure t
     :bind
     ("M-A" . marginalia-cycle)
-    :init
+    :config
     (marginalia-mode))
 
-  (use-package company)
-  (add-hook 'after-init-hook 'global-company-mode)
+  (use-package company
+    :ensure t
+    :config
+    (add-hook 'after-init-hook 'global-company-mode))
+
 
 #+end_src
   
@@ -216,18 +211,22 @@
 #+begin_src emacs-lisp
   ;; User Experience Enhancements
 
-  (use-package tree-sitter)
-  (use-package tree-sitter-langs)
+  (use-package tree-sitter
+    :ensure t)
+  (use-package tree-sitter-langs
+    :ensure t)
   (require 'tree-sitter)
   (require 'tree-sitter-langs)
   (global-tree-sitter-mode)
   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
 
   (use-package which-key
+    :ensure t
     :init
     (which-key-mode))
 
   (use-package expand-region
+    :ensure t
     :bind
     ("C-=" . er/expand-region))
 
@@ -239,6 +238,7 @@
   ;;   ([remap scroll-up-command] . golden-ratio-scroll-screen-up))
 
   (use-package savehist
+    :ensure t
     :init
     (savehist-mode))
 
@@ -265,34 +265,42 @@
 
 * Functionality
 #+begin_src emacs-lisp
+  (winner-mode)
 
-  (use-package avy)
+  (use-package avy :ensure t)
   (global-set-key (kbd "C-`") 'avy-goto-char-2)
   (global-set-key (kbd "C-~") 'avy-goto-line)
 
   (use-package annotate
+    :ensure t
     :hook
     (prog-mode . annotate-mode))
 
   (use-package rainbow-delimiters
+    :ensure t
     :hook
     (prog-mode . rainbow-delimiters-mode))
 
-  (use-package magit)
+  (use-package magit
+    :ensure t)
 
   (use-package olivetti
+    :ensure t
     :bind (("C-c o" . olivetti-mode)))
 
   (use-package org-bullets
+    :ensure t
     :hook
     (org-mode . org-bullets-mode))
 
   (use-package gptel
+    :ensure t
     :bind
     (("C-c g s" . gptel-send)))
 
   ;; Use eglot when available
   (use-package eglot
+    :ensure t
     :hook
     (prog-mode . eglot-ensure))
 
@@ -314,12 +322,8 @@
   (add-hook 'mrk-mode-hook 'eglot-ensure)
 #+end_src
 
-* Appearance
+* Appearances
 #+begin_src emacs-lisp
-
-  (use-package base16-theme
-    :config
-    (load-theme 'base16-default-dark t))
 
   (setq org-hide-emphasis-markers t)
   (set-face-attribute 'default nil :font "Menlo" :height 140)
@@ -327,9 +331,10 @@
   ;; Make xit count lines for correct line number width
   (setq display-line-numbers-width-start t)
 
-  ;; Truncate lines
-  (setq truncate-lines t)
-
+  (use-package ef-themes
+    :ensure t
+    :config
+    (load-theme 'modus-operandi-tinted t))
 #+end_src
 
 * UI Tweaks
