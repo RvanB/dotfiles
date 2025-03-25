@@ -61,11 +61,13 @@
 
 (use-package icomplete
   :bind (:map icomplete-minibuffer-map
-	      ("RET" . icomplete-force-complete-and-exit))
+	      ("TAB" . icomplete-force-complete)
+	      ("C-n" . icomplete-forward-completions)
+	      ("C-p" . icomplete-backward-completions))
   :hook
   (after-init . (lambda ()
-		  (fido-mode 1)
-		  (icomplete-mode 1)))
+		  (fido-mode -1)
+		  (icomplete-vertical-mode 1)))
   :config
   ;; (setq icomplete-in-buffer t)
   (setq tab-always-indent 'complete)
@@ -173,3 +175,26 @@
 (require 'eglot)
 (add-to-list 'eglot-server-programs '(mrk-mode . ("/Users/rvanbron/test-lsp/.venv/bin/python" "/Users/rvanbron/test-lsp/test.py")))
 (add-hook 'mrk-mode-hook 'eglot-ensure)
+
+;; ========== Window management ==========
+(defun rvb/kill-buffer-and-close-window ()
+  "Kill the current buffer and close the window."
+  (interactive)
+  (let ((buffer (current-buffer)))
+    (kill-buffer buffer)
+    (when (one-window-p)
+      (delete-window))
+    (when (and (not (one-window-p))
+               (not (window-live-p (get-buffer-window buffer))))
+      (delete-window))))
+
+(global-set-key (kbd "s-k") 'rvb/kill-buffer-and-close-window)
+
+;; ========== Task Management ==========
+;; Add ~/.todo.org to org-agenda-files
+(require 'org)
+(add-to-list 'org-agenda-files (expand-file-name "~/.todo.org"))
+
+;; Enable org-capture
+(global-set-key (kbd "C-c c") 'org-capture)
+
