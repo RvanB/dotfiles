@@ -51,29 +51,92 @@
 ;; Make it count lines for correct line number width
 (setq display-line-numbers-width-start t)
 
-;; ========== Theming ==========
-(use-package standard-themes
-  :ensure t
-  :config
-  (load-theme 'standard-light t))
+;; ========== Appearance ==========
+(set-frame-parameter nil 'ns-appearance 'light)
+(set-frame-parameter nil 'ns-transparent-titlebar nil)
+
+(setq modus-themes-common-palette-overrides
+      '((border-mode-line-active unspecified)
+        (border-mode-line-inactive unspecified)))
+
+;; Add all your customizations prior to loading the themes
+(setq modus-themes-italic-constructs t
+      modus-themes-bold-constructs t)
+
+;; Use dark high contrast theme
+(load-theme 'modus-vivendi t)
+
+;; Change the color of the modeline
+(set-face-foreground 'mode-line "#FFFFFF")
+(set-face-background 'mode-line "#5E2A13")
+
+(set-face-foreground 'font-lock-comment-face (modus-themes-get-color-value 'rust))
+(set-face-background 'line-number (modus-themes-get-color-value 'bg-main))
+(set-face-foreground 'line-number (modus-themes-get-color-value 'blue-warmer))
+
+;; Disable the scroll bar
+(scroll-bar-mode -1)
+;; Disable tool bar
+(tool-bar-mode -1)
+
+;; Set the font
+(set-face-attribute 'default nil :font "Aporetic Sans Mono" :height 160)
 
 ;; ========== Completions ==========
 
-(use-package icomplete
-  :bind (:map icomplete-minibuffer-map
-	      ("TAB" . icomplete-force-complete)
-	      ("C-n" . icomplete-forward-completions)
-	      ("C-p" . icomplete-backward-completions))
-  :hook
-  (after-init . (lambda ()
-		  (fido-mode -1)
-		  (icomplete-vertical-mode 1)))
+;; (use-package icomplete
+;;   :bind (:map icomplete-minibuffer-map
+;; 	      ("TAB" . icomplete-force-complete)
+;; 	      ("C-n" . icomplete-forward-completions)
+;; 	      ("C-p" . icomplete-backward-completions))
+;;   :hook
+;;   (after-init . (lambda ()
+;; 		  (fido-mode -1)
+;; 		  (icomplete-vertical-mode 1)))
+;;   :config
+;;   (keymap-unset icomplete-minibuffer-map "C-.")
+;;   (keymap-unset icomplete-minibuffer-map "C-,")
+;;   ;; (setq icomplete-in-buffer t)
+;;   (setq tab-always-indent 'complete)
+;;   (setq icomplete-show-matches-on-no-input t))
+;;   ;; (advice-add 'completion-at-point
+;;   ;; 	      :after #'minibuffer-hide-completions))
+
+(setq tab-always-indent 'complete)
+
+;; Enable Vertico.
+(use-package vertico
+  :ensure t
+  :custom
+  (vertico-cycle t)
+  :init
+  (vertico-mode)
+  (vertico-flat-mode))
+
+;; (use-package marginalia
+;;   :ensure t
+;;   :config
+;;   (marginalia-mode))
+
+(use-package embark
+  :ensure t
+
+  :bind
+  (("C-." . embark-act)
+   ("C-;" . embark-dwim)
+   ("C-h B" . embark-bindings))
+  
   :config
-  ;; (setq icomplete-in-buffer t)
-  (setq tab-always-indent 'complete)
-  (setq icomplete-show-matches-on-no-input t))
-  ;; (advice-add 'completion-at-point
-  ;; 	      :after #'minibuffer-hide-completions))
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+
+;; Persist history over Emacs restarts. Vertico sorts by history position.
+(use-package savehist
+  :init
+  (savehist-mode))
 
 (use-package corfu
   :ensure t
@@ -110,7 +173,13 @@
 (use-package gptel
   :ensure t
   :bind
-  (("C-c g s" . gptel-send)))
+  (("C-c g m" . gptel-menu)))
+
+;; ========== Which key ==========
+(use-package which-key
+  :ensure t
+  :config
+  (which-key-mode))
 
 ;; ========== Expand region ==========
 (use-package expand-region
@@ -132,7 +201,7 @@
         (cd directory)
         (let ((full-path (shell-command-to-string "pipenv --venv")))
   	(setq venv-path (file-name-directory (directory-file-name (string-trim full-path))))
-          (setq venv (file-name-nondirectory (directory-file-name (string-trim full-path)))))))
+        (setq venv (file-name-nondirectory (directory-file-name (string-trim full-path)))))))
      ((string-equal package-manager "poetry")
       (with-temp-buffer
         (cd directory)
@@ -142,7 +211,8 @@
      ((string-equal package-manager "uv")
       (with-temp-buffer
         (cd directory)
-        (setq venv-path (shell-command-to-string "uv env")))))
+        (setq venv-path (file-name-directory (expand-file-name ".venv" directory)))
+	(setq venv ".venv"))))
     (setq venv-path (string-trim venv-path))  ; Trim whitespace
     (let ((json-content
            (json-encode `((venvPath . ,venv-path)
