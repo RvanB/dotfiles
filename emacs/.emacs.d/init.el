@@ -51,6 +51,29 @@
 ;; Make it count lines for correct line number width
 (setq display-line-numbers-width-start t)
 
+;; ========== Terminals ==========
+(use-package eat
+  :ensure t)
+
+(use-package vterm
+  :ensure t)
+
+(use-package multi-vterm
+  :ensure t)
+
+(use-package toggle-term
+  :bind (("M-o f" . toggle-term-find)
+         ("M-o t" . toggle-term-term)
+         ("M-o v" . toggle-term-vterm)
+         ("M-o a" . toggle-term-eat)
+         ("M-o s" . toggle-term-shell)
+         ("M-o e" . toggle-term-eshell)
+         ("M-o i" . toggle-term-ielm)
+         ("M-o o" . toggle-term-toggle))
+  :config
+    (setq toggle-term-size 25)
+    (setq toggle-term-switch-upon-toggle t))
+
 ;; ========== Appearance ==========
 (set-frame-parameter nil 'ns-appearance 'light)
 (set-frame-parameter nil 'ns-transparent-titlebar nil)
@@ -111,6 +134,7 @@
   (vertico-cycle t)
   :init
   (vertico-mode)
+  (vertico-multiform-mode)
   (vertico-flat-mode))
 
 ;; (use-package marginalia
@@ -151,14 +175,60 @@
   (completion-category-overrides '((file (styles partial-completion)))))
 
 ;; ========== Tree sitter ==========
-(use-package tree-sitter
-  :ensure t)
-(use-package tree-sitter-langs
-  :ensure t
-  :after tree-sitter
+;; (use-package tree-sitter
+;;   :ensure t)
+
+;; (use-package tree-sitter-langs
+;;   :ensure t
+;;   :after tree-sitter
+;;   :config
+;;   (global-tree-sitter-mode)
+;;   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
+
+(use-package treesit
+  :ensure nil
   :config
-  (global-tree-sitter-mode)
-  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
+  (setq treesit-language-source-alist
+        '(
+	  (bash       . ("https://github.com/tree-sitter/tree-sitter-bash"))
+          (c          . ("https://github.com/tree-sitter/tree-sitter-c"))
+          (cmake      . ("https://github.com/uyha/tree-sitter-cmake"))
+          (cpp        . ("https://github.com/tree-sitter/tree-sitter-cpp"))
+          (css        . ("https://github.com/tree-sitter/tree-sitter-css"))
+          (dockerfile . ("https://github.com/camdencheek/tree-sitter-dockerfile"))
+          (dot        . ("https://github.com/rydesun/tree-sitter-dot"))
+          (doxygen    . ("https://github.com/tree-sitter-grammars/tree-sitter-doxygen"))
+          (elisp      . ("https://github.com/Wilfred/tree-sitter-elisp"))
+          (gitcommit  . ("https://github.com/gbprod/tree-sitter-gitcommit"))
+          (go         . ("https://github.com/tree-sitter/tree-sitter-go"))
+          (gomod      . ("https://github.com/camdencheek/tree-sitter-go-mod"))
+          (gosum      . ("https://github.com/amaanq/tree-sitter-go-sum"))
+          (gowork     . ("https://github.com/omertuc/tree-sitter-go-work"))
+          (html       . ("https://github.com/tree-sitter/tree-sitter-html"))
+          (http       . ("https://github.com/rest-nvim/tree-sitter-http"))
+          (java       . ("https://github.com/tree-sitter/tree-sitter-java"))
+          (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript"))
+          (json       . ("https://github.com/tree-sitter/tree-sitter-json"))
+          (lua        . ("https://github.com/tree-sitter-grammars/tree-sitter-lua"))
+          (make       . ("https://github.com/tree-sitter-grammars/tree-sitter-make"))
+          (markdown   . ("https://github.com/tree-sitter-grammars/tree-sitter-markdown"))
+          (proto      . ("https://github.com/treywood/tree-sitter-proto"))
+          (python     . ("https://github.com/tree-sitter/tree-sitter-python"))
+          (rust       . ("https://github.com/tree-sitter/tree-sitter-rust"))
+          (sql        . ("https://github.com/derekstride/tree-sitter-sql"))
+          (toml       . ("https://github.com/tree-sitter/tree-sitter-toml"))
+          (tsx        . ("https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src"))
+          (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src"))
+          (vue        . ("https://github.com/tree-sitter-grammars/tree-sitter-vue"))
+          (yaml       . ("https://github.com/tree-sitter-grammars/tree-sitter-yaml")))))
+
+(use-package treesit-auto
+  :ensure t
+  :custom
+  (treesit-auto-install 'prompt)
+  :config
+  (treesit-auto-add-to-auto-mode-alist 'all)
+  (global-treesit-auto-mode))
 
 ;; ========== Magit ==========
 (use-package magit
@@ -261,9 +331,6 @@
 (global-set-key (kbd "s-k") 'rvb/kill-buffer-and-close-window)
 
 ;; ========== Task Management ==========
-;; Add ~/.todo.org to org-agenda-files
-(require 'org)
-(add-to-list 'org-agenda-files (expand-file-name "~/.todo.org"))
 
 ;; Enable org-capture
 (global-set-key (kbd "C-c c") 'org-capture)
