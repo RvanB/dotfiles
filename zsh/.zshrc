@@ -4,17 +4,16 @@
 ########## ZSH CONFIGURATIONS ##########
 export PATH="$HOME/.local/bin:$PATH"
 
-# AWS
-# export PATH="$HOME/aws/:$HOME/aws/aws-cli/:$PATH"
-
 # Cargo binaries
 export PATH="$HOME/.cargo/bin/:$PATH"
+
+# My own programs
+export PATH="$HOME/bin:$PATH"
 
 # # pyenv
 # export PYENV_ROOT="$HOME/.pyenv"
 # command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 # eval "$(pyenv init -)"
-
 
 ########## COMPLETIONS ##########
 

@@ -78,6 +78,8 @@
 (set-face-background 'line-number (modus-themes-get-color-value 'bg-main))
 (set-face-foreground 'line-number (modus-themes-get-color-value 'blue-warmer))
 
+;; Disable menu bar
+(menu-bar-mode -1)
 ;; Disable the scroll bar
 (scroll-bar-mode -1)
 ;; Disable tool bar
@@ -88,40 +90,40 @@
 
 ;; ========== Completions ==========
 
-(use-package icomplete
-  :bind (:map icomplete-minibuffer-map
-	      ("TAB" . icomplete-force-complete)
-	      ("C-n" . icomplete-forward-completions)
-	      ("C-p" . icomplete-backward-completions))
-  :hook
-  (after-init . (lambda ()
-		  (fido-mode -1)
-		  (icomplete-vertical-mode 1)))
-  :config
-  (keymap-unset icomplete-minibuffer-map "C-.")
-  (keymap-unset icomplete-minibuffer-map "C-,")
-  ;; (setq icomplete-in-buffer t)
-  (setq tab-always-indent 'complete)
-  (setq icomplete-show-matches-on-no-input t))
-  ;; (advice-add 'completion-at-point
-  ;; 	      :after #'minibuffer-hide-completions))
-
-;; (setq tab-always-indent 'complete)
-
-;; ;; Enable Vertico.
-;; (use-package vertico
-;;   :ensure t
-;;   :custom
-;;   (vertico-cycle t)
-;;   :init
-;;   (vertico-mode)
-;;   (vertico-multiform-mode)
-;;   (vertico-flat-mode))
-
-;; (use-package marginalia
-;;   :ensure t
+;; (use-package icomplete
+;;   :bind (:map icomplete-minibuffer-map
+;; 	      ("TAB" . icomplete-force-complete)
+;; 	      ("C-n" . icomplete-forward-completions)
+;; 	      ("C-p" . icomplete-backward-completions))
+;;   :hook
+;;   (after-init . (lambda ()
+;; 		  (fido-mode -1)
+;; 		  (icomplete-vertical-mode 1)))
 ;;   :config
-;;   (marginalia-mode))
+;;   (keymap-unset icomplete-minibuffer-map "C-.")
+;;   (keymap-unset icomplete-minibuffer-map "C-,")
+;;   ;; (setq icomplete-in-buffer t)
+;;   (setq tab-always-indent 'complete)
+;;   (setq icomplete-show-matches-on-no-input t))
+;;   ;; (advice-add 'completion-at-point
+;;   ;; 	      :after #'minibuffer-hide-completions))
+
+(setq tab-always-indent 'complete)
+
+;; Enable Vertico.
+(use-package vertico
+  :ensure t
+  :custom
+  (vertico-cycle t)
+  :init
+  (vertico-mode)
+  (vertico-multiform-mode)
+  (vertico-flat-mode))
+
+(use-package marginalia
+  :ensure t
+  :config
+  (marginalia-mode))
 
 (use-package embark
   :ensure t
@@ -215,10 +217,29 @@
 (use-package magit
   :ensure t)
 
-(use-package eglot
+;; ========== LSP ==========
+(use-package lsp-mode
   :ensure t
-  :hook
-  (prog-mode . eglot-ensure))
+  :init
+  ;; set prefix for lsp-command-keymap
+  (setq lsp-keymap-prefix "C-c l")
+  :hook (
+	 ;; (xxx-mode .lsp)
+	 ;; which key
+	 (lsp-mode . lsp-enable-which-key-integration))
+  :commands lsp)
+
+(use-package lsp-pyright
+  :ensure t
+  :custom (lsp-pyright-langserver-command "basedpyright")
+  :hook (python-ts-mode . (lambda ()
+			    (require 'lsp-pyright)
+			    (lsp))))
+
+;; (use-package eglot
+;;   :ensure t
+;;   :hook
+;;   (prog-mode . eglot-ensure))
 
 ;; ========== ChatGPT ==========
 (use-package gptel
@@ -310,9 +331,3 @@
       (delete-window))))
 
 (global-set-key (kbd "s-k") 'rvb/kill-buffer-and-close-window)
-
-;; ========== Task Management ==========
-
-;; Enable org-capture
-(global-set-key (kbd "C-c c") 'org-capture)
-
