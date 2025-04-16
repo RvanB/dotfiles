@@ -56,6 +56,8 @@
   :ensure t)
 
 ;; ========== Appearance ==========
+(fringe-mode 0)
+
 (set-frame-parameter nil 'ns-appearance 'light)
 (set-frame-parameter nil 'ns-transparent-titlebar nil)
 
