@@ -55,25 +55,6 @@
 (use-package eat
   :ensure t)
 
-(use-package vterm
-  :ensure t)
-
-(use-package multi-vterm
-  :ensure t)
-
-(use-package toggle-term
-  :bind (("M-o f" . toggle-term-find)
-         ("M-o t" . toggle-term-term)
-         ("M-o v" . toggle-term-vterm)
-         ("M-o a" . toggle-term-eat)
-         ("M-o s" . toggle-term-shell)
-         ("M-o e" . toggle-term-eshell)
-         ("M-o i" . toggle-term-ielm)
-         ("M-o o" . toggle-term-toggle))
-  :config
-    (setq toggle-term-size 25)
-    (setq toggle-term-switch-upon-toggle t))
-
 ;; ========== Appearance ==========
 (set-frame-parameter nil 'ns-appearance 'light)
 (set-frame-parameter nil 'ns-transparent-titlebar nil)
@@ -107,35 +88,35 @@
 
 ;; ========== Completions ==========
 
-;; (use-package icomplete
-;;   :bind (:map icomplete-minibuffer-map
-;; 	      ("TAB" . icomplete-force-complete)
-;; 	      ("C-n" . icomplete-forward-completions)
-;; 	      ("C-p" . icomplete-backward-completions))
-;;   :hook
-;;   (after-init . (lambda ()
-;; 		  (fido-mode -1)
-;; 		  (icomplete-vertical-mode 1)))
-;;   :config
-;;   (keymap-unset icomplete-minibuffer-map "C-.")
-;;   (keymap-unset icomplete-minibuffer-map "C-,")
-;;   ;; (setq icomplete-in-buffer t)
-;;   (setq tab-always-indent 'complete)
-;;   (setq icomplete-show-matches-on-no-input t))
-;;   ;; (advice-add 'completion-at-point
-;;   ;; 	      :after #'minibuffer-hide-completions))
+(use-package icomplete
+  :bind (:map icomplete-minibuffer-map
+	      ("TAB" . icomplete-force-complete)
+	      ("C-n" . icomplete-forward-completions)
+	      ("C-p" . icomplete-backward-completions))
+  :hook
+  (after-init . (lambda ()
+		  (fido-mode -1)
+		  (icomplete-vertical-mode 1)))
+  :config
+  (keymap-unset icomplete-minibuffer-map "C-.")
+  (keymap-unset icomplete-minibuffer-map "C-,")
+  ;; (setq icomplete-in-buffer t)
+  (setq tab-always-indent 'complete)
+  (setq icomplete-show-matches-on-no-input t))
+  ;; (advice-add 'completion-at-point
+  ;; 	      :after #'minibuffer-hide-completions))
 
-(setq tab-always-indent 'complete)
+;; (setq tab-always-indent 'complete)
 
-;; Enable Vertico.
-(use-package vertico
-  :ensure t
-  :custom
-  (vertico-cycle t)
-  :init
-  (vertico-mode)
-  (vertico-multiform-mode)
-  (vertico-flat-mode))
+;; ;; Enable Vertico.
+;; (use-package vertico
+;;   :ensure t
+;;   :custom
+;;   (vertico-cycle t)
+;;   :init
+;;   (vertico-mode)
+;;   (vertico-multiform-mode)
+;;   (vertico-flat-mode))
 
 ;; (use-package marginalia
 ;;   :ensure t
