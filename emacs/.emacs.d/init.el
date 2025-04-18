@@ -1,4 +1,4 @@
-;; ========== Set up package archives ==========
+;; ========== Package Management ==========
 (require 'package)
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
                          ("org" . "https://orgmode.org/elpa/")
@@ -7,6 +7,10 @@
 
 (unless package-archive-contents
   (package-refresh-contents t))
+
+;; Use-package for managing packages
+(eval-when-compile
+  (require 'use-package))
 
 ; Disable bell
 (setq ring-bell-function 'ignore)
@@ -88,40 +92,40 @@
 
 ;; ========== Completions ==========
 
-(use-package icomplete
-  :bind (:map icomplete-minibuffer-map
-	      ("TAB" . icomplete-force-complete)
-	      ("C-n" . icomplete-forward-completions)
-	      ("C-p" . icomplete-backward-completions))
-  :hook
-  (after-init . (lambda ()
-		  (fido-mode -1)
-		  (icomplete-vertical-mode 1)))
-  :config
-  (keymap-unset icomplete-minibuffer-map "C-.")
-  (keymap-unset icomplete-minibuffer-map "C-,")
-  ;; (setq icomplete-in-buffer t)
-  (setq tab-always-indent 'complete)
-  (setq icomplete-show-matches-on-no-input t))
-  ;; (advice-add 'completion-at-point
-  ;; 	      :after #'minibuffer-hide-completions))
-
-;; (setq tab-always-indent 'complete)
-
-;; ;; Enable Vertico.
-;; (use-package vertico
-;;   :ensure t
-;;   :custom
-;;   (vertico-cycle t)
-;;   :init
-;;   (vertico-mode)
-;;   (vertico-multiform-mode)
-;;   (vertico-flat-mode))
-
-;; (use-package marginalia
-;;   :ensure t
+;; (use-package icomplete
+;;   :bind (:map icomplete-minibuffer-map
+;; 	      ("TAB" . icomplete-force-complete)
+;; 	      ("C-n" . icomplete-forward-completions)
+;; 	      ("C-p" . icomplete-backward-completions))
+;;   :hook
+;;   (after-init . (lambda ()
+;; 		  (fido-mode -1)
+;; 		  (icomplete-vertical-mode 1)))
 ;;   :config
-;;   (marginalia-mode))
+;;   (keymap-unset icomplete-minibuffer-map "C-.")
+;;   (keymap-unset icomplete-minibuffer-map "C-,")
+;;   ;; (setq icomplete-in-buffer t)
+;;   (setq tab-always-indent 'complete)
+;;   (setq icomplete-show-matches-on-no-input t))
+;;   ;; (advice-add 'completion-at-point
+;;   ;; 	      :after #'minibuffer-hide-completions))
+
+;; ;; (setq tab-always-indent 'complete)
+
+;; Enable Vertico.
+(use-package vertico
+  :ensure t
+  :custom
+  (vertico-cycle t)
+  :init
+  (vertico-mode)
+  (vertico-multiform-mode)
+  (vertico-flat-mode))
+
+(use-package marginalia
+  :ensure t
+  :config
+  (marginalia-mode))
 
 (use-package embark
   :ensure t
@@ -220,11 +224,26 @@
   :hook
   (prog-mode . eglot-ensure))
 
-;; ========== ChatGPT ==========
+;; ========== AI Tools ==========
 (use-package gptel
   :ensure t
   :bind
   (("C-c g m" . gptel-menu)))
+
+;; Requirement for aidermacs
+(use-package transient
+  :ensure t)
+
+(use-package aidermacs
+  :ensure t
+  :bind (("C-c a" . aidermacs-transient-menu))
+  :config
+  ;; Set API_KEY in .bashrc, that will automatically
+  ;; (setenv "ANTHROPIC_API_KEY" "sk-...")
+  ;; Consider moving this to a secure location
+  :custom
+  (aidermacs-user-architect-mode t)
+  (aidermacs-default-model "gpt-4o"))
 
 ;; ========== Which key ==========
 (use-package which-key
