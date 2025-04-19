@@ -215,6 +215,12 @@
   (treesit-auto-add-to-auto-mode-alist 'all)
   (global-treesit-auto-mode))
 
+;; ========== PDFs ==========
+(use-package pdf-tools
+  :ensure t
+  :config
+  (setq pdf-view-use-scaling nil))
+
 ;; ========== Magit ==========
 (use-package magit
   :ensure t)
@@ -243,11 +249,25 @@
 ;;   :hook
 ;;   (prog-mode . eglot-ensure))
 
-;; ========== ChatGPT ==========
+;; ========== AI Tools ==========
 (use-package gptel
   :ensure t
+  :config
+  (setq gptel-model 'o3-mini
+	gptel-backend (gptel-make-gh-copilot "Copilot"))
+  (add-hook 'gptel-post-stream-hook 'gptel-auto-scroll)
+  (add-hook 'gptel-post-response-functions 'gptel-end-of-response)
   :bind
   (("C-c g m" . gptel-menu)))
+
+(use-package copilot
+  :vc (:url "https://github.com/copilot-emacs/copilot.el"
+            :rev :newest
+            :branch "main")
+  :config
+  (add-hook 'prog-mode-hook 'copilot-mode)
+  (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
+  (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion))
 
 ;; ========== Which key ==========
 (use-package which-key
