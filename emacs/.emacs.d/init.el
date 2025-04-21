@@ -46,10 +46,10 @@
 (setq search-whitespace-regexp ".*?")
 
 ;; Show line numbers in programming buffers
-(add-hook 'prog-mode-hook 'display-line-numbers-mode)
+;; (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
 ;; Make it count lines for correct line number width
-(setq display-line-numbers-width-start t)
+;; (setq display-line-numbers-width-start t)
 
 ;; ========== Terminals ==========
 (use-package eat
@@ -341,6 +341,9 @@
 (add-hook 'mrk-mode-hook 'eglot-ensure)
 
 ;; ========== Window management ==========
+;; Enable shift+arrows for window switching
+(windmove-default-keybindings)
+
 (defun rvb/kill-buffer-and-close-window ()
   "Kill the current buffer and close the window."
   (interactive)
@@ -352,4 +355,30 @@
                (not (window-live-p (get-buffer-window buffer))))
       (delete-window))))
 
+;; Killing a window closes the buffer
 (global-set-key (kbd "s-k") 'rvb/kill-buffer-and-close-window)
+
+;; Window traversal
+(defun rvb/other-window-backward (&optional n)
+  "Select Nth previous window."
+  (interactive "P")
+  (other-window (- (prefix-numeric-value n))))
+
+;; Bindings for forward and backward
+(global-set-key (kbd "C-c n") 'other-window)
+(global-set-key (kbd "C-c p") 'rvb/other-window-backward)
+
+;; Enable narrowing
+(put 'narrow-to-region 'disabled nil)
+
+;; ========== In-Buffer Movement ==========
+(use-package ultra-scroll
+
+  :vc (:url "https://github.com/jdtsmith/ultra-scroll") ; For Emacs>=30
+  :init
+  (setq scroll-conservatively 101 ; important!
+        scroll-margin 0) 
+  :config
+  (ultra-scroll-mode 1))
+
+
