@@ -226,28 +226,28 @@
   :ensure t)
 
 ;; ========== LSP ==========
-(use-package lsp-mode
-  :ensure t
-  :init
-  ;; set prefix for lsp-command-keymap
-  (setq lsp-keymap-prefix "C-c l")
-  :hook (
-	 ;; (xxx-mode .lsp)
-	 ;; which key
-	 (lsp-mode . lsp-enable-which-key-integration))
-  :commands lsp)
-
-(use-package lsp-pyright
-  :ensure t
-  :custom (lsp-pyright-langserver-command "basedpyright")
-  :hook (python-ts-mode . (lambda ()
-			    (require 'lsp-pyright)
-			    (lsp))))
-
-;; (use-package eglot
+;; (use-package lsp-mode
 ;;   :ensure t
-;;   :hook
-;;   (prog-mode . eglot-ensure))
+;;   :init
+;;   ;; set prefix for lsp-command-keymap
+;;   (setq lsp-keymap-prefix "C-c l")
+;;   :hook (
+;; 	 ;; (xxx-mode .lsp)
+;; 	 ;; which key
+;; 	 (lsp-mode . lsp-enable-which-key-integration))
+;;   :commands lsp)
+
+;; (use-package lsp-pyright
+;;   :ensure t
+;;   :custom (lsp-pyright-langserver-command "basedpyright")
+;;   :hook (python-ts-mode . (lambda ()
+;; 			    (require 'lsp-pyright)
+;; 			    (lsp))))
+
+(use-package eglot
+  :ensure t
+  :hook
+  (prog-mode . eglot-ensure))
 
 ;; ========== AI Tools ==========
 (use-package gptel
@@ -341,7 +341,7 @@
 (add-hook 'mrk-mode-hook 'eglot-ensure)
 
 ;; ========== Window management ==========
-;; Enable shift+arrows for window switching
+;; Enable keybindings for window switching
 (windmove-default-keybindings)
 
 (defun rvb/kill-buffer-and-close-window ()
@@ -381,4 +381,7 @@
   :config
   (ultra-scroll-mode 1))
 
-
+;; Disable changing text scale with the mouse
+(global-set-key (kbd "<pinch>") 'ignore)
+(global-set-key (kbd "<C-wheel-up>") 'ignore)
+(global-set-key (kbd "<C-wheel-down>") 'ignore)
