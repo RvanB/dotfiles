@@ -8,7 +8,13 @@
 (unless package-archive-contents
   (package-refresh-contents t))
 
-; Disable bell
+;; Disable lock files
+(setq create-lockfiles nil)
+
+;; Only bring up warnings at error level
+(setq warning-minimum-level :error)
+
+;; Disable bell
 (setq ring-bell-function 'ignore)
 
 ;; Don't show splash screen
@@ -61,24 +67,23 @@
 (set-frame-parameter nil 'ns-appearance 'light)
 (set-frame-parameter nil 'ns-transparent-titlebar nil)
 
-(setq modus-themes-common-palette-overrides
-      '((border-mode-line-active unspecified)
-        (border-mode-line-inactive unspecified)))
+;; (setq modus-themes-common-palette-overrides
+;;       '((border-mode-line-active unspecified)
+;;         (border-mode-line-inactive unspecified)))
 
 ;; Add all your customizations prior to loading the themes
 (setq modus-themes-italic-constructs t
       modus-themes-bold-constructs t)
 
-;; Use dark high contrast theme
-(load-theme 'modus-vivendi t)
+(load-theme 'modus-operandi t)
 
 ;; Change the color of the modeline
-(set-face-foreground 'mode-line "#FFFFFF")
-(set-face-background 'mode-line "#5E2A13")
+;; (set-face-foreground 'mode-line "#FFFFFF")
+;; (set-face-background 'mode-line "#5E2A13")
 
-(set-face-foreground 'font-lock-comment-face (modus-themes-get-color-value 'rust))
-(set-face-background 'line-number (modus-themes-get-color-value 'bg-main))
-(set-face-foreground 'line-number (modus-themes-get-color-value 'blue-warmer))
+;; (set-face-foreground 'font-lock-comment-face (modus-themes-get-color-value 'rust))
+;; (set-face-background 'line-number (modus-themes-get-color-value 'bg-main))
+;; (set-face-foreground 'line-number (modus-themes-get-color-value 'blue-warmer))
 
 ;; Disable menu bar
 (menu-bar-mode -1)
@@ -91,6 +96,9 @@
 (set-face-attribute 'default nil :font "Aporetic Sans Mono" :height 160)
 
 ;; ========== Completions ==========
+
+;; Auto complete pairs (parentheses, brackets, etc.)
+(electric-pair-mode 1)
 
 ;; (use-package icomplete
 ;;   :bind (:map icomplete-minibuffer-map
@@ -146,6 +154,10 @@
 (use-package savehist
   :init
   (savehist-mode))
+
+;; Enable auto completion and configure quitting
+(setq corfu-auto t
+      corfu-quit-no-match 'separator) ;; or t
 
 (use-package corfu
   :ensure t
@@ -248,26 +260,6 @@
   :ensure t
   :hook
   (prog-mode . eglot-ensure))
-
-;; ========== AI Tools ==========
-(use-package gptel
-  :ensure t
-  :config
-  (setq gptel-model 'o3-mini
-	gptel-backend (gptel-make-gh-copilot "Copilot"))
-  (add-hook 'gptel-post-stream-hook 'gptel-auto-scroll)
-  (add-hook 'gptel-post-response-functions 'gptel-end-of-response)
-  :bind
-  (("C-c g m" . gptel-menu)))
-
-(use-package copilot
-  :vc (:url "https://github.com/copilot-emacs/copilot.el"
-            :rev :newest
-            :branch "main")
-  :config
-  (add-hook 'prog-mode-hook 'copilot-mode)
-  (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
-  (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion))
 
 ;; ========== Which key ==========
 (use-package which-key
@@ -373,8 +365,10 @@
 
 ;; ========== In-Buffer Movement ==========
 (use-package ultra-scroll
-
-  :vc (:url "https://github.com/jdtsmith/ultra-scroll") ; For Emacs>=30
+  :pin "manual"
+  :vc (:url "https://github.com/jdtsmith/ultra-scroll"
+	    :rev :newest
+	    :branch "main")
   :init
   (setq scroll-conservatively 101 ; important!
         scroll-margin 0) 
@@ -385,3 +379,30 @@
 (global-set-key (kbd "<pinch>") 'ignore)
 (global-set-key (kbd "<C-wheel-up>") 'ignore)
 (global-set-key (kbd "<C-wheel-down>") 'ignore)
+
+(defun rvb/back-to-indentation-or-beginning ()
+  (interactive)
+  (if (= (point) (progn (back-to-indentation) (point)))
+      (beginning-of-line)))
+(global-set-key [remap move-beginning-of-line] 'rvb/back-to-indentation-or-beginning)
+(global-set-key [remap org-beginning-of-line] 'rvb/back-to-indentation-or-beginning)
+
+;; ========== AI Tools ==========
+(use-package gptel
+  :ensure t
+  :config
+  (setq gptel-model 'o3-mini
+	gptel-backend (gptel-make-gh-copilot "Copilot"))
+  (add-hook 'gptel-post-stream-hook 'gptel-auto-scroll)
+  (add-hook 'gptel-post-response-functions 'gptel-end-of-response)
+  :bind
+  (("C-c g m" . gptel-menu)))
+
+(use-package copilot
+  :vc (:url "https://github.com/copilot-emacs/copilot.el"
+            :rev :newest
+            :branch "main")
+  :config
+  ;; (add-hook 'prog-mode-hook 'copilot-mode)
+  (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
+  (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion))

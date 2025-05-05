@@ -15,6 +15,9 @@ export PATH="$HOME/bin:$PATH"
 # command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 # eval "$(pyenv init -)"
 
+[ -n "$EAT_SHELL_INTEGRATION_DIR" ] && \
+  source "$EAT_SHELL_INTEGRATION_DIR/zsh"
+
 ########## COMPLETIONS ##########
 
 # fpath=(~/.zsh/completion $fpath)
