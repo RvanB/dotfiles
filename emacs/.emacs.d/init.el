@@ -314,6 +314,19 @@
           (insert json-content))
         (message "Configuration file saved to %s" file-path)))))
 
+(defun rvb/ruff-check-project ()
+  ;; get project root with (when-let ((project (project-current))) (project-root project))
+  (interactive)
+  ;; Run "NO_COLOR=1 ruff check -q <project root>" and display in a buffer in compilation mode
+  (let ((output-buffer (get-buffer-create "*ruff-check*")))
+	(with-current-buffer output-buffer
+	  (erase-buffer)
+	  (insert (shell-command-to-string (format "NO_COLOR=1 ruff check -q %s" (when-let ((project (project-current))) (project-root project)))))
+	  (compilation-mode)
+	  (local-set-key "q" (lambda () (interactive) (quit-window t))))
+	(display-buffer output-buffer)))
+(global-set-key (kbd "C-c r") 'rvb/ruff-check-project)
+
 ;; ========== MRK Mode ==========
 ;; Create a major mode for .mrk files called MRK
 (define-derived-mode mrk-mode text-mode "MRK"
