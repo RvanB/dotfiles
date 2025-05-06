@@ -62,6 +62,7 @@
   :ensure t)
 
 ;; ========== Appearance ==========
+
 (fringe-mode 0)
 
 (set-frame-parameter nil 'ns-appearance 'light)
@@ -399,6 +400,32 @@
       (beginning-of-line)))
 (global-set-key [remap move-beginning-of-line] 'rvb/back-to-indentation-or-beginning)
 (global-set-key [remap org-beginning-of-line] 'rvb/back-to-indentation-or-beginning)
+
+;; ========== Search Improvements ==========
+;; https://emacs.stackexchange.com/questions/53004/improving-isearch/53006#53006
+(defun rvb/isearch-repeat-forward+ ()
+  (interactive)
+  (unless isearch-forward
+    (when isearch-other-end
+      (goto-char isearch-other-end)))
+  (isearch-repeat-forward)
+  (unless isearch-success
+    (isearch-repeat-forward)))
+
+(defun rvb/isearch-repeat-backward+ ()
+  (interactive)
+  (when (and isearch-forward isearch-other-end)
+    (goto-char isearch-other-end))
+  (isearch-repeat-backward)
+  (unless isearch-success
+    (isearch-repeat-backward)))
+
+(keymap-set isearch-mode-map "C-s" 'rvb/isearch-repeat-forward+)
+(keymap-set isearch-mode-map "C-r" 'rvb/isearch-repeat-backward+)
+
+;; ========== Org mode ==========
+(setq org-directory "~/orgfiles/")
+(setq org-agenda-files (list org-directory))
 
 ;; ========== AI Tools ==========
 (use-package gptel
