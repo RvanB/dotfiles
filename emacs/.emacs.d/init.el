@@ -121,6 +121,12 @@
 
 (setq tab-always-indent 'complete)
 
+;; Detect indentation
+(use-package dtrt-indent
+  :ensure t)
+
+(dtrt-indent-global-mode t)
+
 ;; Enable Vertico.
 (use-package vertico
   :ensure t
@@ -128,8 +134,8 @@
   (vertico-cycle t)
   :init
   (vertico-mode)
-  (vertico-multiform-mode)
-  (vertico-flat-mode))
+  (vertico-multiform-mode))
+  
 
 (use-package marginalia
   :ensure t
@@ -268,11 +274,18 @@
   :config
   (which-key-mode))
 
-;; ========== Expand region ==========
+;; ========== Text editing improvements ==========
 (use-package expand-region
   :ensure t
   :bind
   ("C-=" . er/expand-region))
+
+(use-package smart-hungry-delete
+  :ensure t
+  :bind (([remap backward-delete-char-untabify] . smart-hungry-delete-backward-char)
+	 ([remap delete-backward-char] . smart-hungry-delete-backward-char)
+	 ([remap delete-char] . smart-hungry-delete-forward-char))
+  :init (smart-hungry-delete-add-default-hooks))-000
 
 ;; ========== Python stuff ==========
 (defun rvb/pyright-config ()
