@@ -62,7 +62,7 @@
   :ensure t)
 
 ;;; Appearance
-
+  
 (fringe-mode 0)
 
 ;; (set-frame-parameter nil 'ns-appearance 'light)
@@ -102,7 +102,7 @@
 ;;; Completions
 
 ;;; Auto complete pairs (parentheses, brackets, etc.)
-(electric-pair-mode 1)
+;; (electric-pair-mode 1)
 
 ;; (use-package icomplete
 ;;   :bind (:map icomplete-minibuffer-map
@@ -335,8 +335,7 @@
           (toml       . ("https://github.com/tree-sitter/tree-sitter-toml"))
           (tsx        . ("https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src"))
           (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src"))
-          (vue        . ("https://github.com/tree-sitter-grammars/tree-sitter-vue"))
-          (yaml       . ("https://github.com/tree-sitter-grammars/tree-sitter-yaml")))))
+          (vue        . ("https://github.com/tree-sitter-grammars/tree-sitter-vue")))))
 
 (use-package treesit-auto
   :ensure t
@@ -387,6 +386,14 @@
   (which-key-mode))
 
 ;;; Text editing improvements
+(use-package undo-tree
+  :ensure t
+  :init
+  ;; Prevent undo tree files from polluting your git repo
+  (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
+  :config
+  (global-undo-tree-mode))
+
 (use-package expand-region
   :ensure t
   :bind
