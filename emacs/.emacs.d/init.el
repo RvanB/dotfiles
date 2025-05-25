@@ -69,7 +69,6 @@
 ;; (set-frame-parameter nil 'ns-transparent-titlebar nil)
 
 (use-package ef-themes :ensure t)
-(load-theme 'ef-spring t)
 
 ;; (setq modus-themes-common-palette-overrides
 ;;       '((border-mode-line-active unspecified)
@@ -388,11 +387,11 @@
 ;;; Text editing improvements
 (use-package undo-tree
   :ensure t
-  :init
-  ;; Prevent undo tree files from polluting your git repo
-  (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
   :config
   (global-undo-tree-mode))
+
+;; Prevent undo tree files from polluting your git repo
+(setq undo-tree-history-directory-alist '((".*" . "~/.emacs.d/undo")))
 
 (use-package expand-region
   :ensure t
@@ -436,6 +435,18 @@
 
 ;;; Delete selection on type
 (delete-selection-mode 1)
+
+;;; Python stuff
+
+;;; PET - Python Executable Tracker
+(use-package pet
+  :ensure t
+  :config
+  (add-hook 'python-ts-mode-hook
+            (lambda ()
+              (setq-local python-shell-interpreter (pet-executable-find "python"))
+              (setq-local python-shell-virtualenv-root (pet-virtualenv-root)))))
+
 
 ;; Flymake ruff
 (use-package flymake-ruff
@@ -488,6 +499,7 @@
                                       "**/*.pyo"])
                           (reportMissingImports . t)
                           (reportMissingTypeStubs . t)
+                          (reportUnusedCallResult . :json-false)
                           (typeCheckingMode . "basic")))))
       (let ((file-path (expand-file-name "pyrightconfig.json" directory)))
         (with-temp-file file-path
