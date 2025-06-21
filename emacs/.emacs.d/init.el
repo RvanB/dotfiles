@@ -78,7 +78,7 @@
 ;; (setq modus-themes-italic-constructs t
 ;;       modus-themes-bold-constructs t)
 
-;; (load-theme 'modus-vivendi t)
+(load-theme 'ef-spring t)
 
 ;;; Change the color of the modeline
 ;; (set-face-foreground 'mode-line "#FFFFFF")
@@ -639,3 +639,10 @@
   ;; (add-hook 'prog-mode-hook 'copilot-mode)
   (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
   (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion))
+
+(use-package aidermacs
+  :ensure t
+  :bind (("C-c a" . aidermacs-transient-menu))
+  :custom
+  (aidermacs-default-chat-mode 'architect)
+  (aidermacs-default-model "openai/claude-3.7-sonnet"))
