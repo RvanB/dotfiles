@@ -642,6 +642,10 @@
 
 (use-package aidermacs
   :ensure t
+  :init
+  ;; Copy Copilot token from shell environment
+  (exec-path-from-shell-copy-env "OPENAI_API_BASE")
+  (exec-path-from-shell-copy-env "OPENAI_API_KEY")
   :bind (("C-c a" . aidermacs-transient-menu))
   :custom
   (aidermacs-default-chat-mode 'architect)

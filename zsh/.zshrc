@@ -15,6 +15,11 @@ export PATH="$HOME/bin:$PATH"
 # command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 # eval "$(pyenv init -)"
 
+########## SECRETS ##########
+# Use Copilot chat LLMs for Aider (and aidermacs)
+export OPENAI_API_BASE="https://api.githubcopilot.com"
+export OPENAI_API_KEY=$(pass show github.com/copilot/token)
+
 ########## COMPLETIONS ##########
 
 # fpath=(~/.zsh/completion $fpath)
