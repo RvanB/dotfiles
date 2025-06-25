@@ -640,13 +640,8 @@
   (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
   (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion))
 
-(use-package aidermacs
+(use-package aider
   :ensure t
-  :init
-  ;; Copy Copilot token from shell environment
-  (exec-path-from-shell-copy-env "OPENAI_API_BASE")
-  (exec-path-from-shell-copy-env "OPENAI_API_KEY")
-  :bind (("C-c a" . aidermacs-transient-menu))
-  :custom
-  (aidermacs-default-chat-mode 'architect)
-  (aidermacs-default-model "openai/claude-3.7-sonnet"))
+  :config
+  (setq aider-args '("--model" "openai/claude-3.7-sonnet-thought" "--no-auto-accept-architect" "--no-auto-commits"))
+  (global-set-key (kbd "C-c e") 'aider-transient-menu))
