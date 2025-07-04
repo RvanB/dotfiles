@@ -8,6 +8,8 @@
 (unless package-archive-contents
   (package-refresh-contents t))
 
+(setq package-install-upgrade-built-in t)
+
 ;;; Disable lock files
 (setq create-lockfiles nil)
 
@@ -31,6 +33,9 @@
 ;;; Auto revert EVERYTHING
 (global-auto-revert-mode 1)
 (setq global-auto-revert-non-file-buffers t)
+
+;;; Winner mode
+(winner-mode)
 
 ;;; Mac OS X Settings
 (when (string= system-type "darwin")       
@@ -78,7 +83,7 @@
 ;; (setq modus-themes-italic-constructs t
 ;;       modus-themes-bold-constructs t)
 
-(load-theme 'ef-spring t)
+;; (load-theme 'modus-operandi t)
 
 ;;; Change the color of the modeline
 ;; (set-face-foreground 'mode-line "#FFFFFF")
@@ -422,7 +427,7 @@
   :bind (([remap backward-delete-char-untabify] . smart-hungry-delete-backward-char)
 	 ([remap delete-backward-char] . smart-hungry-delete-backward-char)
 	 ([remap delete-char] . smart-hungry-delete-forward-char))
-  :init (smart-hungry-delete-add-default-hooks))-000
+  :init (smart-hungry-delete-add-default-hooks))
 
 ;;; Remap M-f and M-b to move by symbol instead of word
 ;; (global-set-key (kbd "M-f") #'forward-symbol)
@@ -438,20 +443,21 @@
 
 ;;; Python stuff
 
+;; This is causing problems with syntax highlighting on python-ts-mode startup.
 ;;; PET - Python Executable Tracker
-(use-package pet
-  :ensure t
-  :config
-  (add-hook 'python-ts-mode-hook
-            (lambda ()
-              (setq-local python-shell-interpreter (pet-executable-find "python"))
-              (setq-local python-shell-virtualenv-root (pet-virtualenv-root)))))
+;; (use-package pet
+;;   :ensure t
+;;   :config
+;;   (add-hook 'python-ts-mode-hook
+;;             (lambda ()
+;;               (setq-local python-shell-interpreter (pet-executable-find "python"))
+;;               (setq-local python-shell-virtualenv-root (pet-virtualenv-root)))))
 
 
 ;; Flymake ruff
-(use-package flymake-ruff
-  :ensure t
-  :hook (eglot-managed-mode . flymake-ruff-load))
+;; (use-package flymake-ruff
+;;   :ensure t
+;;   :hook (eglot-managed-mode . flymake-ruff-load))
 
 ;; This function isn't working for some reason, provided by the flymake-ruff git repo
 ;; (defun rvb/filter-eglot-diagnostics (diags)
@@ -643,5 +649,6 @@
 (use-package aider
   :ensure t
   :config
-  (setq aider-args '("--model" "openai/claude-3.7-sonnet-thought" "--no-auto-accept-architect" "--no-auto-commits"))
+  (setq aider-args '("--model" "openai/claude-3.7-sonnet" "--no-auto-accept-architect" "--no-auto-commits"))
   (global-set-key (kbd "C-c e") 'aider-transient-menu))
+
