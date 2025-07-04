@@ -66,6 +66,8 @@
 (use-package eat
   :ensure t)
 
+(global-set-key (kbd "C-c t") 'eat-project)
+
 ;;; Appearance
   
 (fringe-mode 0)
@@ -83,7 +85,7 @@
 ;; (setq modus-themes-italic-constructs t
 ;;       modus-themes-bold-constructs t)
 
-;; (load-theme 'modus-operandi t)
+(load-theme 'ef-cyprus t)
 
 ;;; Change the color of the modeline
 ;; (set-face-foreground 'mode-line "#FFFFFF")
@@ -575,16 +577,16 @@
 (put 'narrow-to-region 'disabled nil)
 
 ;;; In-Buffer Movement
-(use-package ultra-scroll
-  :pin "manual"
-  :vc (:url "https://github.com/jdtsmith/ultra-scroll"
-	    :rev :newest
-	    :branch "main")
-  :init
-  (setq scroll-conservatively 101 ; important!
-        scroll-margin 0) 
-  :config
-  (ultra-scroll-mode 1))
+;; (use-package ultra-scroll
+;;   :pin "manual"
+;;   :vc (:url "https://github.com/jdtsmith/ultra-scroll"
+;; 	    :rev :newest
+;; 	    :branch "main")
+;;   :init
+;;   (setq scroll-conservatively 101 ; important!
+;;         scroll-margin 0) 
+;;   :config
+;;   (ultra-scroll-mode 1))
 
 ;;; Disable changing text scale with the mouse
 (global-set-key (kbd "<pinch>") 'ignore)
@@ -651,4 +653,7 @@
   :config
   (setq aider-args '("--model" "openai/claude-3.7-sonnet" "--no-auto-accept-architect" "--no-auto-commits"))
   (global-set-key (kbd "C-c e") 'aider-transient-menu))
+
+;;; Custom key bindings
+(global-set-key (kbd "s-p") 'project-switch-project)
 
