@@ -362,25 +362,6 @@
 (use-package magit
   :ensure t)
 
-;;; LSP
-;; (use-package lsp-mode
-;;   :ensure t
-;;   :init
-;;   ;; set prefix for lsp-command-keymap
-;;   (setq lsp-keymap-prefix "C-c l")
-;;   :hook (
-;; 	 ;; (xxx-mode .lsp)
-;; 	 ;; which key
-;; 	 (lsp-mode . lsp-enable-which-key-integration))
-;;   :commands lsp)
-
-;; (use-package lsp-pyright
-;;   :ensure t
-;;   :custom (lsp-pyright-langserver-command "basedpyright")
-;;   :hook (python-ts-mode . (lambda ()
-;; 			    (require 'lsp-pyright)
-;; 			    (lsp))))
-
 (use-package eglot
   :ensure t
   :hook
@@ -545,40 +526,8 @@
     ))
 
 (require 'eglot)
-(add-to-list 'eglot-server-programs '(marc-mode . ("/Users/rvanbron/marc-lsp/.venv/bin/python" "/Users/rvanbron/marc-lsp/marc_lsp_server.py")))
+(add-to-list 'eglot-server-programs '(marc-mode . ("marc-lsp-server")))
 (add-hook 'marc-mode-hook 'eglot-ensure)
-
-(use-package lsp-mode
-  :ensure t
-  :init
-  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
-  (setq lsp-keymap-prefix "C-c l")
-  :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-         (marc-mode . lsp)
-         ;; if you want which-key integration
-         (lsp-mode . lsp-enable-which-key-integration))
-  :commands lsp)
-
-
-
-(require 'lsp-mode)
-
-(lsp-register-client
- (make-lsp-client
-  :new-connection (lsp-stdio-connection '("/Users/rvanbron/marc-lsp/.venv/bin/python" "/Users/rvanbron/marc-lsp/marc_lsp_server.py"))
-  :major-modes '(marc-mode) ;; replace with actual major mode, e.g., 'python-mode
-  :server-id 'marc-ls))
-
-(use-package lsp-ui
-  :ensure t
-  :commands lsp-ui-mode
-  :hook (lsp-mode . lsp-ui-mode)
-  :config
-  (setq lsp-ui-doc-enable t
-        lsp-ui-doc-show-with-mouse nil
-        lsp-ui-doc-show-with-cursor t
-        lsp-ui-doc-position 'at-point))
-
 
 ;;; Window management
 ;;; Enable keybindings for window switching
