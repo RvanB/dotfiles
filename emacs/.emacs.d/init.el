@@ -76,25 +76,18 @@
 ;; (set-frame-parameter nil 'ns-appearance 'light)
 ;; (set-frame-parameter nil 'ns-transparent-titlebar nil)
 
-(use-package ef-themes :ensure t)
+;; (set-face-attribute 'font-lock-keyword-face nil :slant 'italic)
 
-;; (setq modus-themes-common-palette-overrides
-;;       '((border-mode-line-active unspecified)
-;;         (border-mode-line-inactive unspecified)))
+(use-package ef-themes :ensure t)
 
 ;;; Add all your customizations prior to loading the themes
 (setq modus-themes-italic-constructs t
       modus-themes-bold-constructs t)
 
-(load-theme 'modus-operandi t)
+(setq ef-themes-italic-constructs t
+      ef-themes-italic-comments t)
 
-;;; Change the color of the modeline
-;; (set-face-foreground 'mode-line "#FFFFFF")
-;; (set-face-background 'mode-line "#5E2A13")
-
-;; (set-face-foreground 'font-lock-comment-face (modus-themes-get-color-value 'rust))
-;; (set-face-background 'line-number (modus-themes-get-color-value 'bg-main))
-;; (set-face-foreground 'line-number (modus-themes-get-color-value 'blue-warmer))
+(load-theme 'ef-tritanopia-dark t)
 
 ;;; Disable menu bar
 (menu-bar-mode -1)
@@ -104,30 +97,32 @@
 (tool-bar-mode -1)
 
 ;;; Set the font
-;; (set-face-attribute 'default nil :font "Aporetic Sans Mono" :height 140)
+(set-face-attribute 'default nil :font "Aporetic Sans Mono" :height 160)
 
-;;; Completions
+(use-package eldoc-box
+  :ensure t
+  :config
+  (defun my-eldoc-box-update-faces ()
+    "Update eldoc-box faces based on the current theme."
+    (set-face-attribute 'eldoc-box-border nil
+                        :background (frame-parameter nil 'foreground-color))
+    (set-face-attribute 'eldoc-box-body nil
+                        :family "Aporetic Sans" :height 160
+                        :background (frame-parameter nil 'background-color)))
+  (my-eldoc-box-update-faces)
+  (eldoc-box-hover-at-point-mode)
+  (advice-add 'load-theme :after (lambda (&rest _) (my-eldoc-box-update-faces))))
 
-;;; Auto complete pairs (parentheses, brackets, etc.)
-;; (electric-pair-mode 1)
+(defun eglot-open-link ()
+  (interactive)
+  (if-let* ((url (get-text-property (point) 'help-echo)))
+      (browse-url url)
+    (user-error "No URL at point")))
 
-;; (use-package icomplete
-;;   :bind (:map icomplete-minibuffer-map
-;; 	      ("TAB" . icomplete-force-complete)
-;; 	      ("C-n" . icomplete-forward-completions)
-;; 	      ("C-p" . icomplete-backward-completions))
-;;   :hook
-;;   (after-init . (lambda ()
-;; 		  (fido-mode -1)
-;; 		  (icomplete-vertical-mode 1)))
-;;   :config
-;;   (keymap-unset icomplete-minibuffer-map "C-.")
-;;   (keymap-unset icomplete-minibuffer-map "C-,")
-;;   ;; (setq icomplete-in-buffer t)
-;;   (setq tab-always-indent 'complete)
-;;   (setq icomplete-show-matches-on-no-input t))
-;;   ;; (advice-add 'completion-at-point
-;;   ;; 	      :after #'minibuffer-hide-completions))
+(define-advice eldoc-display-in-buffer (:after (&rest _) update-keymap)
+  (with-current-buffer eldoc--doc-buffer
+    (keymap-local-set "RET" #'eglot-open-link)
+    ))
 
 (setq tab-always-indent 'complete)
 
@@ -514,16 +509,7 @@
 (load (expand-file-name (concat user-emacs-directory "marc-mode.el")))
 (require 'marc-mode)
 
-(defun eglot-open-link ()
-  (interactive)
-  (if-let* ((url (get-text-property (point) 'help-echo)))
-      (browse-url url)
-    (user-error "No URL at point")))
 
-(define-advice eldoc-display-in-buffer (:after (&rest _) update-keymap)
-  (with-current-buffer eldoc--doc-buffer
-    (keymap-local-set "RET" #'eglot-open-link)
-    ))
 
 (require 'eglot)
 (add-to-list 'eglot-server-programs '(marc-mode . ("marc-lsp-server")))
@@ -632,9 +618,14 @@
   (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
   (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion))
 
+
+
+
 (use-package aider
   :ensure t
   :config
+  (exec-path-from-shell-copy-env "OPENAI_API_BASE")
+  (exec-path-from-shell-copy-env "OPENAI_API_KEY")
   (setq aider-args '("--model" "openai/claude-3.7-sonnet" "--no-auto-accept-architect" "--no-auto-commits"))
   (global-set-key (kbd "C-c e") 'aider-transient-menu))
 
