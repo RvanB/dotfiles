@@ -5,6 +5,7 @@
                          ("nongnu" . "https://elpa.nongnu.org/nongnu/")
                          ("elpa" . "https://elpa.gnu.org/packages/")))
 
+
 (unless package-archive-contents
   (package-refresh-contents t))
 
@@ -57,10 +58,10 @@
 (setq search-whitespace-regexp ".*?")
 
 ;;; Show line numbers in programming buffers
-;; (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+(add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
 ;;; Make it count lines for correct line number width
-;; (setq display-line-numbers-width-start t)
+(setq display-line-numbers-width-start t)
 
 ;;; Terminals
 (use-package eat
@@ -82,10 +83,10 @@
 ;;         (border-mode-line-inactive unspecified)))
 
 ;;; Add all your customizations prior to loading the themes
-;; (setq modus-themes-italic-constructs t
-;;       modus-themes-bold-constructs t)
+(setq modus-themes-italic-constructs t
+      modus-themes-bold-constructs t)
 
-(load-theme 'ef-cyprus t)
+(load-theme 'modus-operandi t)
 
 ;;; Change the color of the modeline
 ;; (set-face-foreground 'mode-line "#FFFFFF")
@@ -103,7 +104,7 @@
 (tool-bar-mode -1)
 
 ;;; Set the font
-(set-face-attribute 'default nil :font "Aporetic Sans Mono" :height 160)
+;; (set-face-attribute 'default nil :font "Aporetic Sans Mono" :height 140)
 
 ;;; Completions
 
@@ -527,23 +528,57 @@
 	(display-buffer output-buffer)))
 (global-set-key (kbd "C-c r") 'rvb/ruff-check-project)
 
-;; MRK Mode
-;; Create a major mode for .mrk files called MRK
-(define-derived-mode mrk-mode text-mode "MRK"
-  "Major mode for editing .mrk files."
-  ;; Define the syntax highlighting rules
-  (font-lock-add-keywords
-   nil
-   '(("^=[0-9A-Z][0-9A-Z][0-9A-Z]" . font-lock-keyword-face) ;; Tags
-     ("$[a-z0-9]" . font-lock-variable-name-face))) ;; Subfields
+;; MARC Mode
 
-  (setq font-lock-defaults '(nil)))
+(load (expand-file-name (concat user-emacs-directory "marc-mode.el")))
+(require 'marc-mode)
 
-(add-to-list 'auto-mode-alist '("\\.mrk\\'" . mrk-mode))
+(defun eglot-open-link ()
+  (interactive)
+  (if-let* ((url (get-text-property (point) 'help-echo)))
+      (browse-url url)
+    (user-error "No URL at point")))
+
+(define-advice eldoc-display-in-buffer (:after (&rest _) update-keymap)
+  (with-current-buffer eldoc--doc-buffer
+    (keymap-local-set "RET" #'eglot-open-link)
+    ))
 
 (require 'eglot)
-(add-to-list 'eglot-server-programs '(mrk-mode . ("/Users/rvanbron/test-lsp/.venv/bin/python" "/Users/rvanbron/test-lsp/test.py")))
-(add-hook 'mrk-mode-hook 'eglot-ensure)
+(add-to-list 'eglot-server-programs '(marc-mode . ("/Users/rvanbron/marc-lsp/.venv/bin/python" "/Users/rvanbron/marc-lsp/marc_lsp_server.py")))
+(add-hook 'marc-mode-hook 'eglot-ensure)
+
+(use-package lsp-mode
+  :ensure t
+  :init
+  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+  (setq lsp-keymap-prefix "C-c l")
+  :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
+         (marc-mode . lsp)
+         ;; if you want which-key integration
+         (lsp-mode . lsp-enable-which-key-integration))
+  :commands lsp)
+
+
+
+(require 'lsp-mode)
+
+(lsp-register-client
+ (make-lsp-client
+  :new-connection (lsp-stdio-connection '("/Users/rvanbron/marc-lsp/.venv/bin/python" "/Users/rvanbron/marc-lsp/marc_lsp_server.py"))
+  :major-modes '(marc-mode) ;; replace with actual major mode, e.g., 'python-mode
+  :server-id 'marc-ls))
+
+(use-package lsp-ui
+  :ensure t
+  :commands lsp-ui-mode
+  :hook (lsp-mode . lsp-ui-mode)
+  :config
+  (setq lsp-ui-doc-enable t
+        lsp-ui-doc-show-with-mouse nil
+        lsp-ui-doc-show-with-cursor t
+        lsp-ui-doc-position 'at-point))
+
 
 ;;; Window management
 ;;; Enable keybindings for window switching
@@ -570,23 +605,23 @@
   (other-window (- (prefix-numeric-value n))))
 
 ;;; Bindings for forward and backward
-(global-set-key (kbd "C-c n") 'other-window)
-(global-set-key (kbd "C-c p") 'rvb/other-window-backward)
+(global-set-key (kbd "C-<tab>") 'other-window)
+;; (global-set-key (kbd "C-s-<tab>") 'rvb/other-window-backward)
 
 ;;; Enable narrowing
 (put 'narrow-to-region 'disabled nil)
 
 ;;; In-Buffer Movement
-;; (use-package ultra-scroll
-;;   :pin "manual"
-;;   :vc (:url "https://github.com/jdtsmith/ultra-scroll"
-;; 	    :rev :newest
-;; 	    :branch "main")
-;;   :init
-;;   (setq scroll-conservatively 101 ; important!
-;;         scroll-margin 0) 
-;;   :config
-;;   (ultra-scroll-mode 1))
+(use-package ultra-scroll
+  :pin "manual"
+  :vc (:url "https://github.com/jdtsmith/ultra-scroll"
+	    :rev :newest
+	    :branch "main")
+  :init
+  (setq scroll-conservatively 101 ; important!
+        scroll-margin 0))
+  ;; :config
+  ;; (ultra-scroll-mode 1))
 
 ;;; Disable changing text scale with the mouse
 (global-set-key (kbd "<pinch>") 'ignore)
