@@ -79,15 +79,6 @@
 
 ;; (set-face-attribute 'font-lock-keyword-face nil :slant 'italic)
 
-(setq dashboard-items '((recents   . 10)
-                        (bookmarks . 10)
-                        (projects  . 10)
-                        (agenda    . 5)))
-
-(use-package dashboard
-  :ensure t
-  :config
-  (dashboard-setup-startup-hook))
 
 (use-package ef-themes :ensure t)
 
@@ -102,7 +93,6 @@
   :ensure t)
 
 (require 'autothemer)
-(load (expand-file-name (concat user-emacs-directory "rose-pine-theme.el")))
 
 (load-theme 'modus-vivendi t)
 
@@ -571,9 +561,9 @@
 	    :branch "main")
   :init
   (setq scroll-conservatively 101 ; important!
-        scroll-margin 0))
-  ;; :config
-  ;; (ultra-scroll-mode 1))
+        scroll-margin 0)
+  :config
+  (ultra-scroll-mode 1))
 
 ;;; Disable changing text scale with the mouse
 (global-set-key (kbd "<pinch>") 'ignore)
