@@ -99,7 +99,7 @@
       standard-themes-prompts '(bold))
 
 (use-package standard-themes :ensure t)
-(load-theme 'standard-light t)
+(load-theme 'ef-dark t)
 
 (use-package mood-line
   :ensure t
@@ -107,10 +107,10 @@
   (setq mood-line-format mood-line-format-default)
   (mood-line-mode))
 
-(use-package spacious-padding
-  :ensure t
-  :config
-  (spacious-padding-mode))
+;; (use-package spacious-padding
+;;   :ensure t
+;;   :config
+;;   (spacious-padding-mode))
 
 ;; (use-package autothemer
 ;;   :ensure t)
@@ -124,8 +124,8 @@
 (tool-bar-mode -1)
 
 ;;; Set the font
-(set-face-attribute 'default nil :font "MonoLisa 14")
-(set-face-attribute 'variable-pitch nil :font "Helvetica 16")
+(set-face-attribute 'default nil :font "Aporetic Sans Mono 14")
+(set-face-attribute 'variable-pitch nil :font "Aporetic Sans 14")
 
 (use-package eldoc-box
   :ensure t
@@ -136,7 +136,7 @@
     (set-face-attribute 'eldoc-box-border nil
                         :background (frame-parameter nil 'foreground-color))
     (set-face-attribute 'eldoc-box-body nil
-                        :font "MonoLisa 14"
+                        :font "Aporetic Sans 14"
                         :background (frame-parameter nil 'background-color)))
   (my-eldoc-box-update-faces)
   (advice-add 'load-theme :after (lambda (&rest _) (my-eldoc-box-update-faces))))
@@ -288,15 +288,15 @@
   ;; to be run in the current's tab (so, current project's) root directory
   (otpp-override-mode 1))
 
-(use-package modern-tab-bar
-  :vc (:url "https://github.com/aaronjensen/emacs-modern-tab-bar.git"
-            :rev :newest
-            :branch "main")
-  :config
-  (setq tab-bar-show t
-        tab-bar-new-button nil
-        tab-bar-close-button-show nil)
-  (modern-tab-bar-mode))
+;; (use-package modern-tab-bar
+;;   :vc (:url "https://github.com/aaronjensen/emacs-modern-tab-bar.git"
+;;             :rev :newest
+;;             :branch "main")
+;;   :config
+;;   (setq tab-bar-show t
+;;         tab-bar-new-button nil
+;;         tab-bar-close-button-show nil)
+;;   (modern-tab-bar-mode))
 
 (use-package marginalia
   :ensure t
