@@ -1,3 +1,4 @@
+
 ;;; Set up package archives 
 (require 'package)
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
@@ -74,37 +75,57 @@
   
 (fringe-mode 0)
 
-(set-frame-parameter nil 'ns-appearance 'dark)
-(set-frame-parameter nil 'ns-transparent-titlebar nil)
+
+;; (set-frame-parameter nil 'ns-appearance 'light)
+;; (set-frame-parameter nil 'ns-transparent-titlebar nil)
 
 ;; (set-face-attribute 'font-lock-keyword-face nil :slant 'italic)
 
 
+;; ef themes
+(setq ef-themes-italic-constructs t
+      ef-themes-bold-constructs t
+      ef-themes-italic-comments t)
 (use-package ef-themes :ensure t)
 
-;;; Add all your customizations prior to loading the themes
+;; Modus themes
 (setq modus-themes-italic-constructs t
       modus-themes-bold-constructs t)
 
-(setq ef-themes-italic-constructs t
-      ef-themes-italic-comments t)
+;; Standard themes
+(setq standard-themes-italic-constructs t
+      standard-themes-bold-constructs t
+      standard-themes-italic-comments t
+      standard-themes-prompts '(bold))
 
-(use-package autothemer
-  :ensure t)
+(use-package standard-themes :ensure t)
+(load-theme 'standard-light t)
 
-(require 'autothemer)
+(use-package mood-line
+  :ensure t
+  :config
+  (setq mood-line-format mood-line-format-default)
+  (mood-line-mode))
 
-(load-theme 'modus-vivendi t)
+(use-package spacious-padding
+  :ensure t
+  :config
+  (spacious-padding-mode))
+
+;; (use-package autothemer
+;;   :ensure t)
+;; (require 'autothemer)
 
 ;;; Disable menu bar
-(menu-bar-mode -1)
+;; (menu-bar-mode -1)
 ;;; Disable the scroll bar
 (scroll-bar-mode -1)
 ;;; Disable tool bar
 (tool-bar-mode -1)
 
 ;;; Set the font
-(set-face-attribute 'default nil :font "NanumGothicCoding 16")
+(set-face-attribute 'default nil :font "MonoLisa 14")
+(set-face-attribute 'variable-pitch nil :font "Helvetica 16")
 
 (use-package eldoc-box
   :ensure t
@@ -115,7 +136,7 @@
     (set-face-attribute 'eldoc-box-border nil
                         :background (frame-parameter nil 'foreground-color))
     (set-face-attribute 'eldoc-box-body nil
-                        :font "NanumGothicCoding 16"
+                        :font "MonoLisa 14"
                         :background (frame-parameter nil 'background-color)))
   (my-eldoc-box-update-faces)
   (advice-add 'load-theme :after (lambda (&rest _) (my-eldoc-box-update-faces))))
@@ -251,19 +272,11 @@
   (vertico-mode)
   (vertico-multiform-mode))
 
-;; Switch tab-bar-format-tabs to tab-bar-format-tabs-groups
-
-;; (use-package project-tab-groups
-;;   :ensure
-;;   :config
-;;   (project-tab-groups-mode 1))
-
 (setq tab-bar-format
       '(tab-bar-format-tabs
         tab-bar-separator
         tab-bar-format-align-right))
-
-(add-to-list 'tab-bar-format #'tab-bar-format-menu-bar)
+(tab-bar-mode)
 
 (use-package otpp
   :ensure t
@@ -275,12 +288,15 @@
   ;; to be run in the current's tab (so, current project's) root directory
   (otpp-override-mode 1))
 
-
-;; (use-package vertico-posframe
-;;   :ensure t
-;;   :after vertico
-;;   :config
-;;   (vertico-posframe-mode 1))
+(use-package modern-tab-bar
+  :vc (:url "https://github.com/aaronjensen/emacs-modern-tab-bar.git"
+            :rev :newest
+            :branch "main")
+  :config
+  (setq tab-bar-show t
+        tab-bar-new-button nil
+        tab-bar-close-button-show nil)
+  (modern-tab-bar-mode))
 
 (use-package marginalia
   :ensure t

@@ -1,3 +1,0 @@
-[submodule "emacs/copilot.el"]
-	path = emacs/.emacs.d/copilot.el
-	url = https://github.com/zerolfx/copilot.el
