@@ -20,6 +20,9 @@ export PATH="$HOME/bin:$PATH"
 export OPENAI_API_BASE="https://api.githubcopilot.com"
 export OPENAI_API_KEY=$(pass show github.com/copilot/token)
 
+# Set environment variables for Claude on Bedrock:
+$(pass show aws.com/bedrock/inference-profile)
+
 ########## COMPLETIONS ##########
 
 # fpath=(~/.zsh/completion $fpath)
@@ -65,7 +68,7 @@ function git_prompt() {
   fi
 }
 
-PROMPT=$'%f%T %n@%m%f%k %{$fg[magenta]%}${PWD/#$HOME/~} %{$fg[blue]%}$ %{$reset_color%}'
+PROMPT=$'%f%T %n@%m%f%k %{$fg[red]%}${PWD/#$HOME/~} %{$fg[blue]%}> %{$reset_color%}'
 # RPROMPT=$'$(exit_code_prompt)'
 ########## ALIASES AND UTILITY FUNCTIONS ###########
 
