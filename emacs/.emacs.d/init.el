@@ -58,7 +58,7 @@
 (setq search-whitespace-regexp ".*?")
 
 ;;; Show line numbers in programming buffers
-(add-hook 'prog-mode-hook 'display-line-numbers-mode)
+;; (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
 ;;; Make it count lines for correct line number width
 (setq display-line-numbers-width-start t)
@@ -67,16 +67,27 @@
 (use-package eat
   :ensure t)
 
-(global-set-key (kbd "C-c t") 'eat-project)
+(global-set-key (kbd "C-s-t") 'eat)
+(global-set-key (kbd "C-s-p") 'eat-project)
 
 ;;; Appearance
   
 (fringe-mode 0)
 
-;; (set-frame-parameter nil 'ns-appearance 'light)
-;; (set-frame-parameter nil 'ns-transparent-titlebar nil)
+(set-frame-parameter nil 'ns-appearance 'dark)
+(set-frame-parameter nil 'ns-transparent-titlebar nil)
 
 ;; (set-face-attribute 'font-lock-keyword-face nil :slant 'italic)
+
+(setq dashboard-items '((recents   . 10)
+                        (bookmarks . 10)
+                        (projects  . 10)
+                        (agenda    . 5)))
+
+(use-package dashboard
+  :ensure t
+  :config
+  (dashboard-setup-startup-hook))
 
 (use-package ef-themes :ensure t)
 
@@ -87,7 +98,13 @@
 (setq ef-themes-italic-constructs t
       ef-themes-italic-comments t)
 
-(load-theme 'ef-tritanopia-dark t)
+(use-package autothemer
+  :ensure t)
+
+(require 'autothemer)
+(load (expand-file-name (concat user-emacs-directory "rose-pine-theme.el")))
+
+(load-theme 'modus-vivendi t)
 
 ;;; Disable menu bar
 (menu-bar-mode -1)
@@ -97,20 +114,20 @@
 (tool-bar-mode -1)
 
 ;;; Set the font
-(set-face-attribute 'default nil :font "Aporetic Sans Mono" :height 160)
+(set-face-attribute 'default nil :font "NanumGothicCoding 16")
 
 (use-package eldoc-box
   :ensure t
+  :hook (prog-mode . eldoc-box-hover-at-point-mode)
   :config
   (defun my-eldoc-box-update-faces ()
     "Update eldoc-box faces based on the current theme."
     (set-face-attribute 'eldoc-box-border nil
                         :background (frame-parameter nil 'foreground-color))
     (set-face-attribute 'eldoc-box-body nil
-                        :family "Aporetic Sans" :height 160
+                        :font "NanumGothicCoding 16"
                         :background (frame-parameter nil 'background-color)))
   (my-eldoc-box-update-faces)
-  (eldoc-box-hover-at-point-mode)
   (advice-add 'load-theme :after (lambda (&rest _) (my-eldoc-box-update-faces))))
 
 (defun eglot-open-link ()
@@ -608,6 +625,38 @@
   :bind
   (("C-c g m" . gptel-menu)))
 
+(defcustom aider-extra-args ""
+  "Extra command-line arguments passed to aider when starting a session."
+  :type 'string
+  :group 'aider)
+
+
+;; (defun aider--get-models ()
+;;   "Return a list of available models by running lsllms command in the shell."
+;;   (let ((output (shell-command-to-string "lsllms")))
+;;     (split-string output "\n" t)))  ; t removes empty strings
+
+;; (defun aider--choose-model ()
+;;   "Prompt the user to choose a model using completing-read from lsllms output."
+;;   (completing-read "Select aider model: " (aider--get-models)))
+
+;; (defun aider-start-session ()
+;;   "Start an aider session in a comint buffer with the chosen model and extra args.
+;; Uses lsllms to list available models and then launches the aider process."
+;;   (interactive)
+;;   (let* ((model (aider--choose-model))
+;;          (full-model (if (string-prefix-p "openai/" model)
+;;                          model
+;;                        (concat "openai/" model)))
+;;          (cmd (string-join (list "aider" "--model" full-model aider-extra-args) " "))
+;;          (buffer-name "*aider-session*"))
+;;     (with-current-buffer (get-buffer-create buffer-name)
+;;       (comint-mode)
+;;       (erase-buffer))
+;;     (make-comint-in-buffer "aider" buffer-name "zsh" nil "-i" "-c" cmd)
+;;     (pop-to-buffer buffer-name)
+;;     (message "Started aider session with command:\n%s" cmd)))
+
 ;;; GitHub Copilot
 (use-package copilot
   :vc (:url "https://github.com/copilot-emacs/copilot.el"
@@ -619,14 +668,12 @@
   (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion))
 
 
-
-
 (use-package aider
   :ensure t
   :config
   (exec-path-from-shell-copy-env "OPENAI_API_BASE")
   (exec-path-from-shell-copy-env "OPENAI_API_KEY")
-  (setq aider-args '("--model" "openai/claude-3.7-sonnet" "--no-auto-accept-architect" "--no-auto-commits"))
+  ;; (setq aider-args '("--model" "openai/claude-3.7-sonnet" "--no-auto-accept-architect" "--no-auto-commits"))
   (global-set-key (kbd "C-c e") 'aider-transient-menu))
 
 ;;; Custom key bindings
