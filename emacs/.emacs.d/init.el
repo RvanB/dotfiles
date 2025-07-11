@@ -250,7 +250,37 @@
   :init
   (vertico-mode)
   (vertico-multiform-mode))
-  
+
+;; Switch tab-bar-format-tabs to tab-bar-format-tabs-groups
+
+;; (use-package project-tab-groups
+;;   :ensure
+;;   :config
+;;   (project-tab-groups-mode 1))
+
+(setq tab-bar-format
+      '(tab-bar-format-tabs
+        tab-bar-separator
+        tab-bar-format-align-right))
+
+(add-to-list 'tab-bar-format #'tab-bar-format-menu-bar)
+
+(use-package otpp
+  :ensure t
+  :after project
+  :init
+  ;; Enable `otpp-mode` globally
+  (otpp-mode 1)
+  ;; If you want to advice the commands in `otpp-override-commands`
+  ;; to be run in the current's tab (so, current project's) root directory
+  (otpp-override-mode 1))
+
+
+;; (use-package vertico-posframe
+;;   :ensure t
+;;   :after vertico
+;;   :config
+;;   (vertico-posframe-mode 1))
 
 (use-package marginalia
   :ensure t
@@ -545,10 +575,6 @@
   "Select Nth previous window."
   (interactive "P")
   (other-window (- (prefix-numeric-value n))))
-
-;;; Bindings for forward and backward
-(global-set-key (kbd "C-<tab>") 'other-window)
-;; (global-set-key (kbd "C-s-<tab>") 'rvb/other-window-backward)
 
 ;;; Enable narrowing
 (put 'narrow-to-region 'disabled nil)
