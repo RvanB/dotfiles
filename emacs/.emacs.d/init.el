@@ -87,13 +87,6 @@
     ('light (load-theme 'modus-operandi t))
     ('dark (load-theme 'modus-vivendi t))))
 
-(defun rvb/handle-appearance-change (appearance)
-  "Handle macOS appearance changes by updating frame and theme."
-  (rvb/update-ns-appearance appearance)
-  (rvb/apply-theme appearance))
-
-(add-hook 'ns-system-appearance-change-functions #'rvb/handle-appearance-change)
-
 (defun rvb/modus-toggle-update-ns-appearance (&rest _)
   "Update ns-appearance after toggling Modus theme."
   (let ((appearance (cond
@@ -109,10 +102,10 @@
 ;; (set-face-attribute 'font-lock-keyword-face nil :slant 'italic)
 
 ;; Spacious padding
-;; (use-package spacious-padding
-;;   :ensure t
-;;   :config
-;;   (spacious-padding-mode))
+(use-package spacious-padding
+  :ensure t
+  :config
+  (spacious-padding-mode))
 
 ;; ef themes
 (setq ef-themes-italic-constructs t
@@ -131,7 +124,10 @@
       standard-themes-prompts '(bold))
 
 (use-package standard-themes :ensure t)
-(load-theme 'modus-vivendi t)
+
+;; Apply theme
+(rvb/apply-theme 'dark)
+(rvb/update-ns-appearance 'dark)
 
 ;; (use-package spacious-padding
 ;;   :ensure t
@@ -149,26 +145,36 @@
 ;;; Disable tool bar
 (tool-bar-mode -1)
 
-(setq djcb-read-only-cursor-type 'hbar)
-(setq djcb-overwrite-cursor-type 'box)
-(setq djcb-normal-cursor-type 'bar)
+(setq god-mode-cursor-type 'box)
+(setq normal-mode-cursor-type 'bar)
 
-(defun djcb-set-cursor-according-to-mode ()
-  "Change cursor color and type according to some minor modes.
-In normal mode, restore the cursor color from the current theme."
+(defun rvb/set-cursor-according-to-mode ()
   (cond
-   (buffer-read-only
-    (setq cursor-type djcb-read-only-cursor-type))
-   (overwrite-mode
-    (setq cursor-type djcb-overwrite-cursor-type))
+   (god-local-mode
+    (setq cursor-type god-mode-cursor-type))
    (t
-    (setq cursor-type djcb-normal-cursor-type))))
+    (setq cursor-type normal-mode-cursor-type))))
 
-(add-hook 'post-command-hook #'djcb-set-cursor-according-to-mode)
+(add-hook 'post-command-hook #'rvb/set-cursor-according-to-mode)
 
 ;;; Set the font
 (set-face-attribute 'default nil :font "Aporetic Sans Mono 16")
 (set-face-attribute 'variable-pitch nil :font "Aporetic Sans 16")
+
+
+(use-package eldoc-box
+  :ensure t
+  ;; :hook (prog-mode . eldoc-box-hover-at-point-mode)
+  :config
+  (defun my-eldoc-box-update-faces ()
+    "Update eldoc-box faces based on the current theme."
+    (set-face-attribute 'eldoc-box-border nil
+                        :background (frame-parameter nil 'foreground-color))
+    (set-face-attribute 'eldoc-box-body nil
+                        :font "Aporetic Sans 14"
+                        :background (frame-parameter nil 'background-color)))
+  (my-eldoc-box-update-faces)
+  (advice-add 'load-theme :after (lambda (&rest _) (my-eldoc-box-update-faces))))
 
 (defun eglot-open-link ()
   (interactive)
@@ -301,13 +307,34 @@ In normal mode, restore the cursor color from the current theme."
   (vertico-mode)
   (vertico-multiform-mode))
 
+;; (use-package vertico-posframe
+;;   :ensure t
+;;   :init
+;;   (setq vertico-posframe-parameters
+;;       '((left-fringe . 10)
+;;         (right-fringe . 10)))
+;;   :config
+;;   (vertico-posframe-mode))
+
+
+;; (use-package nova
+;;   :vc (:url "https://github.com/thisisran/nova"
+;;             :rev :newest
+;;             :branch "main")
+;;   :init
+;;   (defface orderless-match-face-0 nil nil)
+;;   :config
+;;   (nova-vertico-mode)
+;;   (nova-corfu-mode)
+;;   (nova-corfu-popupinfo-mode 1)
+;;   )
+
+
 ;; (setq tab-bar-format
 ;;       '(tab-bar-format-tabs
 ;;         tab-bar-separator
 ;;         tab-bar-format-align-right))
 ;; (tab-bar-mode)
-
-(desktop-save-mode 1)
 
 ;; (use-package otpp
 ;;   :ensure t
@@ -318,16 +345,6 @@ In normal mode, restore the cursor color from the current theme."
 ;;   ;; If you want to advice the commands in `otpp-override-commands`
 ;;   ;; to be run in the current's tab (so, current project's) root directory
 ;;   (otpp-override-mode 1))
-
-;; (use-package modern-tab-bar
-;;   :vc (:url "https://github.com/aaronjensen/emacs-modern-tab-bar.git"
-;;             :rev :newest
-;;             :branch "main")
-;;   :config
-;;   (setq tab-bar-show t
-;;         tab-bar-new-button nil
-;;         tab-bar-close-button-show nil)
-;;   (modern-tab-bar-mode))
 
 (use-package marginalia
   :ensure t
@@ -367,7 +384,8 @@ In normal mode, restore the cursor color from the current theme."
 (use-package corfu
   :ensure t
   :config
-  (global-corfu-mode))
+  (global-corfu-mode)
+  (corfu-popupinfo-mode))
 
 (use-package orderless
   :ensure t
@@ -453,13 +471,66 @@ In normal mode, restore the cursor color from the current theme."
   (which-key-mode))
 
 ;;; Text editing improvements
-(use-package undo-tree
+;; (use-package undo-tree
+;;   :ensure t
+;;   :config
+;;   (global-undo-tree-mode))
+
+;; Set up package.el to work with MELPA
+(require 'package)
+(add-to-list 'package-archives
+             '("melpa" . "https://melpa.org/packages/"))
+(package-initialize)
+(package-refresh-contents)
+
+(use-package undo-fu
+  :ensure t)
+
+;; Download Evil
+;; (use-package evil
+;;   :ensure t
+;;   :init
+;;   (setq evil-undo-system 'undo-fu)
+;;   (setq evil-want-integration t)
+;;   (setq evil-want-keybinding nil)
+;;   :config
+
+;;   (evil-mode 1))
+
+(use-package keycast
   :ensure t
   :config
-  (global-undo-tree-mode))
+  (keycast-header-line-mode))
+
+;; God mode
+(use-package god-mode
+  :ensure t     
+  :config
+  (god-mode)
+  (define-key god-local-mode-map (kbd "i") #'god-local-mode)
+  (global-set-key (kbd "<escape>") #'(lambda () (interactive) (god-mode-all 1)))
+  (define-key god-local-mode-map (kbd ".") #'repeat)
+  (global-set-key (kbd "C-x C-1") #'delete-other-windows)
+  (global-set-key (kbd "C-x C-2") #'split-window-below)
+  (global-set-key (kbd "C-x C-3") #'split-window-right)
+  (global-set-key (kbd "C-x C-0") #'delete-window)
+  (global-set-key (kbd "C-x C-o") #'other-window)
+  (global-set-key (kbd "C-x C-g") #'magit)
+
+  (define-key god-local-mode-map (kbd "[") #'backward-paragraph)
+  (define-key god-local-mode-map (kbd "]") #'forward-paragraph)
+  (require 'god-mode-isearch)
+  (define-key isearch-mode-map (kbd "<escape>") #'god-mode-isearch-activate)
+  (define-key god-mode-isearch-map (kbd "i") #'god-mode-isearch-disable))
+
+;; (use-package evil-collection
+;;   :after evil
+;;   :ensure t
+;;   :config
+;;   (evil-collection-init))
 
 ;; Prevent undo tree files from polluting your git repo
-(setq undo-tree-history-directory-alist '((".*" . "~/.emacs.d/undo")))
+;; (setq undo-tree-history-directory-alist '((".*" . "~/.emacs.d/undo")))
 
 
 (add-hook 'isearch-mode-end-hook (lambda ()
@@ -477,12 +548,12 @@ Automatically widens on isearch exit."
     (narrow-to-region start end)
     (call-interactively 'isearch-forward-regexp)))
 
-(global-set-key (kbd "C-c C-SPC") #'rvb/isearch-visible-region)
+(global-set-key (kbd "C-c s") #'rvb/isearch-visible-region)
 
 
 (use-package expand-region
   :ensure t
-  :bind
+:bind
   ("C-=" . er/expand-region)
   :config
   (setq expand-region-smart-cursor t)
