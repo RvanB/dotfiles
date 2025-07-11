@@ -75,12 +75,44 @@
   
 (fringe-mode 0)
 
+(defun rvb/update-ns-appearance (appearance)
+  "Update the ns-appearance frame parameter based on the appearance"
+  (set-frame-parameter nil 'ns-appearance appearance)
+  (set-frame-parameter nil 'ns-transparent-titlebar t))
 
-;; (set-frame-parameter nil 'ns-appearance 'light)
-;; (set-frame-parameter nil 'ns-transparent-titlebar nil)
+(defun rvb/apply-theme (appearance)
+  "Load theme, taking current system APPEARANCE into consideration."
+  (mapc #'disable-theme custom-enabled-themes)
+  (pcase appearance
+    ('light (load-theme 'modus-operandi t))
+    ('dark (load-theme 'modus-vivendi t))))
+
+(defun rvb/handle-appearance-change (appearance)
+  "Handle macOS appearance changes by updating frame and theme."
+  (rvb/update-ns-appearance appearance)
+  (rvb/apply-theme appearance))
+
+(add-hook 'ns-system-appearance-change-functions #'rvb/handle-appearance-change)
+
+(defun rvb/modus-toggle-update-ns-appearance (&rest _)
+  "Update ns-appearance after toggling Modus theme."
+  (let ((appearance (cond
+                     ((member 'modus-operandi custom-enabled-themes) 'light)
+                     ((member 'modus-vivendi custom-enabled-themes) 'dark))))
+    (when appearance
+      (rvb/update-ns-appearance appearance))))
+
+(advice-add 'modus-themes-toggle :after #'rvb/modus-toggle-update-ns-appearance)
+
+(global-set-key (kbd "<f5>") #'modus-themes-toggle)
 
 ;; (set-face-attribute 'font-lock-keyword-face nil :slant 'italic)
 
+;; Spacious padding
+;; (use-package spacious-padding
+;;   :ensure t
+;;   :config
+;;   (spacious-padding-mode))
 
 ;; ef themes
 (setq ef-themes-italic-constructs t
@@ -99,13 +131,7 @@
       standard-themes-prompts '(bold))
 
 (use-package standard-themes :ensure t)
-(load-theme 'ef-dark t)
-
-(use-package mood-line
-  :ensure t
-  :config
-  (setq mood-line-format mood-line-format-default)
-  (mood-line-mode))
+(load-theme 'modus-vivendi t)
 
 ;; (use-package spacious-padding
 ;;   :ensure t
@@ -123,23 +149,26 @@
 ;;; Disable tool bar
 (tool-bar-mode -1)
 
-;;; Set the font
-(set-face-attribute 'default nil :font "Aporetic Sans Mono 14")
-(set-face-attribute 'variable-pitch nil :font "Aporetic Sans 14")
+(setq djcb-read-only-cursor-type 'hbar)
+(setq djcb-overwrite-cursor-type 'box)
+(setq djcb-normal-cursor-type 'bar)
 
-(use-package eldoc-box
-  :ensure t
-  :hook (prog-mode . eldoc-box-hover-at-point-mode)
-  :config
-  (defun my-eldoc-box-update-faces ()
-    "Update eldoc-box faces based on the current theme."
-    (set-face-attribute 'eldoc-box-border nil
-                        :background (frame-parameter nil 'foreground-color))
-    (set-face-attribute 'eldoc-box-body nil
-                        :font "Aporetic Sans 14"
-                        :background (frame-parameter nil 'background-color)))
-  (my-eldoc-box-update-faces)
-  (advice-add 'load-theme :after (lambda (&rest _) (my-eldoc-box-update-faces))))
+(defun djcb-set-cursor-according-to-mode ()
+  "Change cursor color and type according to some minor modes.
+In normal mode, restore the cursor color from the current theme."
+  (cond
+   (buffer-read-only
+    (setq cursor-type djcb-read-only-cursor-type))
+   (overwrite-mode
+    (setq cursor-type djcb-overwrite-cursor-type))
+   (t
+    (setq cursor-type djcb-normal-cursor-type))))
+
+(add-hook 'post-command-hook #'djcb-set-cursor-according-to-mode)
+
+;;; Set the font
+(set-face-attribute 'default nil :font "Aporetic Sans Mono 16")
+(set-face-attribute 'variable-pitch nil :font "Aporetic Sans 16")
 
 (defun eglot-open-link ()
   (interactive)
@@ -272,21 +301,23 @@
   (vertico-mode)
   (vertico-multiform-mode))
 
-(setq tab-bar-format
-      '(tab-bar-format-tabs
-        tab-bar-separator
-        tab-bar-format-align-right))
-(tab-bar-mode)
+;; (setq tab-bar-format
+;;       '(tab-bar-format-tabs
+;;         tab-bar-separator
+;;         tab-bar-format-align-right))
+;; (tab-bar-mode)
 
-(use-package otpp
-  :ensure t
-  :after project
-  :init
-  ;; Enable `otpp-mode` globally
-  (otpp-mode 1)
-  ;; If you want to advice the commands in `otpp-override-commands`
-  ;; to be run in the current's tab (so, current project's) root directory
-  (otpp-override-mode 1))
+(desktop-save-mode 1)
+
+;; (use-package otpp
+;;   :ensure t
+;;   :after project
+;;   :init
+;;   ;; Enable `otpp-mode` globally
+;;   (otpp-mode 1)
+;;   ;; If you want to advice the commands in `otpp-override-commands`
+;;   ;; to be run in the current's tab (so, current project's) root directory
+;;   (otpp-override-mode 1))
 
 ;; (use-package modern-tab-bar
 ;;   :vc (:url "https://github.com/aaronjensen/emacs-modern-tab-bar.git"
@@ -429,6 +460,25 @@
 
 ;; Prevent undo tree files from polluting your git repo
 (setq undo-tree-history-directory-alist '((".*" . "~/.emacs.d/undo")))
+
+
+(add-hook 'isearch-mode-end-hook (lambda ()
+                                   (when (buffer-narrowed-p)
+                                     (widen))))
+
+(defun rvb/isearch-visible-region ()
+  "Narrow buffer to visible window region and start isearch-forward-regexp.
+Automatically widens on isearch exit."
+  (interactive)
+  (let ((start (window-start))
+        (end (save-excursion
+               (goto-char (window-end nil t))
+               (point))))
+    (narrow-to-region start end)
+    (call-interactively 'isearch-forward-regexp)))
+
+(global-set-key (kbd "C-c C-SPC") #'rvb/isearch-visible-region)
+
 
 (use-package expand-region
   :ensure t
@@ -711,3 +761,4 @@
 ;;; Custom key bindings
 (global-set-key (kbd "s-p") 'project-switch-project)
 
+(put 'narrow-to-page 'disabled nil)
