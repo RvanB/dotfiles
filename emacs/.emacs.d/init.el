@@ -498,9 +498,7 @@
 ;;   (evil-mode 1))
 
 (use-package keycast
-  :ensure t
-  :config
-  (keycast-header-line-mode))
+  :ensure t)
 
 ;; God mode
 (use-package god-mode
@@ -508,7 +506,7 @@
   :config
   (god-mode)
   (define-key god-local-mode-map (kbd "i") #'god-local-mode)
-  (global-set-key (kbd "<escape>") #'(lambda () (interactive) (god-mode-all 1)))
+  (global-set-key (kbd "C-g") #'(lambda () (interactive) (god-mode-all 1)))
   (define-key god-local-mode-map (kbd ".") #'repeat)
   (global-set-key (kbd "C-x C-1") #'delete-other-windows)
   (global-set-key (kbd "C-x C-2") #'split-window-below)
@@ -520,7 +518,7 @@
   (define-key god-local-mode-map (kbd "[") #'backward-paragraph)
   (define-key god-local-mode-map (kbd "]") #'forward-paragraph)
   (require 'god-mode-isearch)
-  (define-key isearch-mode-map (kbd "<escape>") #'god-mode-isearch-activate)
+  (define-key isearch-mode-map (kbd "C-g") #'god-mode-isearch-activate)
   (define-key god-mode-isearch-map (kbd "i") #'god-mode-isearch-disable))
 
 ;; (use-package evil-collection
