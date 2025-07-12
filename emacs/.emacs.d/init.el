@@ -500,13 +500,20 @@
 (use-package keycast
   :ensure t)
 
+(defun rvb/keyboard-quit-and-god-mode ()
+  (interactive)
+  (god-mode-all 1)
+  (keyboard-quit))
+
+
+
 ;; God mode
 (use-package god-mode
   :ensure t     
   :config
   (god-mode)
   (define-key god-local-mode-map (kbd "i") #'god-local-mode)
-  (global-set-key (kbd "C-g") #'(lambda () (interactive) (god-mode-all 1)))
+  (global-set-key (kbd "C-g") #'rvb/keyboard-quit-and-god-mode)
   (define-key god-local-mode-map (kbd ".") #'repeat)
   (global-set-key (kbd "C-x C-1") #'delete-other-windows)
   (global-set-key (kbd "C-x C-2") #'split-window-below)
@@ -516,10 +523,7 @@
   (global-set-key (kbd "C-x C-g") #'magit)
 
   (define-key god-local-mode-map (kbd "[") #'backward-paragraph)
-  (define-key god-local-mode-map (kbd "]") #'forward-paragraph)
-  (require 'god-mode-isearch)
-  (define-key isearch-mode-map (kbd "C-g") #'god-mode-isearch-activate)
-  (define-key god-mode-isearch-map (kbd "i") #'god-mode-isearch-disable))
+  (define-key god-local-mode-map (kbd "]") #'forward-paragraph))
 
 ;; (use-package evil-collection
 ;;   :after evil
@@ -530,23 +534,74 @@
 ;; Prevent undo tree files from polluting your git repo
 ;; (setq undo-tree-history-directory-alist '((".*" . "~/.emacs.d/undo")))
 
+(advice-add 'keyboard-quit :before
+            (lambda ()
+              (isearch-done)))
 
-(add-hook 'isearch-mode-end-hook (lambda ()
-                                   (when (buffer-narrowed-p)
-                                     (widen))))
+(defvar-local rvb/isearch-narrowed nil)
+(defvar-local rvb/isearch-wrapped nil)
 
 (defun rvb/isearch-visible-region ()
-  "Narrow buffer to visible window region and start isearch-forward-regexp.
-Automatically widens on isearch exit."
+  "Narrow buffer to visible region and start isearch. Auto-widens on exit."
   (interactive)
   (let ((start (window-start))
         (end (save-excursion
                (goto-char (window-end nil t))
                (point))))
     (narrow-to-region start end)
-    (call-interactively 'isearch-forward-regexp)))
+    (setq rvb/isearch-narrowed t)
+    (setq rvb/isearch-wrapped nil)
+    (add-hook 'isearch-update-post-hook #'rvb/auto-wrap-isearch nil t)
+    (call-interactively #'isearch-forward)))
 
-(global-set-key (kbd "C-c s") #'rvb/isearch-visible-region)
+(defun rvb/widen-after-isearch ()
+  "Widen the buffer if it was narrowed by rvb/isearch-visible-region."
+  (when rvb/isearch-narrowed
+    (setq rvb/isearch-narrowed nil)
+    (setq rvb/isearch-wrapped nil)
+    (remove-hook 'isearch-update-post-hook #'rvb/auto-wrap-isearch t)
+    (widen)))
+
+(defun rvb/auto-wrap-isearch ()
+  "Automatically wrap Isearch when no match is found in narrowed region."
+  (when (and isearch-forward
+             isearch-string
+             (not isearch-success)
+             (not rvb/isearch-wrapped))  ;; prevent infinite looping
+    (setq rvb/isearch-wrapped t)
+    (goto-char (point-min))
+    (isearch-repeat-forward)))
+
+(add-hook 'isearch-mode-end-hook #'rvb/widen-after-isearch)
+
+(global-set-key (kbd "C-c C-i") #'rvb/isearch-visible-region)
+
+
+;; (add-hook 'isearch-mode-end-hook (lambda ()
+;;                                    (when (buffer-narrowed-p)
+;;                                      (widen))))
+;; (defvar-local rvb/isearch-narrowed nil)
+
+;; (defun rvb/isearch-visible-region ()
+;;   "Narrow buffer to visible region and start isearch. Auto-widens on exit."
+;;   (interactive)
+;;   (let ((start (window-start))
+;;         (end (save-excursion
+;;                (goto-char (window-end nil t))
+;;                (point))))
+;;     (narrow-to-region start end)
+;;     (setq rvb/isearch-narrowed t)
+;;     (call-interactively #'isearch-forward)))
+
+;; (defun rvb/widen-after-isearch ()
+;;   "Widen the buffer if it was narrowed by rvb/isearch-visible-region."
+;;   (when rvb/isearch-narrowed
+;;     (setq rvb/isearch-narrowed nil)
+;;     (widen)))
+
+;; (add-hook 'isearch-mode-end-hook #'rvb/widen-after-isearch)
+
+;; (global-set-key (kbd "C-c C-i") #'rvb/isearch-visible-region)
 
 
 (use-package expand-region
@@ -756,7 +811,6 @@ Automatically widens on isearch exit."
   (isearch-repeat-backward)
   (unless isearch-success
     (isearch-repeat-backward)))
-
 
 (keymap-set isearch-mode-map "C-s" 'rvb/isearch-repeat-forward+)
 (keymap-set isearch-mode-map "C-r" 'rvb/isearch-repeat-backward+)
