@@ -68,8 +68,8 @@
 (use-package eat
   :ensure t)
 
-(global-set-key (kbd "C-s-t") 'eat)
-(global-set-key (kbd "C-s-p") 'eat-project)
+(global-set-key (kbd "C-c t") 'eat)
+(global-set-key (kbd "C-c p") 'eat-project)
 
 ;;; Appearance
   
@@ -145,21 +145,11 @@
 ;;; Disable tool bar
 (tool-bar-mode -1)
 
-(setq god-mode-cursor-type 'box)
-(setq normal-mode-cursor-type 'bar)
 
-(defun rvb/set-cursor-according-to-mode ()
-  (cond
-   (god-local-mode
-    (setq cursor-type god-mode-cursor-type))
-   (t
-    (setq cursor-type normal-mode-cursor-type))))
-
-(add-hook 'post-command-hook #'rvb/set-cursor-according-to-mode)
 
 ;;; Set the font
 (set-face-attribute 'default nil :font "Aporetic Sans Mono 16")
-(set-face-attribute 'variable-pitch nil :font "Aporetic Sans 16")
+(set-face-attribute 'variable-pitch nil :font "Aporetic Sans Mono 16")
 
 
 (use-package eldoc-box
@@ -171,7 +161,7 @@
     (set-face-attribute 'eldoc-box-border nil
                         :background (frame-parameter nil 'foreground-color))
     (set-face-attribute 'eldoc-box-body nil
-                        :font "Aporetic Sans 14"
+                        :font "Aporetic Sans Mono 14"
                         :background (frame-parameter nil 'background-color)))
   (my-eldoc-box-update-faces)
   (advice-add 'load-theme :after (lambda (&rest _) (my-eldoc-box-update-faces))))
@@ -500,30 +490,55 @@
 (use-package keycast
   :ensure t)
 
-(defun rvb/keyboard-quit-and-god-mode ()
-  (interactive)
-  (god-mode-all 1)
-  (keyboard-quit))
+
 
 
 
 ;; God mode
 (use-package god-mode
-  :ensure t     
+  :ensure t
+  :init
+  
+  (setq god-mode-enable-function-key-translation nil)
   :config
+  (add-to-list 'god-exempt-major-modes 'eat-mode)
   (god-mode)
+  
   (define-key god-local-mode-map (kbd "i") #'god-local-mode)
-  (global-set-key (kbd "C-g") #'rvb/keyboard-quit-and-god-mode)
   (define-key god-local-mode-map (kbd ".") #'repeat)
+  (define-key god-local-mode-map (kbd "[") #'backward-paragraph)
+  (define-key god-local-mode-map (kbd "]") #'forward-paragraph)
+    
+  (global-set-key (kbd "C-g") #'rvb/keyboard-quit-and-god-mode)
   (global-set-key (kbd "C-x C-1") #'delete-other-windows)
   (global-set-key (kbd "C-x C-2") #'split-window-below)
   (global-set-key (kbd "C-x C-3") #'split-window-right)
   (global-set-key (kbd "C-x C-0") #'delete-window)
   (global-set-key (kbd "C-x C-o") #'other-window)
-  (global-set-key (kbd "C-x C-g") #'magit)
 
-  (define-key god-local-mode-map (kbd "[") #'backward-paragraph)
-  (define-key god-local-mode-map (kbd "]") #'forward-paragraph))
+  (global-set-key (kbd "C-c C-s i") #'surround-insert)
+  (global-set-key (kbd "C-c C-s d") #'surround-delete)
+  (global-set-key (kbd "C-c C-s c") #'surround-change)
+  
+  
+  (global-set-key (kbd "C-x C-g") #'magit))
+
+(setq god-mode-cursor-type 'box)
+(setq normal-mode-cursor-type 'bar)
+
+(defun rvb/set-cursor-according-to-mode ()
+  (cond
+   (god-local-mode
+    (setq cursor-type god-mode-cursor-type))
+   (t
+    (setq cursor-type normal-mode-cursor-type))))
+
+(defun rvb/keyboard-quit-and-god-mode ()
+  (interactive)
+  (god-mode-all 1)
+  (keyboard-quit))
+
+(add-hook 'post-command-hook #'rvb/set-cursor-according-to-mode)
 
 ;; (use-package evil-collection
 ;;   :after evil
@@ -642,7 +657,8 @@
 ;;; Surround
 (use-package surround
   :ensure t
-  :bind-keymap ("M-'" . surround-keymap))
+) 
+
 
 ;;; Delete selection on type
 (delete-selection-mode 1)
@@ -885,3 +901,5 @@
 (global-set-key (kbd "s-p") 'project-switch-project)
 
 (put 'narrow-to-page 'disabled nil)
+
+(add-hook 'emacs-startup-hook #'eat)
