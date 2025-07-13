@@ -589,7 +589,7 @@
 
 (add-hook 'isearch-mode-end-hook #'rvb/widen-after-isearch)
 
-(global-set-key (kbd "C-c C-i") #'rvb/isearch-visible-region)
+(global-set-key (kbd "C-c C-l") #'rvb/isearch-visible-region)
 
 
 ;; (add-hook 'isearch-mode-end-hook (lambda ()
@@ -785,8 +785,18 @@
 ;;; Enable narrowing
 (put 'narrow-to-region 'disabled nil)
 
-;;; In-Buffer Movement
+;;; In-Buffer Movement / Navigation
 
+(add-hook 'prog-mode-hook 'hl-line-mode)
+
+(defun rvb/move-point-to-window-center ()
+  "Move point to the line at the vertical center of the window."
+  (interactive)
+  (let* ((center-line (/ (window-body-height) 2))
+         (target-pos (save-excursion
+                       (move-to-window-line center-line)
+                       (point))))
+    (goto-char target-pos)))
 
 ;; https://www.reddit.com/r/emacs/comments/1g092xp/hack_use_pixelscroll_for_all_scrolling_and/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
 (defun kb/pixel-recenter (&optional arg redisplay)
@@ -810,28 +820,30 @@ ARG and REDISPLAY are identical to the original function."
       (error (message "[kb/pixel-recenter] %s" (error-message-string err))))
     (when redisplay (redisplay t))))
 
+(defconst golden-ratio 1.618 "Golden ratio constant.")
+
 (defun kb/pixel-scroll-up (&optional arg)
-  "(Nearly) drop-in replacement for `scroll-up'."
+  "(Nearly) drop-in replacement for `scroll-up' using golden ratio if ARG is nil."
   (cond
    ((eq this-command 'scroll-up-line)
     (funcall (ad-get-orig-definition 'scroll-up) (or arg 1)))
    (t
-    (unless (eobp) ; Jittery window if trying to go down when already at bottom
-      (pixel-scroll-precision-interpolate
-       (- (* (line-pixel-height)
-             (or arg (- (window-text-height) next-screen-context-lines))))
-       nil 1)))))
+    (unless (eobp)
+      (let* ((lines (or arg (truncate (/ (window-text-height) golden-ratio))))
+             (pixels (* (line-pixel-height) lines)))
+        (pixel-scroll-precision-interpolate (- pixels) nil 1)
+        (rvb/move-point-to-window-center))))))
 
 (defun kb/pixel-scroll-down (&optional arg)
-  "(Nearly) drop-in replacement for `scroll-down'."
+  "(Nearly) drop-in replacement for `scroll-down' using golden ratio if ARG is nil."
   (cond
    ((eq this-command 'scroll-down-line)
     (funcall (ad-get-orig-definition 'scroll-down) (or arg 1)))
    (t
-    (pixel-scroll-precision-interpolate
-     (* (line-pixel-height)
-        (or arg (- (window-text-height) next-screen-context-lines)))
-     nil 1))))
+    (let* ((lines (or arg (truncate (/ (window-text-height) golden-ratio))))
+           (pixels (* (line-pixel-height) lines)))
+      (pixel-scroll-precision-interpolate pixels nil 1)
+      (rvb/move-point-to-window-center)))))
 
 (use-package ultra-scroll
   :pin "manual"
