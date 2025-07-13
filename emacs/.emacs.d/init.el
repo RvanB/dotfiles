@@ -1,4 +1,3 @@
-
 ;;; Set up package archives 
 (require 'package)
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
@@ -66,13 +65,14 @@
 
 ;;; Terminals
 (use-package eat
-  :ensure t)
-
-(global-set-key (kbd "C-c t") 'eat)
-(global-set-key (kbd "C-c p") 'eat-project)
+  :ensure t
+  :config
+  (global-set-key (kbd "C-c t") 'eat)
+  (global-set-key (kbd "C-c p") 'eat-project))
 
 ;;; Appearance
 
+;; Disable fringes
 (fringe-mode 0)
 
 (defun rvb/update-ns-appearance (appearance)
@@ -96,10 +96,7 @@
       (rvb/update-ns-appearance appearance))))
 
 (advice-add 'modus-themes-toggle :after #'rvb/modus-toggle-update-ns-appearance)
-
 (global-set-key (kbd "<f5>") #'modus-themes-toggle)
-
-;; (set-face-attribute 'font-lock-keyword-face nil :slant 'italic)
 
 ;; Spacious padding
 (use-package spacious-padding
@@ -108,35 +105,29 @@
   (spacious-padding-mode))
 
 ;; ef themes
-(setq ef-themes-italic-constructs t
+(use-package ef-themes
+  :ensure t
+  :init
+  (setq ef-themes-italic-constructs t
       ef-themes-bold-constructs t
-      ef-themes-italic-comments t)
-(use-package ef-themes :ensure t)
+      ef-themes-italic-comments t))
 
 ;; Modus themes
 (setq modus-themes-italic-constructs t
       modus-themes-bold-constructs t)
 
 ;; Standard themes
-(setq standard-themes-italic-constructs t
+(use-package standard-themes
+  :ensure t
+  :init
+  (setq standard-themes-italic-constructs t
       standard-themes-bold-constructs t
       standard-themes-italic-comments t
-      standard-themes-prompts '(bold))
-
-(use-package standard-themes :ensure t)
+      standard-themes-prompts '(bold)))
 
 ;; Apply theme
 (rvb/apply-theme 'dark)
 (rvb/update-ns-appearance 'dark)
-
-;; (use-package spacious-padding
-;;   :ensure t
-;;   :config
-;;   (spacious-padding-mode))
-
-;; (use-package autothemer
-;;   :ensure t)
-;; (require 'autothemer)
 
 ;;; Disable menu bar
 ;; (menu-bar-mode -1)
@@ -145,12 +136,12 @@
 ;;; Disable tool bar
 (tool-bar-mode -1)
 
-
-
 ;;; Set the font
 (set-face-attribute 'default nil :font "Aporetic Sans Mono 16")
 (set-face-attribute 'variable-pitch nil :font "Aporetic Sans Mono 16")
 
+
+;; Utility
 
 (use-package eldoc-box
   :ensure t
@@ -165,12 +156,6 @@
                         :background (frame-parameter nil 'background-color)))
   (my-eldoc-box-update-faces)
   (advice-add 'load-theme :after (lambda (&rest _) (my-eldoc-box-update-faces))))
-
-(defun eglot-open-link ()
-  (interactive)
-  (if-let* ((url (get-text-property (point) 'help-echo)))
-      (browse-url url)
-    (user-error "No URL at point")))
 
 (define-advice eldoc-display-in-buffer (:after (&rest _) update-keymap)
   (with-current-buffer eldoc--doc-buffer
@@ -297,29 +282,7 @@
   (vertico-mode)
   (vertico-multiform-mode))
 
-;; (use-package vertico-posframe
-;;   :ensure t
-;;   :init
-;;   (setq vertico-posframe-parameters
-;;       '((left-fringe . 10)
-;;         (right-fringe . 10)))
-;;   :config
-;;   (vertico-posframe-mode))
-
-
-;; (use-package nova
-;;   :vc (:url "https://github.com/thisisran/nova"
-;;             :rev :newest
-;;             :branch "main")
-;;   :init
-;;   (defface orderless-match-face-0 nil nil)
-;;   :config
-;;   (nova-vertico-mode)
-;;   (nova-corfu-mode)
-;;   (nova-corfu-popupinfo-mode 1)
-;;   )
-
-
+;;; Project tabs
 ;; (setq tab-bar-format
 ;;       '(tab-bar-format-tabs
 ;;         tab-bar-separator
@@ -383,17 +346,6 @@
   (completion-styles '(orderless basic))
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles partial-completion)))))
-
-;;; Tree sitter
-;; (use-package tree-sitter
-;;   :ensure t)
-
-;; (use-package tree-sitter-langs
-;;   :ensure t
-;;   :after tree-sitter
-;;   :config
-;;   (global-tree-sitter-mode)
-;;   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
 
 (use-package treesit
   :ensure nil
@@ -460,19 +412,6 @@
   :config
   (which-key-mode))
 
-;;; Text editing improvements
-;; (use-package undo-tree
-;;   :ensure t
-;;   :config
-;;   (global-undo-tree-mode))
-
-;; Set up package.el to work with MELPA
-(require 'package)
-(add-to-list 'package-archives
-             '("melpa" . "https://melpa.org/packages/"))
-(package-initialize)
-(package-refresh-contents)
-
 (use-package undo-fu
   :ensure t
   :config
@@ -488,96 +427,6 @@
 (use-package keycast
   :ensure t)
 
-;; God mode
-(use-package god-mode
-  :ensure t
-  :init
-  
-  (setq god-mode-enable-function-key-translation nil)
-  :config
-  (add-to-list 'god-exempt-major-modes 'eat-mode)
-  (god-mode)
-  
-  (define-key god-local-mode-map (kbd "i") #'god-local-mode)
-  (define-key god-local-mode-map (kbd ".") #'repeat)
-  (define-key god-local-mode-map (kbd "[") #'backward-paragraph)
-  (define-key god-local-mode-map (kbd "]") #'forward-paragraph)
-  
-  (global-set-key (kbd "C-g") #'rvb/keyboard-quit-and-god-mode)
-  (global-set-key (kbd "C-x C-1") #'delete-other-windows)
-  (global-set-key (kbd "C-x C-2") #'split-window-below)
-  (global-set-key (kbd "C-x C-3") #'split-window-right)
-  (global-set-key (kbd "C-x C-0") #'delete-window)
-  (global-set-key (kbd "C-x C-o") #'other-window)
-
-  (global-set-key (kbd "C-c C-s i") #'surround-insert)
-  (global-set-key (kbd "C-c C-s d") #'surround-delete)
-  (global-set-key (kbd "C-c C-s c") #'surround-change)
-  
-  
-  (global-set-key (kbd "C-x C-g") #'magit))
-
-(setq god-mode-cursor-type 'box)
-(setq normal-mode-cursor-type 'bar)
-
-(defun rvb/set-cursor-according-to-mode ()
-  (cond
-   (god-local-mode
-    (setq cursor-type god-mode-cursor-type))
-   (t
-    (setq cursor-type normal-mode-cursor-type))))
-
-(defun rvb/keyboard-quit-and-god-mode ()
-  (interactive)
-  (god-mode-all 1)
-  (keyboard-quit))
-
-(add-hook 'post-command-hook #'rvb/set-cursor-according-to-mode)
-
-;; Prevent undo tree files from polluting your git repo
-;; (setq undo-tree-history-directory-alist '((".*" . "~/.emacs.d/undo")))
-
-(advice-add 'keyboard-quit :before
-            (lambda ()
-              (isearch-done)))
-
-(defvar-local rvb/isearch-narrowed nil)
-(defvar-local rvb/isearch-wrapped nil)
-
-(defun rvb/isearch-visible-region ()
-  "Narrow buffer to visible region and start isearch. Auto-widens on exit."
-  (interactive)
-  (let ((start (window-start))
-        (end (save-excursion
-               (goto-char (window-end nil t))
-               (point))))
-    (narrow-to-region start end)
-    (setq rvb/isearch-narrowed t)
-    (setq rvb/isearch-wrapped nil)
-    (add-hook 'isearch-update-post-hook #'rvb/auto-wrap-isearch nil t)
-    (call-interactively #'isearch-forward)))
-
-(defun rvb/widen-after-isearch ()
-  "Widen the buffer if it was narrowed by rvb/isearch-visible-region."
-  (when rvb/isearch-narrowed
-    (setq rvb/isearch-narrowed nil)
-    (setq rvb/isearch-wrapped nil)
-    (remove-hook 'isearch-update-post-hook #'rvb/auto-wrap-isearch t)
-    (widen)))
-
-(defun rvb/auto-wrap-isearch ()
-  "Automatically wrap Isearch when no match is found in narrowed region."
-  (when (and isearch-forward
-             isearch-string
-             (not isearch-success)
-             (not rvb/isearch-wrapped))  ;; prevent infinite looping
-    (setq rvb/isearch-wrapped t)
-    (goto-char (point-min))
-    (isearch-repeat-forward)))
-
-(add-hook 'isearch-mode-end-hook #'rvb/widen-after-isearch)
-
-(global-set-key (kbd "C-c C-l") #'rvb/isearch-visible-region)
 
 (use-package expand-region
   :ensure t
@@ -610,15 +459,9 @@
 	 ([remap delete-char] . smart-hungry-delete-forward-char))
   :init (smart-hungry-delete-add-default-hooks))
 
-;;; Remap M-f and M-b to move by symbol instead of word
-;; (global-set-key (kbd "M-f") #'forward-symbol)
-;; (global-set-key (kbd "M-b") (lambda () (interactive) (forward-symbol -1)))
-
 ;;; Surround
 (use-package surround
-  :ensure t
-  ) 
-
+  :ensure t) 
 
 ;;; Delete selection on type
 (delete-selection-mode 1)
@@ -708,11 +551,8 @@
 (global-set-key (kbd "C-c r") 'rvb/ruff-check-project)
 
 ;; MARC Mode
-
 (load (expand-file-name (concat user-emacs-directory "marc-mode.el")))
 (require 'marc-mode)
-
-
 
 (require 'eglot)
 (add-to-list 'eglot-server-programs '(marc-mode . ("marc-lsp-server")))
@@ -746,6 +586,49 @@
 (put 'narrow-to-region 'disabled nil)
 
 ;;; In-Buffer Movement / Navigation
+
+;; God mode
+(use-package god-mode
+  :ensure t
+  :init
+  
+  (setq god-mode-enable-function-key-translation nil)
+  :config
+  (add-to-list 'god-exempt-major-modes 'eat-mode)
+  (god-mode)
+  
+  (define-key god-local-mode-map (kbd "i") #'god-local-mode)
+  (define-key god-local-mode-map (kbd ".") #'repeat)
+  (define-key god-local-mode-map (kbd "[") #'backward-paragraph)
+  (define-key god-local-mode-map (kbd "]") #'forward-paragraph)
+  
+  (global-set-key (kbd "C-g") #'rvb/keyboard-quit-and-god-mode)
+  (global-set-key (kbd "C-x C-1") #'delete-other-windows)
+  (global-set-key (kbd "C-x C-2") #'split-window-below)
+  (global-set-key (kbd "C-x C-3") #'split-window-right)
+  (global-set-key (kbd "C-x C-0") #'delete-window)
+  (global-set-key (kbd "C-x C-o") #'other-window)
+
+  (global-set-key (kbd "C-c C-s i") #'surround-insert)
+  (global-set-key (kbd "C-c C-s d") #'surround-delete)
+  (global-set-key (kbd "C-c C-s c") #'surround-change)
+  
+  (global-set-key (kbd "C-x C-g") #'magit))
+
+(setq god-mode-cursor-type 'box)
+(setq normal-mode-cursor-type 'bar)
+
+(defun rvb/set-cursor-according-to-mode ()
+  (cond
+   (god-local-mode
+    (setq cursor-type god-mode-cursor-type))
+   (t
+    (setq cursor-type normal-mode-cursor-type))))
+
+(defun rvb/keyboard-quit-and-god-mode ()
+  (interactive)
+  (god-mode-all 1)
+  (keyboard-quit))
 
 ;; forward-to-word / forward-word
 (require 'misc)
@@ -869,6 +752,48 @@ ARG and REDISPLAY are identical to the original function."
 (keymap-set isearch-mode-map "C-s" 'rvb/isearch-repeat-forward+)
 (keymap-set isearch-mode-map "C-r" 'rvb/isearch-repeat-backward+)
 
+(advice-add 'keyboard-quit :before
+            (lambda ()
+              (isearch-done)))
+
+(defvar-local rvb/isearch-narrowed nil)
+(defvar-local rvb/isearch-wrapped nil)
+
+(defun rvb/isearch-visible-region ()
+  "Narrow buffer to visible region and start isearch. Auto-widens on exit."
+  (interactive)
+  (let ((start (window-start))
+        (end (save-excursion
+               (goto-char (window-end nil t))
+               (point))))
+    (narrow-to-region start end)
+    (setq rvb/isearch-narrowed t)
+    (setq rvb/isearch-wrapped nil)
+    (add-hook 'isearch-update-post-hook #'rvb/auto-wrap-isearch nil t)
+    (call-interactively #'isearch-forward)))
+
+(defun rvb/widen-after-isearch ()
+  "Widen the buffer if it was narrowed by rvb/isearch-visible-region."
+  (when rvb/isearch-narrowed
+    (setq rvb/isearch-narrowed nil)
+    (setq rvb/isearch-wrapped nil)
+    (remove-hook 'isearch-update-post-hook #'rvb/auto-wrap-isearch t)
+    (widen)))
+
+(defun rvb/auto-wrap-isearch ()
+  "Automatically wrap Isearch when no match is found in narrowed region."
+  (when (and isearch-forward
+             isearch-string
+             (not isearch-success)
+             (not rvb/isearch-wrapped))  ;; prevent infinite looping
+    (setq rvb/isearch-wrapped t)
+    (goto-char (point-min))
+    (isearch-repeat-forward)))
+
+(add-hook 'isearch-mode-end-hook #'rvb/widen-after-isearch)
+
+(global-set-key (kbd "C-c C-l") #'rvb/isearch-visible-region)
+
 ;;; Org mode
 (setq org-directory "~/orgfiles/")
 (setq org-agenda-files (list org-directory))
@@ -888,33 +813,6 @@ ARG and REDISPLAY are identical to the original function."
   "Extra command-line arguments passed to aider when starting a session."
   :type 'string
   :group 'aider)
-
-
-;; (defun aider--get-models ()
-;;   "Return a list of available models by running lsllms command in the shell."
-;;   (let ((output (shell-command-to-string "lsllms")))
-;;     (split-string output "\n" t)))  ; t removes empty strings
-
-;; (defun aider--choose-model ()
-;;   "Prompt the user to choose a model using completing-read from lsllms output."
-;;   (completing-read "Select aider model: " (aider--get-models)))
-
-;; (defun aider-start-session ()
-;;   "Start an aider session in a comint buffer with the chosen model and extra args.
-;; Uses lsllms to list available models and then launches the aider process."
-;;   (interactive)
-;;   (let* ((model (aider--choose-model))
-;;          (full-model (if (string-prefix-p "openai/" model)
-;;                          model
-;;                        (concat "openai/" model)))
-;;          (cmd (string-join (list "aider" "--model" full-model aider-extra-args) " "))
-;;          (buffer-name "*aider-session*"))
-;;     (with-current-buffer (get-buffer-create buffer-name)
-;;       (comint-mode)
-;;       (erase-buffer))
-;;     (make-comint-in-buffer "aider" buffer-name "zsh" nil "-i" "-c" cmd)
-;;     (pop-to-buffer buffer-name)
-;;     (message "Started aider session with command:\n%s" cmd)))
 
 ;;; GitHub Copilot
 (use-package copilot
