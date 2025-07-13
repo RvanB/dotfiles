@@ -786,16 +786,7 @@
 (put 'narrow-to-region 'disabled nil)
 
 ;;; In-Buffer Movement
-(use-package ultra-scroll
-  :pin "manual"
-  :vc (:url "https://github.com/jdtsmith/ultra-scroll"
-	    :rev :newest
-	    :branch "main")
-  :init
-  (setq scroll-conservatively 101 ; important!
-        scroll-margin 0)
-  :config
-  (ultra-scroll-mode 1))
+
 
 ;; https://www.reddit.com/r/emacs/comments/1g092xp/hack_use_pixelscroll_for_all_scrolling_and/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
 (defun kb/pixel-recenter (&optional arg redisplay)
@@ -842,7 +833,15 @@ ARG and REDISPLAY are identical to the original function."
         (or arg (- (window-text-height) next-screen-context-lines)))
      nil 1))))
 
-(add-hook 'ultra-scroll-mode-hook
+(use-package ultra-scroll
+  :pin "manual"
+  :vc (:url "https://github.com/jdtsmith/ultra-scroll"
+	    :rev :newest
+	    :branch "main")
+  :init
+  (setq scroll-conservatively 101 ; important!
+        scroll-margin 0)
+  (add-hook 'ultra-scroll-mode-hook
           (lambda ()
             (cond
              (pixel-scroll-precision-mode
@@ -853,6 +852,8 @@ ARG and REDISPLAY are identical to the original function."
               (advice-remove 'scroll-up-command 'kb/pixel-scroll-up)
               (advice-remove 'scroll-down-command 'kb/pixel-scroll-down)
               (advice-remove 'recenter-top-bottom 'kb/pixel-recenter)))))
+  :config
+  (ultra-scroll-mode 1))
 
 
 ;;; Disable changing text scale with the mouse
