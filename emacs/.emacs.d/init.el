@@ -474,54 +474,48 @@
 (package-refresh-contents)
 
 (use-package undo-fu
-  :ensure t)
+    :ensure t
+    :config
+    ;; Disable all current undo/redo keybinds
+    (global-unset-key (kbd "s-z"))
+    (global-unset-key (kbd "C-/"))
+    (global-unset-key (kbd "C-?"))
+    (global-unset-key (kbd "C-M-_"))
 
-;; Download Evil
-;; (use-package evil
-;;   :ensure t
-;;   :init
-;;   (setq evil-undo-system 'undo-fu)
-;;   (setq evil-want-integration t)
-;;   (setq evil-want-keybinding nil)
-;;   :config
-
-;;   (evil-mode 1))
+    (global-set-key (kbd "C-/") 'undo-fu-only-undo)
+    (global-set-key (kbd "C-?") 'undo-fu-only-redo))
 
 (use-package keycast
-  :ensure t)
-
-
-
-
+    :ensure t)
 
 ;; God mode
 (use-package god-mode
-  :ensure t
-  :init
-  
-  (setq god-mode-enable-function-key-translation nil)
-  :config
-  (add-to-list 'god-exempt-major-modes 'eat-mode)
-  (god-mode)
-  
-  (define-key god-local-mode-map (kbd "i") #'god-local-mode)
-  (define-key god-local-mode-map (kbd ".") #'repeat)
-  (define-key god-local-mode-map (kbd "[") #'backward-paragraph)
-  (define-key god-local-mode-map (kbd "]") #'forward-paragraph)
+    :ensure t
+    :init
     
-  (global-set-key (kbd "C-g") #'rvb/keyboard-quit-and-god-mode)
-  (global-set-key (kbd "C-x C-1") #'delete-other-windows)
-  (global-set-key (kbd "C-x C-2") #'split-window-below)
-  (global-set-key (kbd "C-x C-3") #'split-window-right)
-  (global-set-key (kbd "C-x C-0") #'delete-window)
-  (global-set-key (kbd "C-x C-o") #'other-window)
+    (setq god-mode-enable-function-key-translation nil)
+    :config
+    (add-to-list 'god-exempt-major-modes 'eat-mode)
+    (god-mode)
+    
+    (define-key god-local-mode-map (kbd "i") #'god-local-mode)
+    (define-key god-local-mode-map (kbd ".") #'repeat)
+    (define-key god-local-mode-map (kbd "[") #'backward-paragraph)
+    (define-key god-local-mode-map (kbd "]") #'forward-paragraph)
+    
+    (global-set-key (kbd "C-g") #'rvb/keyboard-quit-and-god-mode)
+    (global-set-key (kbd "C-x C-1") #'delete-other-windows)
+    (global-set-key (kbd "C-x C-2") #'split-window-below)
+    (global-set-key (kbd "C-x C-3") #'split-window-right)
+    (global-set-key (kbd "C-x C-0") #'delete-window)
+    (global-set-key (kbd "C-x C-o") #'other-window)
 
-  (global-set-key (kbd "C-c C-s i") #'surround-insert)
-  (global-set-key (kbd "C-c C-s d") #'surround-delete)
-  (global-set-key (kbd "C-c C-s c") #'surround-change)
-  
-  
-  (global-set-key (kbd "C-x C-g") #'magit))
+    (global-set-key (kbd "C-c C-s i") #'surround-insert)
+    (global-set-key (kbd "C-c C-s d") #'surround-delete)
+    (global-set-key (kbd "C-c C-s c") #'surround-change)
+    
+    
+    (global-set-key (kbd "C-x C-g") #'magit))
 
 (setq god-mode-cursor-type 'box)
 (setq normal-mode-cursor-type 'bar)
@@ -539,12 +533,6 @@
   (keyboard-quit))
 
 (add-hook 'post-command-hook #'rvb/set-cursor-according-to-mode)
-
-;; (use-package evil-collection
-;;   :after evil
-;;   :ensure t
-;;   :config
-;;   (evil-collection-init))
 
 ;; Prevent undo tree files from polluting your git repo
 ;; (setq undo-tree-history-directory-alist '((".*" . "~/.emacs.d/undo")))
@@ -590,34 +578,6 @@
 (add-hook 'isearch-mode-end-hook #'rvb/widen-after-isearch)
 
 (global-set-key (kbd "C-c C-l") #'rvb/isearch-visible-region)
-
-
-;; (add-hook 'isearch-mode-end-hook (lambda ()
-;;                                    (when (buffer-narrowed-p)
-;;                                      (widen))))
-;; (defvar-local rvb/isearch-narrowed nil)
-
-;; (defun rvb/isearch-visible-region ()
-;;   "Narrow buffer to visible region and start isearch. Auto-widens on exit."
-;;   (interactive)
-;;   (let ((start (window-start))
-;;         (end (save-excursion
-;;                (goto-char (window-end nil t))
-;;                (point))))
-;;     (narrow-to-region start end)
-;;     (setq rvb/isearch-narrowed t)
-;;     (call-interactively #'isearch-forward)))
-
-;; (defun rvb/widen-after-isearch ()
-;;   "Widen the buffer if it was narrowed by rvb/isearch-visible-region."
-;;   (when rvb/isearch-narrowed
-;;     (setq rvb/isearch-narrowed nil)
-;;     (widen)))
-
-;; (add-hook 'isearch-mode-end-hook #'rvb/widen-after-isearch)
-
-;; (global-set-key (kbd "C-c C-i") #'rvb/isearch-visible-region)
-
 
 (use-package expand-region
   :ensure t
@@ -665,15 +625,15 @@
 
 ;;; Python stuff
 
-;; This is causing problems with syntax highlighting on python-ts-mode startup.
+;; NOTE TO SELF: This is causing problems with syntax highlighting on python-ts-mode startup.
 ;;; PET - Python Executable Tracker
-;; (use-package pet
-;;   :ensure t
-;;   :config
-;;   (add-hook 'python-ts-mode-hook
-;;             (lambda ()
-;;               (setq-local python-shell-interpreter (pet-executable-find "python"))
-;;               (setq-local python-shell-virtualenv-root (pet-virtualenv-root)))))
+(use-package pet
+  :ensure t
+  :config
+  (add-hook 'python-ts-mode-hook
+            (lambda ()
+              (setq-local python-shell-interpreter (pet-executable-find "python"))
+              (setq-local python-shell-virtualenv-root (pet-virtualenv-root)))))
 
 
 ;; Flymake ruff
@@ -786,6 +746,13 @@
 (put 'narrow-to-region 'disabled nil)
 
 ;;; In-Buffer Movement / Navigation
+
+;; forward-to-word / forward-word
+(require 'misc)
+(global-set-key (kbd "M-f") #'forward-to-word)
+(global-set-key (kbd "M-F") #'forward-word)
+(global-set-key (kbd "M-b") #'backward-to-word)
+(global-set-key (kbd "M-B") #'backward-word)
 
 (add-hook 'prog-mode-hook 'hl-line-mode)
 
