@@ -80,6 +80,7 @@
 (rvb/apply-theme 'dark)
 (rvb/update-ns-appearance 'dark)
 
+(require 'rvb-movement)
 ;; Cursor dependent on god mode
 (setq god-mode-cursor-type 'box)
 (setq normal-mode-cursor-type 'bar)
