@@ -72,7 +72,7 @@
 (global-set-key (kbd "C-c p") 'eat-project)
 
 ;;; Appearance
-  
+
 (fringe-mode 0)
 
 (defun rvb/update-ns-appearance (appearance)
@@ -286,7 +286,7 @@
   ;; Optionally make narrowing help available in the minibuffer.
   ;; You may want to use `embark-prefix-help-command' or which-key instead.
   ;; (keymap-set consult-narrow-map (concat consult-narrow-key " ?") #'consult-narrow-help)
-)
+  )
 
 ;;; Enable Vertico.
 (use-package vertico
@@ -474,48 +474,48 @@
 (package-refresh-contents)
 
 (use-package undo-fu
-    :ensure t
-    :config
-    ;; Disable all current undo/redo keybinds
-    (global-unset-key (kbd "s-z"))
-    (global-unset-key (kbd "C-/"))
-    (global-unset-key (kbd "C-?"))
-    (global-unset-key (kbd "C-M-_"))
+  :ensure t
+  :config
+  ;; Disable all current undo/redo keybinds
+  (global-unset-key (kbd "s-z"))
+  (global-unset-key (kbd "C-/"))
+  (global-unset-key (kbd "C-?"))
+  (global-unset-key (kbd "C-M-_"))
 
-    (global-set-key (kbd "C-/") 'undo-fu-only-undo)
-    (global-set-key (kbd "C-?") 'undo-fu-only-redo))
+  (global-set-key (kbd "C-/") 'undo-fu-only-undo)
+  (global-set-key (kbd "C-?") 'undo-fu-only-redo))
 
 (use-package keycast
-    :ensure t)
+  :ensure t)
 
 ;; God mode
 (use-package god-mode
-    :ensure t
-    :init
-    
-    (setq god-mode-enable-function-key-translation nil)
-    :config
-    (add-to-list 'god-exempt-major-modes 'eat-mode)
-    (god-mode)
-    
-    (define-key god-local-mode-map (kbd "i") #'god-local-mode)
-    (define-key god-local-mode-map (kbd ".") #'repeat)
-    (define-key god-local-mode-map (kbd "[") #'backward-paragraph)
-    (define-key god-local-mode-map (kbd "]") #'forward-paragraph)
-    
-    (global-set-key (kbd "C-g") #'rvb/keyboard-quit-and-god-mode)
-    (global-set-key (kbd "C-x C-1") #'delete-other-windows)
-    (global-set-key (kbd "C-x C-2") #'split-window-below)
-    (global-set-key (kbd "C-x C-3") #'split-window-right)
-    (global-set-key (kbd "C-x C-0") #'delete-window)
-    (global-set-key (kbd "C-x C-o") #'other-window)
+  :ensure t
+  :init
+  
+  (setq god-mode-enable-function-key-translation nil)
+  :config
+  (add-to-list 'god-exempt-major-modes 'eat-mode)
+  (god-mode)
+  
+  (define-key god-local-mode-map (kbd "i") #'god-local-mode)
+  (define-key god-local-mode-map (kbd ".") #'repeat)
+  (define-key god-local-mode-map (kbd "[") #'backward-paragraph)
+  (define-key god-local-mode-map (kbd "]") #'forward-paragraph)
+  
+  (global-set-key (kbd "C-g") #'rvb/keyboard-quit-and-god-mode)
+  (global-set-key (kbd "C-x C-1") #'delete-other-windows)
+  (global-set-key (kbd "C-x C-2") #'split-window-below)
+  (global-set-key (kbd "C-x C-3") #'split-window-right)
+  (global-set-key (kbd "C-x C-0") #'delete-window)
+  (global-set-key (kbd "C-x C-o") #'other-window)
 
-    (global-set-key (kbd "C-c C-s i") #'surround-insert)
-    (global-set-key (kbd "C-c C-s d") #'surround-delete)
-    (global-set-key (kbd "C-c C-s c") #'surround-change)
-    
-    
-    (global-set-key (kbd "C-x C-g") #'magit))
+  (global-set-key (kbd "C-c C-s i") #'surround-insert)
+  (global-set-key (kbd "C-c C-s d") #'surround-delete)
+  (global-set-key (kbd "C-c C-s c") #'surround-change)
+  
+  
+  (global-set-key (kbd "C-x C-g") #'magit))
 
 (setq god-mode-cursor-type 'box)
 (setq normal-mode-cursor-type 'bar)
@@ -581,7 +581,7 @@
 
 (use-package expand-region
   :ensure t
-:bind
+  :bind
   ("C-=" . er/expand-region)
   :config
   (setq expand-region-smart-cursor t)
@@ -617,7 +617,7 @@
 ;;; Surround
 (use-package surround
   :ensure t
-) 
+  ) 
 
 
 ;;; Delete selection on type
@@ -665,8 +665,8 @@
       (with-temp-buffer
         (cd directory)
         (let ((full-path (shell-command-to-string "pipenv --venv")))
-  	(setq venv-path (file-name-directory (directory-file-name (string-trim full-path))))
-        (setq venv (file-name-nondirectory (directory-file-name (string-trim full-path)))))))
+  	  (setq venv-path (file-name-directory (directory-file-name (string-trim full-path))))
+          (setq venv (file-name-nondirectory (directory-file-name (string-trim full-path)))))))
      ((string-equal package-manager "poetry")
       (with-temp-buffer
         (cd directory)
@@ -699,12 +699,12 @@
   (interactive)
   ;; Run "NO_COLOR=1 ruff check -q <project root>" and display in a buffer in compilation mode
   (let ((output-buffer (get-buffer-create "*ruff-check*")))
-	(with-current-buffer output-buffer
-	  (erase-buffer)
-	  (insert (shell-command-to-string (format "NO_COLOR=1 ruff check --output-format=concise -q %s" (when-let ((project (project-current))) (project-root project)))))
-	  (compilation-mode)
-	  (local-set-key "q" (lambda () (interactive) (quit-window t))))
-	(display-buffer output-buffer)))
+    (with-current-buffer output-buffer
+      (erase-buffer)
+      (insert (shell-command-to-string (format "NO_COLOR=1 ruff check --output-format=concise -q %s" (when-let ((project (project-current))) (project-root project)))))
+      (compilation-mode)
+      (local-set-key "q" (lambda () (interactive) (quit-window t))))
+    (display-buffer output-buffer)))
 (global-set-key (kbd "C-c r") 'rvb/ruff-check-project)
 
 ;; MARC Mode
@@ -821,16 +821,16 @@ ARG and REDISPLAY are identical to the original function."
   (setq scroll-conservatively 101 ; important!
         scroll-margin 0)
   (add-hook 'ultra-scroll-mode-hook
-          (lambda ()
-            (cond
-             (pixel-scroll-precision-mode
-              (advice-add 'scroll-up-command :override 'kb/pixel-scroll-up)
-              (advice-add 'scroll-down-command :override 'kb/pixel-scroll-down)
-              (advice-add 'recenter-top-bottom :override 'kb/pixel-recenter))
-             (t
-              (advice-remove 'scroll-up-command 'kb/pixel-scroll-up)
-              (advice-remove 'scroll-down-command 'kb/pixel-scroll-down)
-              (advice-remove 'recenter-top-bottom 'kb/pixel-recenter)))))
+            (lambda ()
+              (cond
+               (pixel-scroll-precision-mode
+                (advice-add 'scroll-up-command :override 'kb/pixel-scroll-up)
+                (advice-add 'scroll-down-command :override 'kb/pixel-scroll-down)
+                (advice-add 'recenter-top-bottom :override 'kb/pixel-recenter))
+               (t
+                (advice-remove 'scroll-up-command 'kb/pixel-scroll-up)
+                (advice-remove 'scroll-down-command 'kb/pixel-scroll-down)
+                (advice-remove 'recenter-top-bottom 'kb/pixel-recenter)))))
   :config
   (ultra-scroll-mode 1))
 
