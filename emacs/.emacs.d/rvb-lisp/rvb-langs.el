@@ -131,7 +131,12 @@
 (global-set-key (kbd "C-c r") 'rvb/ruff-check-project)
 
 ;; MARC Mode
-(require 'marc-mode)
+(use-package marc-mode
+  :pin "manual"
+  :vc (:url "https://github.com/rvanb/marc-mode.el"
+            :rev :newest
+            :branch "main"))
+
 (require 'eglot)
 (add-to-list 'eglot-server-programs '(marc-mode . ("marc-lsp-server")))
 (add-hook 'marc-mode-hook 'eglot-ensure)
