@@ -3,8 +3,13 @@
 (use-package gptel
   :ensure t
   :config
-  (setq gptel-model 'o3-mini
-	gptel-backend (gptel-make-gh-copilot "Copilot"))
+  ;; (setq gptel-model 'o3-mini
+  ;;       gptel-backend (gptel-make-gh-copilot "Copilot"))
+  (setq gptel-model 'qwen2.5-coder:7b
+        gptel-backend (gptel-make-ollama "Ollama"
+                        :host "localhost:11434"
+                        :stream t
+                        :models '(qwen2.5-coder:7b)))
   (add-hook 'gptel-post-stream-hook 'gptel-auto-scroll)
   (add-hook 'gptel-post-response-functions 'gptel-end-of-response)
   :bind
