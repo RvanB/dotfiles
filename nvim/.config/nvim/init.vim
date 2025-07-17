@@ -12,6 +12,7 @@ Plugin 'maxmellon/vim-jsx-pretty'
 Plugin 'lervag/vimtex'
 Plugin 'junegunn/fzf.vim'
 Plugin 'christoomey/vim-tmux-navigator'
+Plugin 'Exafunction/windsurf.vim'
 call vundle#end()
 
 set scrolloff=10

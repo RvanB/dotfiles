@@ -10,6 +10,9 @@ export PATH="$HOME/.cargo/bin/:$PATH"
 # My own programs
 export PATH="$HOME/bin:$PATH"
 
+# OpenCode
+export PATH=/Users/rvan/.opencode/bin:$PATH
+
 export HISTFILE=~/.zsh_history
 HISTSIZE=100000
 SAVEHIST=$HISTSIZE
@@ -21,27 +24,30 @@ setopt appendhistory
 
 ########## SECRETS ##########
 # Use Copilot chat LLMs for Aider (and aidermacs)
-export OPENAI_API_BASE="https://api.githubcopilot.com"
-export OPENAI_API_KEY=$(pass show github.com/copilot/token)
+
+# export OPENAI_API_BASE="https://api.githubcopilot.com"
+# export OPENAI_API_KEY=$(pass show github.com/copilot/token > 2>&1)
+
+export CODEIUM_API_KEY=$(pass show windsurf.com/api > /dev/null 2>&1)
 
 # Set environment variables for Claude on Bedrock:
-$(pass show aws.com/bedrock/inference-profile)
+$(pass show aws.com/bedrock/inference-profile > /dev/null 2>&1)
 
 ########## COMPLETIONS ##########
 
 # fpath=(~/.zsh/completion $fpath)
 
 # Partial completion
-# zstyle ':completion:*' completer _complete
+zstyle ':completion:*' completer _complete
 
 # Case insensitivity
-# zstyle ':completion:*' matcher-list '' 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' '+l:|=* r:|=*'
+zstyle ':completion:*' matcher-list '' 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' '+l:|=* r:|=*'
 
 # autoload -Uz compinit && compinit -i
 
 # Suggestions
-# source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
-# ZSH_AUTOSUGGEST_STRATEGY=completion
+source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
+ZSH_AUTOSUGGEST_STRATEGY=completion
 
 ########## THEMING ##########
 
@@ -126,3 +132,4 @@ export SDKMAN_DIR="$HOME/.sdkman"
 
 [ -n "$EAT_SHELL_INTEGRATION_DIR" ] && \
   source "$EAT_SHELL_INTEGRATION_DIR/zsh"
+

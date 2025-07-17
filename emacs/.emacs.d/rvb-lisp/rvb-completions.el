@@ -138,12 +138,11 @@
   (embark-collect-mode . consult-preview-at-point-mode))
 
 
-;;; Enable auto completion and configure quitting
-(setq corfu-auto t
-      corfu-quit-no-match 'separator) ;; or t
-
 (use-package corfu
   :ensure t
+  :init
+  (setq corfu-auto t
+        corfu-quit-no-match 'separator)
   :config
   (global-corfu-mode)
   (corfu-popupinfo-mode))
