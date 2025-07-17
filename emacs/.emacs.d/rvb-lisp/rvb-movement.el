@@ -50,9 +50,8 @@
 
   (global-set-key (kbd "C-c C-s i") #'surround-insert)
   (global-set-key (kbd "C-c C-s d") #'surround-delete)
-  (global-set-key (kbd "C-c C-s c") #'surround-change)
-  
-  (global-set-key (kbd "C-x C-g") #'magit))
+  (global-set-key (kbd "C-c C-s c") #'surround-change))
+
 
 ;; forward-to-word / forward-word
 (require 'misc)
