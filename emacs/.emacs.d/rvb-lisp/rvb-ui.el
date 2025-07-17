@@ -50,10 +50,10 @@
 (global-set-key (kbd "<f5>") #'modus-themes-toggle)
 
 ;; Spacious padding
-;; (use-package spacious-padding
-;;   :ensure t
-;;   :config
-;;   (spacious-padding-mode))
+(use-package spacious-padding
+  :ensure t
+  :config
+  (spacious-padding-mode))
 
 ;; ef themes
 (use-package ef-themes
