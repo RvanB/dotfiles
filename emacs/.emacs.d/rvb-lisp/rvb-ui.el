@@ -50,10 +50,10 @@
 (global-set-key (kbd "<f5>") #'modus-themes-toggle)
 
 ;; Spacious padding
-(use-package spacious-padding
-  :ensure t
-  :config
-  (spacious-padding-mode))
+;; (use-package spacious-padding
+;;   :ensure t
+;;   :config
+;;   (spacious-padding-mode))
 
 ;; ef themes
 (use-package ef-themes
@@ -77,8 +77,8 @@
       standard-themes-prompts '(bold)))
 
 ;; Apply theme
-(rvb/apply-theme 'dark)
-(rvb/update-ns-appearance 'dark)
+(rvb/apply-theme 'light)
+(rvb/update-ns-appearance 'light)
 
 (require 'rvb-movement)
 ;; Cursor dependent on god mode
