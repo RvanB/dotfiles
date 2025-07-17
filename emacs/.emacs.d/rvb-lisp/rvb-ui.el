@@ -7,6 +7,7 @@
 ;;; Make it count lines for correct line number width
 (setq display-line-numbers-width-start t)
 
+;;; Configure eldoc box
 (use-package eldoc-box
   :ensure t
   ;; :hook (prog-mode . eldoc-box-hover-at-point-mode)
@@ -26,34 +27,8 @@
     (keymap-local-set "RET" #'eglot-open-link)
     ))
 
-(defun rvb/update-ns-appearance (appearance)
-  "Update the ns-appearance frame parameter based on the appearance"
-  (set-frame-parameter nil 'ns-appearance appearance)
-  (set-frame-parameter nil 'ns-transparent-titlebar nil))
-
-(defun rvb/apply-theme (appearance)
-  "Load theme, taking current system APPEARANCE into consideration."
-  (mapc #'disable-theme custom-enabled-themes)
-  (pcase appearance
-    ('light (load-theme 'modus-operandi t))
-    ('dark (load-theme 'modus-vivendi t))))
-
-(defun rvb/modus-toggle-update-ns-appearance (&rest _)
-  "Update ns-appearance after toggling Modus theme."
-  (let ((appearance (cond
-                     ((member 'modus-operandi custom-enabled-themes) 'light)
-                     ((member 'modus-vivendi custom-enabled-themes) 'dark))))
-    (when appearance
-      (rvb/update-ns-appearance appearance))))
-
-(advice-add 'modus-themes-toggle :after #'rvb/modus-toggle-update-ns-appearance)
-(global-set-key (kbd "<f5>") #'modus-themes-toggle)
-
-;; Spacious padding
-(use-package spacious-padding
-  :ensure t
-  :config
-  (spacious-padding-mode))
+(set-frame-parameter nil 'ns-appearance 'light)
+(set-frame-parameter nil 'ns-transparent-titlebar nil)
 
 ;; ef themes
 (use-package ef-themes
@@ -63,22 +38,14 @@
       ef-themes-bold-constructs t
       ef-themes-italic-comments t))
 
-;; Modus themes
-(setq modus-themes-italic-constructs t
-      modus-themes-bold-constructs t)
-
-;; Standard themes
-(use-package standard-themes
-  :ensure t
-  :init
-  (setq standard-themes-italic-constructs t
-      standard-themes-bold-constructs t
-      standard-themes-italic-comments t
-      standard-themes-prompts '(bold)))
+(use-package stimmung-themes :ensure t)
 
 ;; Apply theme
-(rvb/apply-theme 'light)
-(rvb/update-ns-appearance 'light)
+(load-theme 'modus-operandi t t)
+(load-theme 'stimmung-themes-light t t)
+
+(enable-theme 'modus-operandi)
+(enable-theme 'stimmung-themes-light)
 
 (require 'rvb-movement)
 ;; Cursor dependent on god mode
@@ -107,7 +74,7 @@
 (tool-bar-mode -1)
 
 ;;; Set the font
-(set-face-attribute 'default nil :font "Aporetic Sans Mono 16")
-(set-face-attribute 'variable-pitch nil :font "Aporetic Sans Mono 16")
+(set-face-attribute 'default nil :font "Aporetic Sans Mono 14")
+(set-face-attribute 'variable-pitch nil :font "Aporetic Sans Mono 14")
 
 (provide 'rvb-ui)
