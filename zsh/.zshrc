@@ -28,10 +28,10 @@ setopt appendhistory
 # export OPENAI_API_BASE="https://api.githubcopilot.com"
 # export OPENAI_API_KEY=$(pass show github.com/copilot/token > 2>&1)
 
-export CODEIUM_API_KEY=$(pass show windsurf.com/api > /dev/null 2>&1)
+export CODEIUM_API_KEY=$(pass show windsurf.com/api 2> /dev/null)
 
 # Set environment variables for Claude on Bedrock:
-$(pass show aws.com/bedrock/inference-profile > /dev/null 2>&1)
+$(pass show aws.com/bedrock/inference-profile 2> /dev/null)
 
 ########## COMPLETIONS ##########
 
