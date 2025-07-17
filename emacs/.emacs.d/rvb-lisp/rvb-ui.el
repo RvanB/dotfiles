@@ -29,7 +29,7 @@
 (defun rvb/update-ns-appearance (appearance)
   "Update the ns-appearance frame parameter based on the appearance"
   (set-frame-parameter nil 'ns-appearance appearance)
-  (set-frame-parameter nil 'ns-transparent-titlebar t))
+  (set-frame-parameter nil 'ns-transparent-titlebar nil))
 
 (defun rvb/apply-theme (appearance)
   "Load theme, taking current system APPEARANCE into consideration."

@@ -25,8 +25,17 @@
 
 
 ;;; In-Buffer Movement / Navigation
+(defun rvb/end-of-line-and-normal-mode ()
+  (interactive)
+  (end-of-line)
+  (god-local-mode -1))
 
-;; God mode
+(defun rvb/beginning-of-line-and-normal-mode ()
+  (interactive)
+  (rvb/back-to-indentation-or-beginning)
+  (god-local-mode -1))
+
+;; ;; God mode
 (use-package god-mode
   :ensure t
   :init
@@ -40,6 +49,8 @@
   (define-key god-local-mode-map (kbd ".") #'repeat)
   (define-key god-local-mode-map (kbd "[") #'backward-paragraph)
   (define-key god-local-mode-map (kbd "]") #'forward-paragraph)
+  (define-key god-local-mode-map (kbd "C-S-E") #'rvb/end-of-line-and-normal-mode)
+  (define-key god-local-mode-map (kbd "C-S-A") #'rvb/beginning-of-line-and-normal-mode)
   
   (global-set-key (kbd "C-g") #'rvb/keyboard-quit-and-god-mode)
   (global-set-key (kbd "C-x C-1") #'delete-other-windows)
@@ -51,7 +62,6 @@
   (global-set-key (kbd "C-c C-s i") #'surround-insert)
   (global-set-key (kbd "C-c C-s d") #'surround-delete)
   (global-set-key (kbd "C-c C-s c") #'surround-change))
-
 
 ;; forward-to-word / forward-word
 (require 'misc)
