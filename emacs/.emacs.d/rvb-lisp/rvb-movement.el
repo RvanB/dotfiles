@@ -43,6 +43,7 @@
   (setq god-mode-enable-function-key-translation nil)
   :config
   (add-to-list 'god-exempt-major-modes 'eat-mode)
+  (add-to-list 'god-exempt-major-modes 'vterm-mode)
   (god-mode)
   
   (define-key god-local-mode-map (kbd "i") #'god-local-mode)

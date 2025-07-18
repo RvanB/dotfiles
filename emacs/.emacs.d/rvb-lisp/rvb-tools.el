@@ -8,6 +8,12 @@
   :config
   (setq pdf-view-use-scaling nil))
 
+;;; graphviz
+(use-package graphviz-dot-mode
+  :ensure t
+  :config
+  (setq graphviz-dot-indent-width 4))  
+
 ;;; Magit
 (use-package magit
   :ensure t)
@@ -17,6 +23,10 @@
   :ensure t
   :config
   (which-key-mode))
+
+(use-package rainbow-mode
+  :ensure t
+  :hook (prog-mode . rainbow-mode))
 
 
 (use-package keycast

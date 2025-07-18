@@ -52,7 +52,18 @@
     ;; use M-x codeium-diagnose to see apis/fields that would be sent to the local language server
     (setq codeium-api-enabled
         (lambda (api)
-            (memq api '(GetCompletions Heartbeat CancelRequest GetAuthToken RegisterUser auth-redirect AcceptCompletion)))))
+          (memq api '(GetCompletions Heartbeat CancelRequest GetAuthToken RegisterUser auth-redirect AcceptCompletion)))))
+
+(use-package claude-code
+  :vc (:url "https://github.com/stevemolitor/claude-code.el"
+            :rev :newest
+            :branch "main")
+  :bind-keymap
+  ("C-c c" . claude-code-command-map) ;; or your preferred key
+  :init
+  (setq claude-code-terminal-backend 'vterm)
+  :config
+  (claude-code-mode))
 
 (use-package aider
   :ensure t

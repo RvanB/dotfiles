@@ -77,13 +77,11 @@ function git_prompt() {
     echo "%{$fg[red]%}*%{$reset_color%} "
   fi
 }
+PROMPT='$(exit_code_prompt) %f%B%{$fg[250]%}%T%b %{$fg[245]%}%n@%m%f%k %B%{$fg[250]%}${PWD/#$HOME/~}%b%f $(git_prompt)> %{$reset_color%}'
 
-PROMPT=$'%f%T %n@%m%f%k %{$fg[red]%}${PWD/#$HOME/~} %{$fg[blue]%}> %{$reset_color%}'
-# RPROMPT=$'$(exit_code_prompt)'
 ########## ALIASES AND UTILITY FUNCTIONS ###########
 
 alias tmux="TERM=xterm-256color tmux"
-alias ls="exa"
 
 # if [[ "$TERM" == "dumb" ]]
 # then
