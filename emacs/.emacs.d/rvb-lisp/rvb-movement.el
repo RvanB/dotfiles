@@ -35,6 +35,11 @@
   (rvb/back-to-indentation-or-beginning)
   (god-local-mode -1))
 
+(defun rvb/keyboard-quit-and-god-mode ()
+  (interactive)
+  (god-mode-all 1)
+  (keyboard-quit))
+
 ;; ;; God mode
 (use-package god-mode
   :ensure t
@@ -71,8 +76,6 @@
 (global-set-key (kbd "M-b") #'backward-to-word)
 (global-set-key (kbd "M-B") #'backward-word)
 
-(add-hook 'prog-mode-hook 'hl-line-mode)
-
 (defun rvb/move-point-to-window-center ()
   "Move point to the line at the vertical center of the window."
   (interactive)
@@ -104,7 +107,7 @@ ARG and REDISPLAY are identical to the original function."
       (error (message "[kb/pixel-recenter] %s" (error-message-string err))))
     (when redisplay (redisplay t))))
 
-(defconst golden-ratio 1.618 "Golden ratio constant.")
+(defconst scroll-ratio 0.5 "Multiplier of the window height to scroll")
 
 (defun kb/pixel-scroll-up (&optional arg)
   "(Nearly) drop-in replacement for `scroll-up' using golden ratio if ARG is nil."
@@ -113,7 +116,7 @@ ARG and REDISPLAY are identical to the original function."
     (funcall (ad-get-orig-definition 'scroll-up) (or arg 1)))
    (t
     (unless (eobp)
-      (let* ((lines (or arg (truncate (/ (window-text-height) golden-ratio))))
+      (let* ((lines (or arg (truncate (* (window-text-height) scroll-ratio))))
              (pixels (* (line-pixel-height) lines)))
         (pixel-scroll-precision-interpolate (- pixels) nil 1)
         (rvb/move-point-to-window-center))))))
@@ -124,7 +127,7 @@ ARG and REDISPLAY are identical to the original function."
    ((eq this-command 'scroll-down-line)
     (funcall (ad-get-orig-definition 'scroll-down) (or arg 1)))
    (t
-    (let* ((lines (or arg (truncate (/ (window-text-height) golden-ratio))))
+    (let* ((lines (or arg (truncate (* (window-text-height) scroll-ratio))))
            (pixels (* (line-pixel-height) lines)))
       (pixel-scroll-precision-interpolate pixels nil 1)
       (rvb/move-point-to-window-center)))))

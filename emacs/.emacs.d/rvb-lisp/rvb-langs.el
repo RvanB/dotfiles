@@ -51,13 +51,13 @@
 
 ;; NOTE TO SELF: This is causing problems with syntax highlighting on python-ts-mode startup.
 ;;; PET - Python Executable Tracker
-;; (use-package pet
-;;   :ensure t
-;;   :config
-;;   (add-hook 'python-ts-mode-hook
-;;             (lambda ()
-;;               (setq-local python-shell-interpreter (pet-executable-find "python"))
-;;               (setq-local python-shell-virtualenv-root (pet-virtualenv-root)))))
+(use-package pet
+  :ensure t
+  :config
+  (add-hook 'python-mode-hook
+            (lambda ()
+              (setq-local python-shell-interpreter (pet-executable-find "python"))
+              (setq-local python-shell-virtualenv-root (pet-virtualenv-root)))))
 
 ;; Flymake ruff
 ;; (use-package flymake-ruff
