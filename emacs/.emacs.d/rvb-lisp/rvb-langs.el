@@ -53,12 +53,23 @@
 ;;; PET - Python Executable Tracker
 (use-package pet
   :ensure t
-  :config
-  (add-hook 'python-mode-hook
-            (lambda ()
-              (setq-local python-shell-interpreter (pet-executable-find "python"))
-              (setq-local python-shell-virtualenv-root (pet-virtualenv-root)))))
+  :config)
 
+;; Set VIRTUAL_ENV environment variable to the venv defined in pyright.json
+;; If pyrightconfig.json exists in the project root, get "venvPath" and "venv" from the json object and concatenate them into a variable
+;; Set VIRTUAL_ENV to this variable
+(defun rvb/set-venv ()
+  (interactive)
+  (let* ((config-file (expand-file-name "pyrightconfig.json" (project-root (project-current))))
+         (json-data (json-read-file config-file))
+         (venv-path (cdr (assoc 'venvPath json-data)))
+         (venv (cdr (assoc 'venv json-data))))
+    (when (and venv-path venv)
+      (setenv "VIRTUAL_ENV" (expand-file-name venv venv-path))
+      (message "VIRTUAL_ENV set to: %s" (getenv "VIRTUAL_ENV")))))
+
+(advice-add 'pet-mode :before #'rvb/set-venv)
+    
 ;; Flymake ruff
 ;; (use-package flymake-ruff
 ;;   :ensure t
