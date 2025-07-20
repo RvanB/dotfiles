@@ -141,7 +141,7 @@
 (use-package corfu
   :ensure t
   :init
-  (setq corfu-auto t
+  (setq corfu-auto nil
         corfu-quit-no-match 'separator)
   :config
   (global-corfu-mode)
