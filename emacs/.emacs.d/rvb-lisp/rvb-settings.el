@@ -34,7 +34,9 @@
 (use-package exec-path-from-shell
   :ensure t
   :config
-  (exec-path-from-shell-initialize))
+  (when (memq window-system '(mac ns x))
+    (exec-path-from-shell-initialize)))
+  
 
 ;;; Misc settings
 (setq make-backup-files nil)

@@ -39,4 +39,4 @@
 ;;; Custom key bindings
 (global-set-key (kbd "s-p") 'project-switch-project)
 
-(add-hook 'emacs-startup-hook #'eat)
+(add-hook 'emacs-startup-hook #'eshell)
