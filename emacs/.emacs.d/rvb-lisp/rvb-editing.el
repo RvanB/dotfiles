@@ -1,8 +1,22 @@
 ;;; Detect indentation
 (use-package dtrt-indent
-  :ensure t)
+  :ensure t
+  :diminish 'dtrt-indent-mode)
 
 (dtrt-indent-global-mode t)
+
+;;; Snippets
+(use-package yasnippet
+  :ensure t
+  :diminish 'yas-minor-mode
+  :config
+  (yas-global-mode 1))
+
+(use-package yasnippet-snippets
+  :ensure t)
+
+(use-package consult-yasnippet
+  :ensure t)
 
 (use-package expand-region
   :ensure t
@@ -13,7 +27,8 @@
   ;; Prioritize symbol over word
   (setq expand-region-exclude-text-mode-expansions nil)
   (setq er/try-expand-list
-        '(er/mark-symbol
+        '(er/mark-word
+          er/mark-symbol
           er/mark-method-call
           er/mark-inside-pairs
           er/mark-outside-pairs

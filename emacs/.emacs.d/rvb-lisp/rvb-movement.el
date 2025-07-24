@@ -58,7 +58,7 @@
   (define-key god-local-mode-map (kbd "C-S-E") #'rvb/end-of-line-and-normal-mode)
   (define-key god-local-mode-map (kbd "C-S-A") #'rvb/beginning-of-line-and-normal-mode)
   
-  (global-set-key (kbd "C-g") #'rvb/keyboard-quit-and-god-mode)
+  (global-set-key (kbd "<escape>") #'rvb/keyboard-quit-and-god-mode)
   (global-set-key (kbd "C-x C-1") #'delete-other-windows)
   (global-set-key (kbd "C-x C-2") #'split-window-below)
   (global-set-key (kbd "C-x C-3") #'split-window-right)

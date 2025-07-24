@@ -21,11 +21,13 @@
 ;;; Which key
 (use-package which-key
   :ensure t
+  :diminish 'which-key-mode
   :config
   (which-key-mode))
 
 (use-package rainbow-mode
   :ensure t
+  :diminish 'rainbow-mode
   :hook (prog-mode . rainbow-mode))
 
 

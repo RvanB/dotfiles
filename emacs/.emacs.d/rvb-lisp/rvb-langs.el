@@ -44,8 +44,13 @@
 
 (use-package eglot
   :ensure t
+  :init
   :hook
-  (prog-mode . eglot-ensure))
+  ;; In prog-mode, ,run eglot ensure and eglot-inlay-hints-mode
+  (prog-mode . eglot-ensure)
+  
+  :config
+  (add-hook 'eglot-managed-mode-hook (lambda () (eglot-inlay-hints-mode -1))))
 
 ;;; Python stuff
 
