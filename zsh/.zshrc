@@ -10,6 +10,10 @@ export PATH="$HOME/.cargo/bin/:$PATH"
 # My own programs
 export PATH="$HOME/bin:$PATH"
 
+# CPAN
+eval "$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib=$HOME/perl5)"
+export PATH="$HOME/perl5/bin:$PATH"
+
 # OpenCode
 export PATH=/Users/rvan/.opencode/bin:$PATH
 

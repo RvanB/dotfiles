@@ -42,15 +42,38 @@
   (treesit-auto-add-to-auto-mode-alist 'all)
   (global-treesit-auto-mode))
 
-(use-package eglot
-  :ensure t
-  :init
-  :hook
-  ;; In prog-mode, ,run eglot ensure and eglot-inlay-hints-mode
-  (prog-mode . eglot-ensure)
+;; (use-package eglot
+;;   :ensure t
+;;   :init
+;;   :hook
+;;   ;; In prog-mode, ,run eglot ensure and eglot-inlay-hints-mode
+;;   (prog-mode . eglot-ensure)
   
-  :config
-  (add-hook 'eglot-managed-mode-hook (lambda () (eglot-inlay-hints-mode -1))))
+;;   :config
+;;   ;; Add Perl language server to eglot server programs
+;;   (add-to-list 'eglot-server-programs
+;;                '((perl-mode . ("pls"))))
+  
+;;   (add-hook 'eglot-managed-mode-hook (lambda () (eglot-inlay-hints-mode -1))))
+
+(exec-path-from-shell-copy-env "PERL5LIB")
+
+(use-package lsp-mode
+  :init
+  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+  (setq lsp-keymap-prefix "C-c l")
+  :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
+         (prog-mode . lsp)
+         ;; if you want which-key integration
+         (lsp-mode . lsp-enable-which-key-integration))
+  :commands lsp)
+
+(use-package lsp-pyright
+  :ensure t
+  :custom (lsp-pyright-langserver-command "basedpyright") ;; or basedpyright
+  :hook (python-mode . (lambda ()
+                          (require 'lsp-pyright)
+                          (lsp))))  ; or lsp-deferred
 
 ;;; Python stuff
 
