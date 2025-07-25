@@ -23,51 +23,7 @@
   (interactive "P")
   (other-window (- (prefix-numeric-value n))))
 
-
 ;;; In-Buffer Movement / Navigation
-(defun rvb/end-of-line-and-normal-mode ()
-  (interactive)
-  (end-of-line)
-  (god-local-mode -1))
-
-(defun rvb/beginning-of-line-and-normal-mode ()
-  (interactive)
-  (rvb/back-to-indentation-or-beginning)
-  (god-local-mode -1))
-
-(defun rvb/keyboard-quit-and-god-mode ()
-  (interactive)
-  (god-mode-all 1)
-  (keyboard-quit))
-
-;; ;; God mode
-(use-package god-mode
-  :ensure t
-  :init
-  
-  (setq god-mode-enable-function-key-translation nil)
-  :config
-  (add-to-list 'god-exempt-major-modes 'eat-mode)
-  (add-to-list 'god-exempt-major-modes 'vterm-mode)
-  (god-mode)
-  
-  (define-key god-local-mode-map (kbd "i") #'god-local-mode)
-  (define-key god-local-mode-map (kbd ".") #'repeat)
-  (define-key god-local-mode-map (kbd "[") #'backward-paragraph)
-  (define-key god-local-mode-map (kbd "]") #'forward-paragraph)
-  (define-key god-local-mode-map (kbd "C-S-E") #'rvb/end-of-line-and-normal-mode)
-  (define-key god-local-mode-map (kbd "C-S-A") #'rvb/beginning-of-line-and-normal-mode)
-  
-  (global-set-key (kbd "<escape>") #'rvb/keyboard-quit-and-god-mode)
-  (global-set-key (kbd "C-x C-1") #'delete-other-windows)
-  (global-set-key (kbd "C-x C-2") #'split-window-below)
-  (global-set-key (kbd "C-x C-3") #'split-window-right)
-  (global-set-key (kbd "C-x C-0") #'delete-window)
-  (global-set-key (kbd "C-x C-o") #'other-window)
-
-  (global-set-key (kbd "C-c C-s i") #'surround-insert)
-  (global-set-key (kbd "C-c C-s d") #'surround-delete)
-  (global-set-key (kbd "C-c C-s c") #'surround-change))
 
 ;; forward-to-word / forward-word
 (require 'misc)

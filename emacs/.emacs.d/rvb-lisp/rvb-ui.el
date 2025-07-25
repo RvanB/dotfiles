@@ -30,7 +30,7 @@
     (set-face-attribute 'eldoc-box-border nil
                         :background (frame-parameter nil 'foreground-color))
     (set-face-attribute 'eldoc-box-body nil
-                        :font "Berkeley Mono 16"
+                        :font "Berkeley Mono 14"
                         :background (frame-parameter nil 'background-color)))
   (my-eldoc-box-update-faces)
   (advice-add 'load-theme :after (lambda (&rest _) (my-eldoc-box-update-faces))))
@@ -65,18 +65,6 @@
                     :box "black")
 
 (require 'rvb-movement)
-;; Cursor dependent on god mode
-(setq god-mode-cursor-type 'box)
-(setq normal-mode-cursor-type 'bar)
-
-(defun rvb/set-cursor-according-to-mode ()
-  (cond
-   (god-local-mode
-    (setq cursor-type god-mode-cursor-type))
-   (t
-    (setq cursor-type normal-mode-cursor-type))))
-
-(add-hook 'post-command-hook 'rvb/set-cursor-according-to-mode)
 
 ;;; Disable menu bar
 ;; (menu-bar-mode -1)
@@ -89,8 +77,8 @@
 ;; (window-divider-mode)
 
 ;;; Set the font
-(set-face-attribute 'default nil :font "Berkeley Mono 16")
-(set-face-attribute 'variable-pitch nil :font "Berkeley Mono 16")
+(set-face-attribute 'default nil :font "Berkeley Mono 14")
+(set-face-attribute 'variable-pitch nil :font "Berkeley Mono 14")
 
 ;; Ligatures
 
