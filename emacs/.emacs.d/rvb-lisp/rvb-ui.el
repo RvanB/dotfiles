@@ -5,6 +5,41 @@
 (use-package diminish
   :ensure t)
 
+;; Beframe
+
+(defvar consult-buffer-sources)
+(declare-function consult--buffer-state "consult")
+
+(with-eval-after-load 'consult
+  (defface beframe-buffer
+    '((t :inherit font-lock-string-face))
+    "Face for `consult' framed buffers.")
+
+  (defun my-beframe-buffer-names-sorted (&optional frame)
+    "Return the list of buffers from `beframe-buffer-names' sorted by visibility.
+With optional argument FRAME, return the list of buffers of FRAME."
+    (beframe-buffer-names frame :sort #'beframe-buffer-sort-visibility))
+
+  (defvar beframe-consult-source
+    `( :name     "Frame-specific buffers (current frame)"
+       :narrow   ?F
+       :category buffer
+       :face     beframe-buffer
+       :history  beframe-history
+       :items    ,#'my-beframe-buffer-names-sorted
+       :action   ,#'switch-to-buffer
+       :state    ,#'consult--buffer-state))
+
+  (add-to-list 'consult-buffer-sources 'beframe-consult-source))
+
+(use-package beframe
+  :ensure t
+  :config
+  (setq beframe-functions-in-frames '(project-prompt-project-dir))
+  (beframe-mode 1))
+
+
+
 ;; Hide eldoc mode
 (diminish 'eldoc-mode)
 
@@ -110,5 +145,11 @@
 
 ;; (require 'rvb-dim)
 ;; (rvb-dim-mode)
+
+;;; Magit todos
+(use-package magit-todos
+  :ensure t
+  :after magit
+  :config (magit-todos-mode 1))
 
 (provide 'rvb-ui)
