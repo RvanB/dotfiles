@@ -37,9 +37,23 @@
   :custom
   (treesit-auto-install 'prompt)
   :config
-  (treesit-auto-add-to-auto-mode-alist 'all)
+  ;; (treesit-auto-add-to-auto-mode-alist 'all)
   (global-treesit-auto-mode))
 
+(use-package eglot-booster
+  :vc (:url "https://github.com/jdtsmith/eglot-booster"
+	    :rev :newest
+	    :branch :main)
+  :after eglot
+  :config
+  (if (executable-find "emacs-lsp-booster")
+      'eglot-booster-mode))
+
+(use-package consult-eglot
+  :ensure t)
+
+(use-package consult-eglot-embark
+  :ensure t)
 
 (exec-path-from-shell-copy-env "PERL5LIB")
 
@@ -48,14 +62,32 @@
   :init
   :hook
   ;; In prog-mode, ,run eglot ensure and eglot-inlay-hints-mode
-  (prog-mode . eglot-ensure)
-  
-  :config
-  ;; Add Perl language server to eglot server programs
-  (add-to-list 'eglot-server-programs
-               '(perl-mode . ("pls"))))
-  
-(add-hook 'eglot-managed-mode-hook (lambda () (eglot-inlay-hints-mode -1))))
+  (prog-mode . eglot-ensure))
+
+(use-package eglot-java
+  :ensure t
+  :after eglot)
+
+
+;; (use-package lsp-mode
+;;   :init
+;;   ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+;;   (setq lsp-keymap-prefix "C-c l")
+;;   :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
+;;          (prog-mode . lsp)
+;;          ;; if you want which-key integration
+;;          (lsp-mode . lsp-enable-which-key-integration))
+;;   :commands lsp)
+
+;; (use-package lsp-pyright
+;;   :ensure t
+;;   :custom (lsp-pyright-langserver-command "basedpyright") ;; or basedpyright
+;;   :hook (python-mode . (lambda ()
+;;                           (require 'lsp-pyright)
+;;                           (lsp))))  ; or lsp-deferred
+
+;; (use-package lsp-java
+;;   :ensure t)
 
 ;;; Python stuff
 
