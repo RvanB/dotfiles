@@ -37,4 +37,7 @@
   :config
   (global-set-key (kbd "C-c w") 'elfeed))
 
+(use-package dap-mode
+  :ensure t)
+
 (provide 'rvb-tools)
