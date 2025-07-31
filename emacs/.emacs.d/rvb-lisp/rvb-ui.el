@@ -12,10 +12,24 @@
 ;; (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
 ;; use-package with package.el:
+
 (use-package dashboard
   :ensure t
+  :init
+  (setq dashboard-page-separator "\n
+\n\n")
+  (setq dashboard-center-content t)
+  (setq dashboard-vertically-center-content t)
+  (setq dashboard-filter-agenda-entry 'dashboard-no-filter-agenda)
   :config
   (dashboard-setup-startup-hook))
+
+(use-package page-break-lines
+  :ensure t
+  :init
+  (setq page-break-lines-char ?-)
+  :config
+  (global-page-break-lines-mode))
 
 ;;; Make it count lines for correct line number width
 (setq display-line-numbers-width-start t)
@@ -30,7 +44,7 @@
     (set-face-attribute 'eldoc-box-border nil
                         :background (frame-parameter nil 'foreground-color))
     (set-face-attribute 'eldoc-box-body nil
-                        :font "Berkeley Mono 14"
+                        :font "Berkeley Mono Variable Z8XX46Z7 14"
                         :background (frame-parameter nil 'background-color)))
   (my-eldoc-box-update-faces)
   (advice-add 'load-theme :after (lambda (&rest _) (my-eldoc-box-update-faces))))
@@ -57,13 +71,6 @@
   :config
   (stimmung-themes-load-light))
 
-;; (set-face-attribute 'mode-line nil
-;;                     :background "#ffdab9"
-;;                     :box "black")
-
-;; (set-face-attribute 'mode-line-inactive nil
-;;                     :box "black")
-
 (require 'rvb-movement)
 
 ;;; Disable menu bar
@@ -77,13 +84,16 @@
 ;; (window-divider-mode)
 
 ;;; Set the font
-(set-face-attribute 'default nil :font "Berkeley Mono 14")
-(set-face-attribute 'variable-pitch nil :font "Berkeley Mono 14")
+;; To disable font smoothing:
+;; defaults write org.gnu.Emacs AppleFontSmoothing -int 0
+(set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 14")
+(set-face-attribute 'variable-pitch nil :font "Berkeley Mono Variable Z8XX46Z7 14")
 
 ;; Ligatures
 
 (use-package ligature
   :ensure t
+
   :config
   ;; Enable the "www" ligature in every possible major mode
   (ligature-set-ligatures 't '("www"))

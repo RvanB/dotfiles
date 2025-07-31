@@ -12,12 +12,15 @@
 ;;; Load my modules from config directory
 (add-to-list 'load-path (expand-file-name "rvb-lisp" user-emacs-directory))
 (require 'rvb-settings)
+(require 'rvb-org)
 (require 'rvb-ui)
 (require 'rvb-completions)
 (require 'rvb-langs)
 (require 'rvb-editing)
 (require 'rvb-movement)
 (require 'rvb-tools)
+(require 'rvb-terminals)
+(require 'rvb-ai)
 
 ;;; Project tabs
 ;; (setq tab-bar-format

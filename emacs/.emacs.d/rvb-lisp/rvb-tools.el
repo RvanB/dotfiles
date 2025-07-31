@@ -1,7 +1,3 @@
-(require 'rvb-ai)
-
-(require 'rvb-terminals)
-
 ;;; PDFs
 (use-package pdf-tools
   :ensure t
@@ -30,8 +26,15 @@
   :diminish 'rainbow-mode
   :hook (prog-mode . rainbow-mode))
 
-
 (use-package keycast
   :ensure t)
+
+(use-package elfeed
+  :ensure t
+  :config
+  (setq elfeed-feeds
+        '("https://simonwillison.net/atom/everything/"))
+  :config
+  (global-set-key (kbd "C-c w") 'elfeed))
 
 (provide 'rvb-tools)
