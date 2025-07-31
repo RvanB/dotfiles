@@ -5,6 +5,13 @@
 (use-package diminish
   :ensure t)
 
+;; Solaire
+(use-package solaire-mode
+  :ensure t
+  :init
+  (solaire-global-mode +1))
+	
+
 ;; Hide eldoc mode
 (diminish 'eldoc-mode)
 
@@ -44,7 +51,7 @@
     (set-face-attribute 'eldoc-box-border nil
                         :background (frame-parameter nil 'foreground-color))
     (set-face-attribute 'eldoc-box-body nil
-                        :font "Berkeley Mono Variable Z8XX46Z7 14"
+                        :font "Berkeley Mono Variable Z8XX46Z7 12"
                         :background (frame-parameter nil 'background-color)))
   (my-eldoc-box-update-faces)
   (advice-add 'load-theme :after (lambda (&rest _) (my-eldoc-box-update-faces))))
@@ -55,7 +62,7 @@
     ))
 
 (set-frame-parameter nil 'ns-appearance 'light)
-(set-frame-parameter nil 'ns-transparent-titlebar nil)
+(set-frame-parameter nil 'ns-transparent-titlebar t)
 
 ;; ef themes
 (use-package ef-themes
@@ -79,6 +86,8 @@
 (scroll-bar-mode -1)
 ;;; Disable tool bar
 (tool-bar-mode -1)
+
+(add-hook 'prog-mode-hook 'menu-bar--display-line-numbers-mode-relative)
 
 ;; Make a clearer division between windows
 ;; (window-divider-mode)
