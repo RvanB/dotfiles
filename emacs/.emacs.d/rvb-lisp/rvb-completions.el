@@ -1,6 +1,7 @@
 
 ;;; Consult
 (use-package consult
+  :ensure t
   ;; Replace bindings. Lazily loaded by `use-package'.
   :bind (;; C-c bindings in `mode-specific-map'
          ("C-c M-x" . consult-mode-command)
@@ -142,7 +143,7 @@
 (use-package corfu
   :ensure t
   :init
-  (setq corfu-auto nil
+  (setq corfu-auto t
         corfu-quit-no-match 'separator)
   :config
   (global-corfu-mode)
@@ -154,5 +155,58 @@
   (completion-styles '(orderless basic))
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles partial-completion)))))
+
+;; Add extensions
+(use-package cape
+  :ensure t
+  ;; Bind prefix keymap providing all Cape commands under a mnemonic key.
+  ;; Press C-c p ? to for help.
+  ;; :bind ("C-c p" . cape-prefix-map) ;; Alternative key: M-<tab>, M-p, M-+
+  ;; Alternatively bind Cape commands individually.
+  ;; :bind (("C-c p d" . cape-dabbrev)
+  ;;        ("C-c p h" . cape-history)
+  ;;        ("C-c p f" . cape-file)
+  ;;        ...)
+  :init
+  ;; Add to the global default value of `completion-at-point-functions' which is
+  ;; used by `completion-at-point'.  The order of the functions matters, the
+  ;; first function returning a result wins.  Note that the list of buffer-local
+  ;; completion functions takes precedence over the global list.
+  (add-hook 'completion-at-point-functions #'cape-dabbrev)
+  (add-hook 'completion-at-point-functions #'cape-file)
+  (add-hook 'completion-at-point-functions #'cape-elisp-block)
+  (add-hook 'completion-at-point-functions #'cape-history)
+  ;; ...
+  )
+
+;;; Snippets
+(use-package yasnippet
+  :ensure t
+  :diminish 'yas-minor-mode
+  :config
+  (yas-global-mode 1))
+
+(use-package yasnippet-snippets
+  :ensure t)
+
+(use-package yasnippet-capf
+  :ensure t
+  :after cape
+  :init
+  (defun my/yasnippet-capf-h ()
+    (add-to-list 'completion-at-point-functions #'yasnippet-capf))
+  :config
+  (add-hook 'prog-mode-hook 'my/yasnippet-capf-h))
+
+(defun my/eglot-capf ()
+  (setq-local completion-at-point-functions
+              (cons (cape-capf-super
+                     #'eglot-completion-at-point
+                     #'yasnippet-capf)
+                    (remove #'eglot-completion-at-point
+                            completion-at-point-functions))))
+
+
+(add-hook 'eglot-managed-mode-hook #'my/eglot-capf)
 
 (provide 'rvb-completions)

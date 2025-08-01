@@ -21,6 +21,7 @@
   :config
   (which-key-mode))
 
+;;; Rainbow parentheses
 (use-package rainbow-mode
   :ensure t
   :diminish 'rainbow-mode
@@ -29,6 +30,7 @@
 (use-package keycast
   :ensure t)
 
+;;; RSS and Nano feeds
 (use-package elfeed
   :ensure t
   :config
@@ -37,6 +39,7 @@
   :config
   (global-set-key (kbd "C-c w") 'elfeed))
 
+;;; Debugger
 (use-package dap-mode
   :ensure t)
 
