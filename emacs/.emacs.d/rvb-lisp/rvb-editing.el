@@ -7,8 +7,6 @@
 
 (use-package expand-region
   :ensure t
-  :bind
-  ("C-=" . er/expand-region)
   :config
   (setq expand-region-smart-cursor t)
   ;; Prioritize symbol over word

@@ -17,7 +17,19 @@
 (use-package hydra
   :ensure t)
 
-(defhydra window-nav (windmove-mode-map "C-c C-w")
+;;; Window navigation
+(keymap-unset magit-status-mode-map "C-c C-w" t)
+(with-eval-after-load 'magit
+  ;; Unbind C-c C-w in all relevant magit maps
+  (dolist (map (list magit-mode-map
+                     magit-status-mode-map
+                     magit-log-mode-map
+                     magit-diff-mode-map
+                     magit-revision-mode-map))
+    (define-key map (kbd "C-c C-w") nil)))
+
+(windmove-default-keybindings)
+(defhydra window-nav (global-map "C-c C-w")
   "Navigate windows"
   ("f" windmove-right "right")
   ("b" windmove-left "left")
@@ -25,6 +37,8 @@
   ("n" windmove-down "down"))
 
 (keymap-global-set "s-k" 'rvb/kill-buffer-and-close-window)
+
+(keymap-global-set "C-=" 'er/expand-region)
 
 (keymap-global-set "<pinch>" 'ignore)
 (keymap-global-set "<C-wheel-up>" 'ignore)
