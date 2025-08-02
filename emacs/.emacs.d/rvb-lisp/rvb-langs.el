@@ -181,7 +181,6 @@
       (compilation-mode)
       (local-set-key "q" (lambda () (interactive) (quit-window t))))
     (display-buffer output-buffer)))
-(global-set-key (kbd "C-c r") 'rvb/ruff-check-project)
 
 ;; MARC Mode
 (use-package marc-mode

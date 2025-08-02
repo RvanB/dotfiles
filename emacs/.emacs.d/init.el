@@ -21,6 +21,7 @@
 (require 'rvb-terminals)
 (require 'rvb-ai)
 (require 'rvb-org)
+(require 'rvb-bindings)
 
 ;;; Project tabs
 ;; (setq tab-bar-format
@@ -39,5 +40,12 @@
 ;;   ;; to be run in the current's tab (so, current project's) root directory
 ;;   (otpp-override-mode 1))
 
-;;; Custom key bindings
-(global-set-key (kbd "s-p") 'project-switch-project)
+
+(defun backward-symbol (&optional n)
+  (interactive)
+  "Move point backward across N symbols (default 1).
+This is the opposite of `forward-symbol`."
+  (interactive "p")
+  (forward-symbol (- (or n 1))))
+
+

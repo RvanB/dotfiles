@@ -5,12 +5,6 @@
 (use-package diminish
   :ensure t)
 
-;; Solaire
-(use-package solaire-mode
-  :ensure t
-  :init
-  (solaire-global-mode +1))
-
 ;; Modeline
 (use-package spaceline
   :ensure t

@@ -35,9 +35,7 @@
   :ensure t
   :config
   (setq elfeed-feeds
-        '("https://simonwillison.net/atom/everything/"))
-  :config
-  (global-set-key (kbd "C-c w") 'elfeed))
+        '("https://simonwillison.net/atom/everything/")))
 
 ;;; Debugger
 (use-package dap-mode

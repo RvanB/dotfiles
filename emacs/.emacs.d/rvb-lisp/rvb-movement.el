@@ -1,7 +1,5 @@
 
 ;;; Window management
-;;; Enable keybindings for window switching
-(windmove-default-keybindings)
 
 (defun rvb/kill-buffer-and-close-window ()
   "Kill the current buffer and close the window."
@@ -13,9 +11,6 @@
     (when (and (not (one-window-p))
                (not (window-live-p (get-buffer-window buffer))))
       (delete-window))))
-
-;;; Killing a window closes the buffer
-(global-set-key (kbd "s-k") 'rvb/kill-buffer-and-close-window)
 
 ;;; Window traversal
 (defun rvb/other-window-backward (&optional n)
@@ -87,32 +82,24 @@ ARG and REDISPLAY are identical to the original function."
   :init
   (setq scroll-conservatively 101 ; important!
         scroll-margin 0)
-  ;; (add-hook 'ultra-scroll-mode-hook
-  ;;           (lambda ()
-  ;;             (cond
-  ;;              (pixel-scroll-precision-mode
-  ;;               (advice-add 'scroll-up-command :override 'kb/pixel-scroll-up)
-  ;;               (advice-add 'scroll-down-command :override 'kb/pixel-scroll-down)
-  ;;               (advice-add 'recenter-top-bottom :override 'kb/pixel-recenter))
-  ;;              (t
-  ;;               (advice-remove 'scroll-up-command 'kb/pixel-scroll-up)
-  ;;               (advice-remove 'scroll-down-command 'kb/pixel-scroll-down)
-  ;;               (advice-remove 'recenter-top-bottom 'kb/pixel-recenter)))))
+  (add-hook 'ultra-scroll-mode-hook
+            (lambda ()
+              (cond
+               (pixel-scroll-precision-mode
+                (advice-add 'scroll-up-command :override 'kb/pixel-scroll-up)
+                (advice-add 'scroll-down-command :override 'kb/pixel-scroll-down)
+                (advice-add 'recenter-top-bottom :override 'kb/pixel-recenter))
+               (t
+                (advice-remove 'scroll-up-command 'kb/pixel-scroll-up)
+                (advice-remove 'scroll-down-command 'kb/pixel-scroll-down)
+                (advice-remove 'recenter-top-bottom 'kb/pixel-recenter)))))
   :config
   (ultra-scroll-mode 1))
-
-
-;;; Disable changing text scale with the mouse
-(global-set-key (kbd "<pinch>") 'ignore)
-(global-set-key (kbd "<C-wheel-up>") 'ignore)
-(global-set-key (kbd "<C-wheel-down>") 'ignore)
 
 (defun rvb/back-to-indentation-or-beginning ()
   (interactive)
   (if (= (point) (progn (back-to-indentation) (point)))
       (beginning-of-line)))
-(global-set-key [remap move-beginning-of-line] 'rvb/back-to-indentation-or-beginning)
-(global-set-key [remap org-beginning-of-line] 'rvb/back-to-indentation-or-beginning)
 
 ;;; i-search changes
 ;; https://emacs.stackexchange.com/questions/53004/improving-isearch/53006#53006
@@ -132,9 +119,6 @@ ARG and REDISPLAY are identical to the original function."
   (isearch-repeat-backward)
   (unless isearch-success
     (isearch-repeat-backward)))
-
-(keymap-set isearch-mode-map "C-s" 'rvb/isearch-repeat-forward+)
-(keymap-set isearch-mode-map "C-r" 'rvb/isearch-repeat-backward+)
 
 (advice-add 'keyboard-quit :before
             (lambda ()
@@ -175,7 +159,5 @@ ARG and REDISPLAY are identical to the original function."
     (isearch-repeat-forward)))
 
 (add-hook 'isearch-mode-end-hook #'rvb/widen-after-isearch)
-
-(global-set-key (kbd "C-c C-l") #'rvb/isearch-visible-region)
 
 (provide 'rvb-movement)
