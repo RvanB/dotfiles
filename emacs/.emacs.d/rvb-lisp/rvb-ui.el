@@ -9,9 +9,9 @@
 (use-package spaceline
   :ensure t
   :config
-  (spaceline-emacs-theme)
   (setq powerline-height 20)
-  (setq powerline-default-separator 'wave))
+  (setq powerline-default-separator 'wave)
+  (spaceline-emacs-theme))
 
 ;; Hide eldoc mode
 (diminish 'eldoc-mode)
