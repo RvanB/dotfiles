@@ -23,15 +23,6 @@
   (interactive "P")
   (other-window (- (prefix-numeric-value n))))
 
-;;; In-Buffer Movement / Navigation
-
-;; forward-to-word / forward-word
-(require 'misc)
-(global-set-key (kbd "M-f") #'forward-to-word)
-(global-set-key (kbd "M-F") #'forward-word)
-(global-set-key (kbd "M-b") #'backward-to-word)
-(global-set-key (kbd "M-B") #'backward-word)
-
 (defun rvb/move-point-to-window-center ()
   "Move point to the line at the vertical center of the window."
   (interactive)
