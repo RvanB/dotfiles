@@ -160,4 +160,11 @@ ARG and REDISPLAY are identical to the original function."
 
 (add-hook 'isearch-mode-end-hook #'rvb/widen-after-isearch)
 
+(defun backward-symbol (&optional n)
+  (interactive)
+  "Move point backward across N symbols (default 1).
+This is the opposite of `forward-symbol`."
+  (interactive "p")
+  (forward-symbol (- (or n 1))))
+
 (provide 'rvb-movement)

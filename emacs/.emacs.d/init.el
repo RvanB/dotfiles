@@ -41,11 +41,5 @@
 ;;   (otpp-override-mode 1))
 
 
-(defun backward-symbol (&optional n)
-  (interactive)
-  "Move point backward across N symbols (default 1).
-This is the opposite of `forward-symbol`."
-  (interactive "p")
-  (forward-symbol (- (or n 1))))
 
 
