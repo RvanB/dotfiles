@@ -130,7 +130,7 @@
    `(minibuffer-prompt ((,class (:foreground ,(inkpot--get-color 52) :weight bold))))
 
    ;; Consult
-   `(consult-file ((,class (:inherit defaut))))
+   `(consult-file ((,class (:inherit default))))
 
    ;; Search - exact mappings
    `(isearch ((,class (:foreground ,(inkpot--get-color 0) :background ,(inkpot--get-color 73) :weight bold))))
