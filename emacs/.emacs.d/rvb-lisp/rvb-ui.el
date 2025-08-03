@@ -63,27 +63,6 @@
 ;;; Make it count lines for correct line number width
 (setq display-line-numbers-width-start t)
 
-
-;;; Configure eldoc box
-(use-package eldoc-box
-  :ensure t
-  ;; :hook (prog-mode . eldoc-box-hover-at-point-mode)
-  :config
-  (defun my-eldoc-box-update-faces ()
-    "Update eldoc-box faces based on the current theme."
-    (set-face-attribute 'eldoc-box-border nil
-                        :background (frame-parameter nil 'foreground-color))
-    (set-face-attribute 'eldoc-box-body nil
-                        :font "Berkeley Mono Variable Z8XX46Z7 14"
-                        :background (frame-parameter nil 'background-color)))
-  (my-eldoc-box-update-faces)
-  (advice-add 'load-theme :after (lambda (&rest _) (my-eldoc-box-update-faces))))
-
-(define-advice eldoc-display-in-buffer (:after (&rest _) update-keymap)
-  (with-current-buffer eldoc--doc-buffer
-    (keymap-local-set "RET" #'eglot-open-link)
-    ))
-
 (set-frame-parameter nil 'ns-appearance 'light)
 (set-frame-parameter nil 'ns-transparent-titlebar nil)
 
