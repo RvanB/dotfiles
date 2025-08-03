@@ -80,6 +80,10 @@
       (goto-char (point-min)))
     (switch-to-buffer buffer)))
 
+(defun inkpot--get-color (vim-color)
+  "Get hex color for a Vim color number using the <SID>X function."
+  (aref inkpot--xterm-colors (inkpot--x vim-color)))
+
 (defface bracket-face
   `((t (:foreground ,(inkpot--get-color 55))))
   "Face for highlighting brackets and parentheses.")
@@ -91,11 +95,6 @@
    nil
    '(("\\([][(){}]\\)" 1 'bracket-face t)))
   (font-lock-flush))
-
-
-(defun inkpot--get-color (vim-color)
-  "Get hex color for a Vim color number using the <SID>X function."
-  (aref inkpot--xterm-colors (inkpot--x vim-color)))
 
 (deftheme inkpot
   "Exact conversion of Vim's inkpot colorscheme.")
