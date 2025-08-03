@@ -10,6 +10,14 @@
   :config
   (add-hook 'prog-mode-hook 'rainbow-delimiters-mode))
 
+(use-package olivetti
+  :ensure t)
+
+(use-package spacious-padding
+  :ensure t
+  :config
+  (spacious-padding-mode))
+
 ;; Diminish minor modes
 (use-package diminish
   :ensure t)
@@ -17,16 +25,14 @@
 (use-package doom-modeline
   :ensure t
   :init
+  (with-eval-after-load "doom-modeline"
+    (doom-modeline-def-modeline 'main
+      '(bar buffer-info buffer-position)
+      '(minor-modes major-mode)))
   (setq doom-modeline-env-version nil)
   (doom-modeline-mode 1))
 
 
-(with-eval-after-load "doom-modeline"
-  (doom-modeline-def-modeline 'main
-  '(bar buffer-info buffer-position)
-  '(minor-modes major-mode)))
-
-(add-hook 'doom-modeline-mode-hook 'setup-custom-doom-modeline)
 
 ;; Hide eldoc mode
 (diminish 'eldoc-mode)
@@ -103,7 +109,7 @@
 (tool-bar-mode -1)
 
 ;; Relative line numbers
-;; (add-hook 'prog-mode-hook 'menu-bar--display-line-numbers-mode-relative)
+(add-hook 'prog-mode-hook 'menu-bar--display-line-numbers-mode-relative)
 
 ;; Make a clearer division between windows
 ;; (window-divider-mode)

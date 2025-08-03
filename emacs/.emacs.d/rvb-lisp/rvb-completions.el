@@ -126,9 +126,6 @@
   :config
   (marginalia-mode))
 
-
-
-
 (use-package corfu
   :ensure t
   :init

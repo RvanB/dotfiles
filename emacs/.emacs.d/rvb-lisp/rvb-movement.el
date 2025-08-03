@@ -27,6 +27,11 @@
                        (point))))
     (goto-char target-pos)))
 
+;;; Buffer movement
+
+(autoload 'View-scroll-half-page-forward "view")
+(autoload 'View-scroll-half-page-backward "view")
+
 ;; https://www.reddit.com/r/emacs/comments/1g092xp/hack_use_pixelscroll_for_all_scrolling_and/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
 (defun kb/pixel-recenter (&optional arg redisplay)
   "Similar to `recenter' but with pixel scrolling.
@@ -82,17 +87,19 @@ ARG and REDISPLAY are identical to the original function."
   :init
   (setq scroll-conservatively 101 ; important!
         scroll-margin 0)
-  ;; (add-hook 'ultra-scroll-mode-hook
-  ;;           (lambda ()
-  ;;             (cond
-  ;;              (pixel-scroll-precision-mode
-  ;;               (advice-add 'scroll-up-command :override 'kb/pixel-scroll-up)
-  ;;               (advice-add 'scroll-down-command :override 'kb/pixel-scroll-down)
-  ;;               (advice-add 'recenter-top-bottom :override 'kb/pixel-recenter))
-  ;;              (t
-  ;;               (advice-remove 'scroll-up-command 'kb/pixel-scroll-up)
-  ;;               (advice-remove 'scroll-down-command 'kb/pixel-scroll-down)
-  ;;               (advice-remove 'recenter-top-bottom 'kb/pixel-recenter)))))
+  (add-hook 'ultra-scroll-mode-hook
+            (lambda ()
+              (cond
+               (pixel-scroll-precision-mode
+                (advice-add 'scroll-up-command :override 'kb/pixel-scroll-up)
+                (advice-add 'scroll-down-command :override 'kb/pixel-scroll-down)
+                ;; (advice-add 'recenter-top-bottom :override 'kb/pixel-recenter)
+                )
+               (t
+                (advice-remove 'scroll-up-command 'kb/pixel-scroll-up)
+                (advice-remove 'scroll-down-command 'kb/pixel-scroll-down)
+                ;; (advice-remove 'recenter-top-bottom 'kb/pixel-recenter)
+                ))))
   :config
   (ultra-scroll-mode 1))
 

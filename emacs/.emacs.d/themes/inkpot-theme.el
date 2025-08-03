@@ -120,6 +120,7 @@
 
    ;; ;; Mode line - exact colors
    `(mode-line ((,class (:foreground ,(inkpot--get-color 79) :background ,(inkpot--get-color 81) :weight bold))))
+   `(mode-line-active ((,class (:inherit mode-line))))
    `(mode-line-inactive ((,class (:foreground ,(inkpot--get-color 84) :background ,(inkpot--get-color 81)))))
    `(mode-line-buffer-id ((,class (:foreground ,(inkpot--get-color 79) :weight bold))))
 
@@ -137,8 +138,9 @@
    `(match ((,class (:background ,(inkpot--get-color 52)))))
 
    ;; Line numbers
-   `(line-number ((,class (:foreground ,(inkpot--get-color 39) :background ,(inkpot--get-color 0)))))
-   ;; `(line-number-current-line ((,class (:foreground ,(inkpot--get-color 85) :background ,(inkpot--get-color 0) :weight bold))))
+   ;; `(line-number ((,class (:foreground ,(inkpot--get-color 39) :background ,(inkpot--get-color 0)))))
+   `(line-number ((,class (:foreground ,(inkpot--get-color 81) :background ,(inkpot--get-color 0)))))
+   `(line-number-current-line ((,class (:foreground ,(inkpot--get-color 84) :background ,(inkpot--get-color 0) :weight bold))))
 
    ;; Magit
    `(magit-branch-local ((,class (:foreground ,(inkpot--get-color 27)))))

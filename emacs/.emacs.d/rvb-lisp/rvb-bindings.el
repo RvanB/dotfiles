@@ -1,3 +1,6 @@
+;; (global-set-key (kbd "C-v") 'View-scroll-half-page-forward)
+;; (global-set-key (kbd "M-v") 'View-scroll-half-page-backward)
+
 (keymap-global-set "s-f" 'forward-symbol)
 (keymap-global-set "s-b" 'backward-symbol)
 
