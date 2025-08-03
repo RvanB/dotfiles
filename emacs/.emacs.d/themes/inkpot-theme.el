@@ -94,6 +94,8 @@
   (custom-theme-set-faces
    'inkpot
 
+   `(highlight-numbers-number ((,class (:foreground ,(inkpot--get-color 69)))))
+
    ;; Basic faces - using computed colors from <SID>X function
    `(default ((,class (:foreground ,(inkpot--get-color 79) :background ,(inkpot--get-color 0)))))
    `(cursor ((,class (:background ,(inkpot--get-color 87)))))
@@ -107,11 +109,12 @@
    `(font-lock-function-call-face ((,class (:inherit default))))
    `(font-lock-builtin-face ((,class (:foreground ,(inkpot--get-color 27)))))
    `(font-lock-comment-face ((,class (:foreground ,(inkpot--get-color 52) :slant italic))))
-   `(font-lock-constant-face ((,class (:foreground ,(inkpot--get-color 25)))))
+   ;; `(font-lock-constant-face ((,class (:foreground ,(inkpot--get-color 25)))))
+   `(font-lock-constant-face ((,class (:inherit default))))
    `(font-lock-function-name-face ((,class (:foreground ,(inkpot--get-color 53)))))
    `(font-lock-keyword-face ((,class (:foreground ,(inkpot--get-color 27)))))
    `(font-lock-string-face ((,class (:foreground ,(inkpot--get-color 73) :background ,(inkpot--get-color 81)))))
-   `(font-lock-type-face ((,class (:weight bold))))
+   `(font-lock-type-face ((,class (:foreground ,(inkpot--get-color 71)))))
    `(font-lock-variable-name-face ((,class (:inherit default))))
    ;; `(font-lock-warning-face ((,class (:foreground ,(inkpot--get-color 16) :background ,(inkpot--get-color 68) :weight bold))))
    `(font-lock-doc-face ((,class (:foreground ,(inkpot--get-color 73) :background ,(inkpot--get-color 81)))))
