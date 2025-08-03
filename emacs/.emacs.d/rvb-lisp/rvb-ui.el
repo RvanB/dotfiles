@@ -4,6 +4,8 @@
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
 (load-theme 'inkpot t)
 
+(add-hook 'prog-mode-hook 'inkpot-enable-bracket-highlighting)
+
 ;; Rainbow delimiters
 (use-package rainbow-delimiters
   :ensure t
@@ -105,8 +107,8 @@
 ;;; Set the font
 ;; To disable font smoothing:
 ;; defaults write org.gnu.Emacs AppleFontSmoothing -int 0
-(set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 17")
-(set-face-attribute 'variable-pitch nil :font "Berkeley Mono Variable Z8XX46Z7 17")
+(set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 16")
+(set-face-attribute 'variable-pitch nil :font "Berkeley Mono Variable Z8XX46Z7 16")
 
 ;; Ligatures
 (use-package ligature

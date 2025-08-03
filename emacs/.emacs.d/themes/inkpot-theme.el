@@ -80,6 +80,18 @@
       (goto-char (point-min)))
     (switch-to-buffer buffer)))
 
+(defface bracket-face
+  `((t (:foreground ,(inkpot--get-color 55))))
+  "Face for highlighting brackets and parentheses.")
+
+(defun inkpot-enable-bracket-highlighting ()
+  "Add custom highlighting for brackets and parentheses."
+  (interactive)
+  (font-lock-add-keywords
+   nil
+   '(("\\([][(){}]\\)" 1 'bracket-face t)))
+  (font-lock-flush))
+
 
 (defun inkpot--get-color (vim-color)
   "Get hex color for a Vim color number using the <SID>X function."
@@ -106,15 +118,15 @@
    `(vertical-border ((,class (:foreground ,(inkpot--get-color 84) :background ,(inkpot--get-color 81)))))
 
    ;; Font lock - exact syntax highlighting from original
-   `(font-lock-function-call-face ((,class (:inherit default))))
+   `(font-lock-function-call-face ((,class (:foreground ,(inkpot--get-color 53)))))
    `(font-lock-builtin-face ((,class (:foreground ,(inkpot--get-color 27)))))
-   `(font-lock-comment-face ((,class (:foreground ,(inkpot--get-color 52) :slant italic))))
+   `(font-lock-comment-face ((,class (:foreground ,(inkpot--get-color 84)))))
    ;; `(font-lock-constant-face ((,class (:foreground ,(inkpot--get-color 25)))))
    `(font-lock-constant-face ((,class (:inherit default))))
    `(font-lock-function-name-face ((,class (:foreground ,(inkpot--get-color 53)))))
    `(font-lock-keyword-face ((,class (:foreground ,(inkpot--get-color 27)))))
    `(font-lock-string-face ((,class (:foreground ,(inkpot--get-color 73) :background ,(inkpot--get-color 81)))))
-   `(font-lock-type-face ((,class (:foreground ,(inkpot--get-color 71)))))
+   `(font-lock-type-face ((,class (:foreground ,(inkpot--get-color 25)))))
    `(font-lock-variable-name-face ((,class (:inherit default))))
    ;; `(font-lock-warning-face ((,class (:foreground ,(inkpot--get-color 16) :background ,(inkpot--get-color 68) :weight bold))))
    `(font-lock-doc-face ((,class (:foreground ,(inkpot--get-color 73) :background ,(inkpot--get-color 81)))))
@@ -134,15 +146,15 @@
    `(match ((,class (:background ,(inkpot--get-color 52)))))
 
    ;; Delimiters
-   `(rainbow-delimiters-depth-1-face ((,class (:foreground ,(inkpot--get-color 55)))))
-   `(rainbow-delimiters-depth-2-face ((,class (:inherit default))))
-   `(rainbow-delimiters-depth-3-face ((,class (:inherit default))))
-   `(rainbow-delimiters-depth-4-face ((,class (:inherit default))))
-   `(rainbow-delimiters-depth-5-face ((,class (:inherit default))))
-   `(rainbow-delimiters-depth-6-face ((,class (:inherit default))))
-   `(rainbow-delimiters-depth-7-face ((,class (:inherit default))))
-   `(rainbow-delimiters-depth-8-face ((,class (:inherit default))))
-   `(rainbow-delimiters-depth-9-face ((,class (:inherit default))))
+   ;; `(rainbow-delimiters-depth-1-face ((,class (:foreground ,(inkpot--get-color 55)))))
+   ;; `(rainbow-delimiters-depth-2-face ((,class (:inherit default))))
+   ;; `(rainbow-delimiters-depth-3-face ((,class (:inherit rainbow-delimiters-depth-1-face))))
+   ;; `(rainbow-delimiters-depth-4-face ((,class (:inherit rainbow-delimiters-depth-2-face))))
+   ;; `(rainbow-delimiters-depth-5-face ((,class (:inherit rainbow-delimiters-depth-1-face))))
+   ;; `(rainbow-delimiters-depth-6-face ((,class (:inherit rainbow-delimiters-depth-2-face))))
+   ;; `(rainbow-delimiters-depth-7-face ((,class (:inherit rainbow-delimiters-depth-1-face))))
+   ;; `(rainbow-delimiters-depth-8-face ((,class (:inherit rainbow-delimiters-depth-2-face))))
+   ;; `(rainbow-delimiters-depth-9-face ((,class (:inherit rainbow-delimiters-depth-1-face))))   
 
    ;; Error messages - exact colors
    ;; `(error ((,class (:foreground ,(inkpot--get-color 79) :background ,(inkpot--get-color 32)))))
