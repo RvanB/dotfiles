@@ -40,10 +40,6 @@
 
 (keymap-global-set "C-=" 'er/expand-region)
 
-(keymap-global-set "<pinch>" 'ignore)
-(keymap-global-set "<C-wheel-up>" 'ignore)
-(keymap-global-set "<C-wheel-down>" 'ignore)
-
 (global-set-key [remap move-beginning-of-line] 'rvb/back-to-indentation-or-beginning)
 (global-set-key [remap org-beginning-of-line] 'rvb/back-to-indentation-or-beginning)
 
@@ -55,3 +51,6 @@
 (keymap-global-set "C-c t" nil)
 (keymap-global-set "C-c t e" 'eat)
 (keymap-global-set "C-c t p" 'eat-project)
+
+(keymap-global-set "C-<tab>" 'next-buffer)
+(keymap-global-set "C-S-<tab>" 'previous-buffer)

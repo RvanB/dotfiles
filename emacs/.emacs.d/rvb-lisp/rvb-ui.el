@@ -1,17 +1,27 @@
 ;; disable fringes
 (fringe-mode 0)
 
+(add-to-list 'custom-theme-load-pat (expand-file-name "themes" user-emacs-directory))
+(load-theme 'inkpot t)
+
+;; Rainbow delimiters
+(use-package rainbow-delimiters
+  :ensure t
+  :config
+  (rainbow-delimiters-mode))
+
 ;; Diminish minor modes
 (use-package diminish
   :ensure t)
 
 ;; Modeline
-(use-package spaceline
-  :ensure t
-  :config
-  (setq powerline-height 20)
-  (setq powerline-default-separator 'wave)
-  (spaceline-emacs-theme))
+;; (use-package spaceline
+;;   :ensure t
+;;   :config
+;;   (add-hook 'ef-themes-after-load-theme-hook 'spaceline-compile)  
+;;   (setq powerline-height 20)
+;;   (setq powerline-default-separator 'arrow)
+;;   (spaceline-emacs-theme))
 
 ;; Hide eldoc mode
 (diminish 'eldoc-mode)
@@ -34,13 +44,14 @@
 
 (use-package page-break-lines
   :ensure t
-  :init
-  (setq page-break-lines-char ?-)
+  ;; :init
+  ;; (setq page-break-lines-char ?-)
   :config
   (global-page-break-lines-mode))
 
 ;;; Make it count lines for correct line number width
 (setq display-line-numbers-width-start t)
+
 
 ;;; Configure eldoc box
 (use-package eldoc-box
@@ -52,7 +63,7 @@
     (set-face-attribute 'eldoc-box-border nil
                         :background (frame-parameter nil 'foreground-color))
     (set-face-attribute 'eldoc-box-body nil
-                        :font "Berkeley Mono Variable Z8XX46Z7 12"
+                        :font "Berkeley Mono Variable Z8XX46Z7 14"
                         :background (frame-parameter nil 'background-color)))
   (my-eldoc-box-update-faces)
   (advice-add 'load-theme :after (lambda (&rest _) (my-eldoc-box-update-faces))))
@@ -63,7 +74,7 @@
     ))
 
 (set-frame-parameter nil 'ns-appearance 'light)
-(set-frame-parameter nil 'ns-transparent-titlebar t)
+(set-frame-parameter nil 'ns-transparent-titlebar nil)
 
 ;; ef themes
 (use-package ef-themes
@@ -75,9 +86,7 @@
 
 ;; Stimmung themes
 (use-package stimmung-themes
-  :ensure t
-  :config
-  (stimmung-themes-load-light))
+  :ensure t)  
 
 (require 'rvb-movement)
 
@@ -96,8 +105,8 @@
 ;;; Set the font
 ;; To disable font smoothing:
 ;; defaults write org.gnu.Emacs AppleFontSmoothing -int 0
-(set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 14")
-(set-face-attribute 'variable-pitch nil :font "Berkeley Mono Variable Z8XX46Z7 14")
+(set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 16")
+(set-face-attribute 'variable-pitch nil :font "Berkeley Mono Variable Z8XX46Z7 16")
 
 ;; Ligatures
 
