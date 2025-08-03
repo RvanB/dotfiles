@@ -1,16 +1,4 @@
-;;; inkpot-theme.el --- Exact conversion of Vim's inkpot colorscheme
-
-;; Copyright (C) 2025
-
-;; Author: Converted from Vim inkpot theme
-;; Version: 1.0
-;; Package-Requires: ((emacs "24"))
-
-;;; Commentary:
-;; Exact conversion of the Vim inkpot colorscheme with the original
-;; <SID>M and <SID>X functions implemented in Elisp.
-
-;;; Code:
+;;; inkpot-theme.el --- conversion of Vim's inkpot colorscheme
 
 ;; Implementation of the original Vim <SID>M and <SID>X functions
 (defun inkpot--m (a)
@@ -165,6 +153,7 @@
    `(magit-diff-removed-highlight ((,class (:inherit magit-diff-removed))))
    `(magit-diff-context ((,class (:inherit default))))
    `(magit-diff-context-highlight ((,class (:foreground ,(inkpot--get-color 79) :background ,(inkpot--get-color 80)))))
+   `(git-commit-summary ((,class (:inherit default))))
 
    ;; Dired
    `(dired-directory ((,class (:foreground ,(inkpot--get-color 27)))))
