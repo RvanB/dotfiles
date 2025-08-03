@@ -106,12 +106,12 @@
    ;; Font lock - exact syntax highlighting from original
    `(font-lock-function-call-face ((,class (:inherit default))))
    `(font-lock-builtin-face ((,class (:foreground ,(inkpot--get-color 27)))))
-   `(font-lock-comment-face ((,class (:foreground ,(inkpot--get-color 52)))))
-   `(font-lock-constant-face ((,class (:foreground ,(inkpot--get-color 69)))))
+   `(font-lock-comment-face ((,class (:foreground ,(inkpot--get-color 52) :slant italic))))
+   `(font-lock-constant-face ((,class (:foreground ,(inkpot--get-color 25)))))
    `(font-lock-function-name-face ((,class (:foreground ,(inkpot--get-color 53)))))
    `(font-lock-keyword-face ((,class (:foreground ,(inkpot--get-color 27)))))
    `(font-lock-string-face ((,class (:foreground ,(inkpot--get-color 73) :background ,(inkpot--get-color 81)))))
-   `(font-lock-type-face ((,class (:foreground ,(inkpot--get-color 25)))))
+   `(font-lock-type-face ((,class (:weight bold))))
    `(font-lock-variable-name-face ((,class (:inherit default))))
    ;; `(font-lock-warning-face ((,class (:foreground ,(inkpot--get-color 16) :background ,(inkpot--get-color 68) :weight bold))))
    `(font-lock-doc-face ((,class (:foreground ,(inkpot--get-color 73) :background ,(inkpot--get-color 81)))))
@@ -168,6 +168,10 @@
    ;; `(dired-ignored ((,class (:foreground ,(inkpot--get-color 39)))))
    `(dired-flagged ((,class (:foreground ,(inkpot--get-color 48)))))
    `(dired-marked ((,class (:foreground ,(inkpot--get-color 55)))))
+
+   ;; Other
+   ;; `(c-annotation-face ((,class (:foreground "#ff0000"))))
+   
 
    ;; Diff mode - exact diff colors from original
    ;; `(diff-added ((,class (:foreground ,(inkpot--get-color 79) :background ,(inkpot--get-color 20)))))
