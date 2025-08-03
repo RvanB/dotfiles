@@ -17,7 +17,16 @@
 (use-package doom-modeline
   :ensure t
   :init
+  (setq doom-modeline-env-version nil)
   (doom-modeline-mode 1))
+
+
+(with-eval-after-load "doom-modeline"
+  (doom-modeline-def-modeline 'main
+  '(bar buffer-info buffer-position)
+  '(minor-modes major-mode)))
+
+(add-hook 'doom-modeline-mode-hook 'setup-custom-doom-modeline)
 
 ;; Hide eldoc mode
 (diminish 'eldoc-mode)

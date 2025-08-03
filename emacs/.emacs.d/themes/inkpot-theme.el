@@ -107,7 +107,7 @@
    ;; Font lock - exact syntax highlighting from original
    `(font-lock-function-call-face ((,class (:foreground ,(inkpot--get-color 53)))))
    `(font-lock-builtin-face ((,class (:foreground ,(inkpot--get-color 27)))))
-   `(font-lock-comment-face ((,class (:foreground ,(inkpot--get-color 84)))))
+   `(font-lock-comment-face ((,class (:foreground ,(inkpot--get-color 84) :slant italic))))
    ;; `(font-lock-constant-face ((,class (:foreground ,(inkpot--get-color 25)))))
    `(font-lock-constant-face ((,class (:inherit default))))
    `(font-lock-function-name-face ((,class (:foreground ,(inkpot--get-color 53)))))
