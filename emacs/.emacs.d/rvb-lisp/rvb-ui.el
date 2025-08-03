@@ -8,25 +8,15 @@
 (use-package rainbow-delimiters
   :ensure t
   :config
-  (rainbow-delimiters-mode))
+  (add-hook 'prog-mode-hook 'rainbow-delimiters-mode))
 
 ;; Diminish minor modes
 (use-package diminish
   :ensure t)
 
-;; Modeline
-;; (use-package spaceline
-;;   :ensure t
-;;   :config
-;;   (add-hook 'ef-themes-after-load-theme-hook 'spaceline-compile)  
-;;   (setq powerline-height 20)
-;;   (setq powerline-default-separator 'wave)
-;;   (spaceline-emacs-theme))
-
 (use-package doom-modeline
   :ensure t
   :init
-  (setq doom-modeline-modal t)
   (doom-modeline-mode 1))
 
 ;; Hide eldoc mode

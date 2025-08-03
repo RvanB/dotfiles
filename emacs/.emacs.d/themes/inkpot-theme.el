@@ -120,7 +120,7 @@
 
    ;; ;; Mode line - exact colors
    `(mode-line ((,class (:foreground ,(inkpot--get-color 79) :background ,(inkpot--get-color 81) :weight bold))))
-   `(mode-line-inactive ((,class (:foreground ,(inkpot--get-color 84)))))
+   `(mode-line-inactive ((,class (:foreground ,(inkpot--get-color 84) :background ,(inkpot--get-color 81)))))
    `(mode-line-buffer-id ((,class (:foreground ,(inkpot--get-color 79) :weight bold))))
 
    `(doom-modeline-project-dir ((,class (:foreground ,(inkpot--get-color 75)))))

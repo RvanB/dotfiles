@@ -18,6 +18,7 @@
   :ensure t)
 
 ;;; Window navigation
+(require 'magit)
 (keymap-unset magit-status-mode-map "C-c C-w" t)
 (with-eval-after-load 'magit
   ;; Unbind C-c C-w in all relevant magit maps
