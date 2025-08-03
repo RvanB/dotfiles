@@ -94,10 +94,6 @@
   (custom-theme-set-faces
    'inkpot
 
-   ;; Tree-sitter faces
-   
-   ;; `(rvb/ts-import-face ((t (:foreground "#ff8800" :weight bold))))
-
    ;; Basic faces - using computed colors from <SID>X function
    `(default ((,class (:foreground ,(inkpot--get-color 79) :background ,(inkpot--get-color 0)))))
    `(cursor ((,class (:background ,(inkpot--get-color 87)))))
@@ -115,16 +111,16 @@
    `(font-lock-function-name-face ((,class (:foreground ,(inkpot--get-color 53)))))
    `(font-lock-keyword-face ((,class (:foreground ,(inkpot--get-color 27)))))
    `(font-lock-string-face ((,class (:foreground ,(inkpot--get-color 73) :background ,(inkpot--get-color 81)))))
-   `(font-lock-type-face ((,class (:foreground ,(inkpot--get-color 53)))))
+   `(font-lock-type-face ((,class (:foreground ,(inkpot--get-color 25)))))
    `(font-lock-variable-name-face ((,class (:inherit default))))
    ;; `(font-lock-warning-face ((,class (:foreground ,(inkpot--get-color 16) :background ,(inkpot--get-color 68) :weight bold))))
    `(font-lock-doc-face ((,class (:foreground ,(inkpot--get-color 73) :background ,(inkpot--get-color 81)))))
    `(font-lock-preprocessor-face ((,class (:foreground ,(inkpot--get-color 25)))))
 
    ;; ;; Mode line - exact colors
-   `(mode-line ((,class (:foreground ,(inkpot--get-color 85) :background ,(inkpot--get-color 81) :weight bold))))
+   `(mode-line ((,class (:foreground "#bebebe" :background "#5e2a13" :weight bold))))
    `(mode-line-inactive ((,class (:foreground ,(inkpot--get-color 84) :background ,(inkpot--get-color 81)))))
-   `(mode-line-buffer-id ((,class (:foreground ,(inkpot--get-color 79) :background ,(inkpot--get-color 81) :weight bold))))
+   `(mode-line-buffer-id ((,class (:foreground ,(inkpot--get-color 79) :weight bold))))
    
    ;; Minibuffer
    `(minibuffer-prompt ((,class (:foreground ,(inkpot--get-color 52) :weight bold))))
@@ -133,6 +129,17 @@
    `(isearch ((,class (:foreground ,(inkpot--get-color 0) :background ,(inkpot--get-color 73) :weight bold))))
    `(lazy-highlight ((,class (:foreground ,(inkpot--get-color 0) :background ,(inkpot--get-color 52)))))
    `(match ((,class (:background ,(inkpot--get-color 52)))))
+
+   ;; Delimiters
+   `(rainbow-delimiters-depth-1-face ((,class (:foreground ,(inkpot--get-color 55)))))
+   `(rainbow-delimiters-depth-2-face ((,class (:inherit default))))
+   `(rainbow-delimiters-depth-3-face ((,class (:inherit default))))
+   `(rainbow-delimiters-depth-4-face ((,class (:inherit default))))
+   `(rainbow-delimiters-depth-5-face ((,class (:inherit default))))
+   `(rainbow-delimiters-depth-6-face ((,class (:inherit default))))
+   `(rainbow-delimiters-depth-7-face ((,class (:inherit default))))
+   `(rainbow-delimiters-depth-8-face ((,class (:inherit default))))
+   `(rainbow-delimiters-depth-9-face ((,class (:inherit default))))
 
    ;; Error messages - exact colors
    ;; `(error ((,class (:foreground ,(inkpot--get-color 79) :background ,(inkpot--get-color 32)))))
