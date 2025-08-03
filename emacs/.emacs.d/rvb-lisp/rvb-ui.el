@@ -4,8 +4,6 @@
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
 (load-theme 'inkpot t)
 
-(add-hook 'prog-mode-hook 'inkpot-enable-bracket-highlighting)
-
 ;; Rainbow delimiters
 (use-package rainbow-delimiters
   :ensure t
@@ -22,8 +20,14 @@
 ;;   :config
 ;;   (add-hook 'ef-themes-after-load-theme-hook 'spaceline-compile)  
 ;;   (setq powerline-height 20)
-;;   (setq powerline-default-separator 'arrow)
+;;   (setq powerline-default-separator 'wave)
 ;;   (spaceline-emacs-theme))
+
+(use-package doom-modeline
+  :ensure t
+  :init
+  (setq doom-modeline-modal t)
+  (doom-modeline-mode 1))
 
 ;; Hide eldoc mode
 (diminish 'eldoc-mode)
@@ -99,7 +103,8 @@
 ;;; Disable tool bar
 (tool-bar-mode -1)
 
-(add-hook 'prog-mode-hook 'menu-bar--display-line-numbers-mode-relative)
+;; Relative line numbers
+;; (add-hook 'prog-mode-hook 'menu-bar--display-line-numbers-mode-relative)
 
 ;; Make a clearer division between windows
 ;; (window-divider-mode)
