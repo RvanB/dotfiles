@@ -4,18 +4,11 @@
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
 (load-theme 'inkpot t)
 
-(defun rvb/project-dirvish ()
-  "Open Dirvish at the current project root."
-  (interactive)
-  (let ((default-directory (project-root (project-current t))))
-    (dirvish default-directory)))
-
 ;; Dirvish
 (use-package dirvish
   :ensure t
   :config
   ;; Make project switch command dirvish
-  (setq project-switch-commands #'rvb/project-dirvish)
   (dirvish-override-dired-mode))
 
 ;; Rainbow delimiters
