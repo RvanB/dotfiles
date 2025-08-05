@@ -4,12 +4,18 @@
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
 (load-theme 'inkpot t)
 
+(defun rvb/project-dirvish ()
+  "Open Dirvish at the current project root."
+  (interactive)
+  (let ((default-directory (project-root (project-current t))))
+    (dirvish default-directory)))
+
 ;; Dirvish
 (use-package dirvish
   :ensure t
   :config
   ;; Make project switch command dirvish
-  (setq project-switch-commands 'dirvish)
+  (setq project-switch-commands #'rvb/project-dirvish)
   (dirvish-override-dired-mode))
 
 ;; Rainbow delimiters
@@ -33,6 +39,10 @@
 (use-package doom-modeline
   :ensure t
   :init
+  (setq dashboard-projects-switch-function 'project-switch-project)
+  (setq dashboard-items '((projects  . 10)
+			  (bookmarks . 5)
+                          (agenda    . 5)))
   (with-eval-after-load "doom-modeline"
     (doom-modeline-def-modeline 'main
       '(bar buffer-info buffer-position)
