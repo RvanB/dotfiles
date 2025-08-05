@@ -4,6 +4,14 @@
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
 (load-theme 'inkpot t)
 
+;; Dirvish
+(use-package dirvish
+  :ensure t
+  :config
+  ;; Make project switch command dirvish
+  (setq project-switch-commands 'dirvish)
+  (dirvish-override-dired-mode))
+
 ;; Rainbow delimiters
 (use-package rainbow-delimiters
   :ensure t
