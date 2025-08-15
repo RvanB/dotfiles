@@ -58,3 +58,5 @@
 
 (keymap-global-set "C-<tab>" 'next-buffer)
 (keymap-global-set "C-S-<tab>" 'previous-buffer)
+
+(keymap-global-set "C-c a" 'org-agenda)

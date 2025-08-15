@@ -20,11 +20,6 @@
 (use-package olivetti
   :ensure t)
 
-(use-package spacious-padding
-  :ensure t
-  :config
-  (spacious-padding-mode))
-
 ;; Diminish minor modes
 (use-package diminish
   :ensure t)
@@ -33,9 +28,10 @@
   :ensure t
   :init
   (setq dashboard-projects-switch-function 'project-switch-project)
-  (setq dashboard-items '((projects  . 10)
-			  (bookmarks . 5)
-                          (agenda    . 5)))
+  (setq dashboard-agenda-sort-strategy '(priority-down time-up))
+  (setq dashboard-items '((agenda    . 10)
+			  (projects  . 10)
+			  (bookmarks . 5)))
   (with-eval-after-load "doom-modeline"
     (doom-modeline-def-modeline 'main
       '(bar buffer-info buffer-position)

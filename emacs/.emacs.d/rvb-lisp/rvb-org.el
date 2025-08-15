@@ -1,6 +1,9 @@
 ;;; Org mode
 (setq org-directory "~/orgfiles/")
 
+;;; Set agenda files to the org directory
+(setq org-agenda-files (list org-directory))
+
 (use-package org-modern
   :ensure t
   :init
