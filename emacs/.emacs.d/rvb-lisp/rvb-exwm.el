@@ -29,6 +29,10 @@
 (add-hook 'after-init-hook 'exwm-wm-mode)
 
 (require 'pulseaudio-control)
+
+;; Select the first sink
+(pulseaudio-control-select-sink-by-index (caar (pulseaudio-control--get-sinks)))
+
 (exwm-input-set-key
   (kbd "<XF86AudioRaiseVolume>")
   (lambda ()
