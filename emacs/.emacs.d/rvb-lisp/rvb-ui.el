@@ -27,11 +27,6 @@
 (use-package doom-modeline
   :ensure t
   :init
-  (setq dashboard-projects-switch-function 'project-switch-project)
-  (setq dashboard-agenda-sort-strategy '(priority-down time-up))
-  (setq dashboard-items '((agenda    . 10)
-			  (projects  . 10)
-			  (bookmarks . 5)))
   (with-eval-after-load "doom-modeline"
     (doom-modeline-def-modeline 'main
       '(bar buffer-info buffer-position)
@@ -54,6 +49,15 @@
   :init
   (setq dashboard-page-separator "\n
 \n\n")
+  (setq dashboard-startupify-list '(dashboard-insert-items
+				    dashboard-insert-init-info
+				    ))
+  (setq dashboard-banner-logo-title nil)
+  (setq dashboard-projects-switch-function 'project-switch-project)
+  (setq dashboard-agenda-sort-strategy '(priority-down time-up))
+  (setq dashboard-items '((agenda    . 10)
+			  (projects  . 10)
+			  (bookmarks . 5)))
   (setq dashboard-center-content t)
   (setq dashboard-vertically-center-content t)
   (setq dashboard-filter-agenda-entry 'dashboard-no-filter-agenda)
