@@ -44,25 +44,11 @@
 
 ;; use-package with package.el:
 
-(use-package dashboard
-  :ensure t
-  :init
-  (setq dashboard-page-separator "\n
-\n\n")
-  (setq dashboard-startupify-list '(dashboard-insert-items
-				    dashboard-insert-init-info
-				    ))
-  (setq dashboard-banner-logo-title nil)
-  (setq dashboard-projects-switch-function 'project-switch-project)
-  (setq dashboard-agenda-sort-strategy '(priority-down time-up))
-  (setq dashboard-items '((agenda    . 10)
-			  (projects  . 10)
-			  (bookmarks . 5)))
-  (setq dashboard-center-content t)
-  (setq dashboard-vertically-center-content t)
-  (setq dashboard-filter-agenda-entry 'dashboard-no-filter-agenda)
-  :config
-  (dashboard-setup-startup-hook))
+(add-hook 'after-init-hook (lambda ()
+			     (org-agenda nil "a")
+			     (delete-other-windows)
+			     (olivetti-mode 1)))
+
 
 (use-package page-break-lines
   :ensure t
@@ -92,7 +78,7 @@
 (require 'rvb-movement)
 
 ;;; Disable menu bar
-;; (menu-bar-mode -1)
+(menu-bar-mode -1)
 ;;; Disable the scroll bar
 (scroll-bar-mode -1)
 ;;; Disable tool bar

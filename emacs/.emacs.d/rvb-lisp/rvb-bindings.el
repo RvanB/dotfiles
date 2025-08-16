@@ -57,6 +57,9 @@
 (keymap-global-set "C-c t p" 'eat-project)
 
 (keymap-global-set "C-<tab>" 'next-buffer)
+(keymap-global-set "C-<iso-lefttab>" 'previous-buffer)
 (keymap-global-set "C-S-<tab>" 'previous-buffer)
 
 (keymap-global-set "C-c a" 'org-agenda)
+
+(provide 'rvb-bindings)
