@@ -81,7 +81,8 @@ function git_prompt() {
     echo "%{$fg[red]%}*%{$reset_color%} "
   fi
 }
-PROMPT='$(exit_code_prompt) %f%B%{$fg[250]%}%T%b %{$fg[245]%}%n@%m%f%k %B%{$fg[250]%}${PWD/#$HOME/~}%b%f $(git_prompt)> %{$reset_color%}'
+
+PROMPT='$(exit_code_prompt) %f%B%T%b %{$fg[blue]%}%n@%m%f %B%{$fg[magenta]%}${PWD/#$HOME/~}%b%f $(git_prompt)> %{$reset_color%}'
 
 ########## ALIASES AND UTILITY FUNCTIONS ###########
 

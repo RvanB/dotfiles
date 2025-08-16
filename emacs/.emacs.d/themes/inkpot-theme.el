@@ -125,6 +125,31 @@
    `(mode-line-buffer-id ((,class (:foreground ,(inkpot--get-color 79) :weight bold))))
 
    `(doom-modeline-project-dir ((,class (:foreground ,(inkpot--get-color 75)))))
+
+   ;; Eat terminal
+   `(eat-term-color-0  ((,class (:foreground "#000000"))))
+   `(eat-term-color-8  ((,class (:foreground "#595959"))))
+
+   `(eat-term-color-1  ((,class (:foreground "#ff0000"))))
+   `(eat-term-color-9  ((,class (:foreground "#ff5f5f"))))
+
+   `(eat-term-color-2  ((,class (:foreground "#00af5f"))))
+   `(eat-term-color-10 ((,class (:foreground "#00ff5f"))))
+
+   `(eat-term-color-3  ((,class (:foreground "#f0a050"))))
+   `(eat-term-color-11 ((,class (:foreground "#ffaf5f"))))
+
+   `(eat-term-color-4  ((,class (:foreground "#00afff"))))
+   `(eat-term-color-12 ((,class (:foreground "#5fcfff"))))
+
+   `(eat-term-color-5  ((,class (:foreground "#af5f5f"))))
+   `(eat-term-color-13 ((,class (:foreground "#af5faf"))))
+
+   `(eat-term-color-6  ((,class (:foreground "#5fffaf"))))
+   `(eat-term-color-14 ((,class (:foreground "#afffaf"))))
+
+   `(eat-term-color-7  ((,class (:foreground "#ffffff"))))
+   `(eat-term-color-15 ((,class (:foreground "#ffffff"))))
    
    ;; Minibuffer
    `(minibuffer-prompt ((,class (:foreground ,(inkpot--get-color 52) :weight bold))))

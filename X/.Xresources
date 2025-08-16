@@ -1,7 +1,7 @@
 ! Use a nice truetype font and size by default... 
 ! XTerm*faceName: Meslo LG S for Powerline
-XTerm*faceSize: 12
-XTerm*faceName: Aporetic Sans Mono
+XTerm*faceSize: 14
+XTerm*faceName: Berkeley Mono Variable Z8XX46Z7  
 
 ! I like a LOT of scrollback...
 XTerm*savelines: 16384
