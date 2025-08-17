@@ -27,10 +27,15 @@
 (use-package doom-modeline
   :ensure t
   :init
+  ;; Whether display the battery status. It respects `display-battery-mode'.
+  (setq doom-modeline-battery t)
+
+  ;; Whether display the time. It respects `display-time-mode'.
+  (setq doom-modeline-time t)
   (with-eval-after-load "doom-modeline"
     (doom-modeline-def-modeline 'main
       '(bar buffer-info buffer-position)
-      '(minor-modes major-mode)))
+      '(battery minor-modes major-mode)))
   (setq doom-modeline-env-version nil)
   (doom-modeline-mode 1))
 

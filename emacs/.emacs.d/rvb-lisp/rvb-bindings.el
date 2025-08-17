@@ -62,4 +62,6 @@
 
 (keymap-global-set "C-c a" 'org-agenda)
 
+(keymap-global-set "C-x C-b" 'ibuffer)
+
 (provide 'rvb-bindings)

@@ -1,7 +1,9 @@
 (require 'exwm)
 (require 'exwm-systemtray)
 
-(exwm-systemtray-mode)
+(require 'exwm-randr)
+
+
 
 ;; Set the initial workspace number
 (setq exwm-workspace-number 4)
@@ -57,7 +59,7 @@
      '(pulseaudio-control-toggle-current-sink-mute)))
 
 ;; Print screen
-(global-set-key (kbd "<print>")
+(exwm-input-set-key (kbd "<print>")
   (lambda ()
     (interactive)
     (let ((path (concat "~/Documents/Screenshot-" (format-time-string "%Y-%m-%d,%H:%M:%S") ".png")))
@@ -66,5 +68,23 @@
     (message (concat "Screenshot saved to " path)))
     ))
 
+(require 'exwm-randr)
+(setq exwm-randr-workspace-output-plist '(0 "DP-1"))
+(add-hook 'exwm-randr-screen-change-hook
+          (lambda ()
+            (start-process-shell-command
+             "xrandr" nil
+             (if (string-match " connected" (shell-command-to-string "xrandr | grep '^DP-1'"))
+                 "xrandr --output DP-1 --primary --auto --output eDP-1 --off"
+               "xrandr --output eDP-1 --primary --auto --output DP-1 --off"))))
+;; (add-hook 'exwm-randr-screen-change-hook
+;;           (lambda ()
+;;             (start-process-shell-command
+;;              "xrandr" nil "xrandr --output DP-1 --left-of eDP-1 --auto")))
+
+(exwm-randr-mode)
+(exwm-wm-mode)
+(exwm-systemtray-mode)
+(display-battery-mode)
+
 (provide 'rvb-exwm)
-source
