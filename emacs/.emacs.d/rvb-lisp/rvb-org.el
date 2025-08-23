@@ -1,6 +1,18 @@
 ;;; Org mode
 (setq org-directory "~/orgfiles/")
 
+(custom-set-faces
+ ;; Emacs 27 and later
+ '(org-block ((t (:inherit fixed-pitch :background unspecified))))
+ ;; For older Emacs versions
+ '(org-block-background ((t (:background nil))))
+ )
+
+(custom-set-faces
+ '(org-block-begin-line ((t (:background nil))))
+ '(org-block-end-line ((t (:background nil))))
+ )
+
 ;;; Set agenda files to the org directory
 (setq org-agenda-files (list org-directory))
 
