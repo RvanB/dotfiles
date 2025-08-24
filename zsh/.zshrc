@@ -7,6 +7,8 @@ export PATH="$HOME/.local/bin:$PATH"
 # Cargo binaries
 export PATH="$HOME/.cargo/bin/:$PATH"
 
+export PKG_CONFIG_PATH=/opt/local/lib/opencv4/pkgconfig:$PKG_CONFIG_PATH
+
 # My own programs
 export PATH="$HOME/bin:$PATH"
 
