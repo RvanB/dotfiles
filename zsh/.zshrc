@@ -34,7 +34,7 @@ setopt appendhistory
 # export OPENAI_API_BASE="https://api.githubcopilot.com"
 # export OPENAI_API_KEY=$(pass show github.com/copilot/token > 2>&1)
 
-export CODEIUM_API_KEY=$(pass show windsurf.com/api 2> /dev/null)
+# export CODEIUM_API_KEY=$(pass show windsurf.com/api 2> /dev/null)
 
 # Set environment variables for Claude on Bedrock:
 $(pass show aws.com/bedrock/inference-profile 2> /dev/null)
@@ -50,10 +50,6 @@ zstyle ':completion:*' completer _complete
 zstyle ':completion:*' matcher-list '' 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' '+l:|=* r:|=*'
 
 # autoload -Uz compinit && compinit -i
-
-# Suggestions
-source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
-ZSH_AUTOSUGGEST_STRATEGY=completion
 
 ########## THEMING ##########
 
@@ -131,10 +127,9 @@ export NVM_DIR="$HOME/.nvm"
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 export FZF_DEFAULT_COMMAND='find .'
 
-#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
-export SDKMAN_DIR="$HOME/.sdkman"
-[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
-
 [ -n "$EAT_SHELL_INTEGRATION_DIR" ] && \
   source "$EAT_SHELL_INTEGRATION_DIR/zsh"
 
+#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+export SDKMAN_DIR="$HOME/.sdkman"
+[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
