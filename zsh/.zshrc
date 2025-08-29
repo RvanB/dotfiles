@@ -31,6 +31,9 @@ setopt appendhistory
 ########## SECRETS ##########
 # Use Copilot chat LLMs for Aider (and aidermacs)
 
+# Set environment variables for Claude on Bedrock:
+$(pass show aws.com/bedrock/inference-profile 2> /dev/null)
+
 # export OPENAI_API_BASE="https://api.githubcopilot.com"
 # export OPENAI_API_KEY=$(pass show github.com/copilot/token > 2>&1)
 
