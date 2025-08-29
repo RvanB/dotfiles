@@ -36,9 +36,6 @@ setopt appendhistory
 
 # export CODEIUM_API_KEY=$(pass show windsurf.com/api 2> /dev/null)
 
-# Set environment variables for Claude on Bedrock:
-$(pass show aws.com/bedrock/inference-profile 2> /dev/null)
-
 ########## COMPLETIONS ##########
 
 # fpath=(~/.zsh/completion $fpath)
