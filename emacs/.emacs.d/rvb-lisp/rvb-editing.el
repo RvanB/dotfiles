@@ -3,7 +3,8 @@
   :ensure t
   :diminish 'dtrt-indent-mode)
 
-(dtrt-indent-global-mode t)
+;; (add-hook 'prog-mode-hook 'dtrt-indent-mode)
+;; (dtrt-indent-global-mode t)
 
 (use-package expand-region
   :ensure t

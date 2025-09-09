@@ -51,6 +51,12 @@
   (if (executable-find "emacs-lsp-booster")
       'eglot-booster-mode))
 
+(add-to-list 'eglot-server-programs
+             '(python-ts-mode
+               . ("lspx"
+                  "--lsp" "basedpyright-langserver --stdio"
+		  "--lsp" "ruff server")))
+
 (use-package consult-eglot
   :ensure t)
 

@@ -4,6 +4,9 @@
 ########## ZSH CONFIGURATIONS ##########
 export PATH="$HOME/.local/bin:$PATH"
 
+# Deno (lspx)
+export PATH="/Users/rvanbron/.deno/bin:$PATH"
+
 # Cargo binaries
 export PATH="$HOME/.cargo/bin/:$PATH"
 
@@ -29,8 +32,6 @@ setopt appendhistory
 # eval "$(pyenv init -)"
 
 ########## SECRETS ##########
-# Use Copilot chat LLMs for Aider (and aidermacs)
-
 # Set environment variables for Claude on Bedrock:
 $(pass show aws.com/bedrock/inference-profile 2> /dev/null)
 
