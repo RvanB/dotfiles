@@ -1,0 +1,7 @@
+theme = Apple System Colors Light
+font-family = "Berkeley Mono"
+font-size = 16
+font-thicken = true
+font-thicken-strength = 50
+shell-integration-features = no-cursor
+cursor-style = "block"
