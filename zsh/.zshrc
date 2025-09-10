@@ -16,8 +16,10 @@ export PKG_CONFIG_PATH=/opt/local/lib/opencv4/pkgconfig:$PKG_CONFIG_PATH
 export PATH="$HOME/bin:$PATH"
 
 # CPAN
-eval "$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib=$HOME/perl5)"
-export PATH="$HOME/perl5/bin:$PATH"
+if [[ -d "$HOME/perl5/lib/perl5/local" ]]; then
+  eval "$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib=$HOME/perl5)"
+  export PATH="$HOME/perl5/bin:$PATH"
+fi
 
 # OpenCode
 export PATH=/Users/rvan/.opencode/bin:$PATH
@@ -105,9 +107,7 @@ session() {
     "$SESSION_SCRIPT_DIR/session.py" "$@"
 }
 
-# Auto-completion for 'session' (thanks chatgpt)
-#
-# Usage e.g `session pub-TAB`
+# Autocomplete for session
 autoload -Uz compinit
 compinit
 _session() {
@@ -124,13 +124,19 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh" # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
-# FZF
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 export FZF_DEFAULT_COMMAND='find .'
 
-[ -n "$EAT_SHELL_INTEGRATION_DIR" ] && \
-  source "$EAT_SHELL_INTEGRATION_DIR/zsh"
+# Eat
+[ -n "$EAT_SHELL_INTEGRATION_DIR" ] && source "$EAT_SHELL_INTEGRATION_DIR/zsh"
 
-#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+# Krita AI integration
+if [[ -s "$HOME/Library/Application Support/krita/ai_diffusion/server/uv/env" ]]; then
+  . "$HOME/Library/Application Support/krita/ai_diffusion/server/uv/env"
+fi
+
+# sdkman
 export SDKMAN_DIR="$HOME/.sdkman"
-[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+if [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
+  source "$HOME/.sdkman/bin/sdkman-init.sh"
+fi
