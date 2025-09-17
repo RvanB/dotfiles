@@ -3,8 +3,13 @@
   :ensure t
   :diminish 'dtrt-indent-mode)
 
-;; (add-hook 'prog-mode-hook 'dtrt-indent-mode)
-;; (dtrt-indent-global-mode t)
+(use-package adaptive-wrap
+  :ensure t
+  :config
+  (setq adaptive-wrap-extra-indent 2) ; Adjust this value for desired extra indentation
+  (adaptive-wrap-prefix-mode 1))
+
+(dtrt-indent-global-mode 1)
 
 (use-package expand-region
   :ensure t
