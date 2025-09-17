@@ -51,11 +51,6 @@
   (if (executable-find "emacs-lsp-booster")
       'eglot-booster-mode))
 
-(add-to-list 'eglot-server-programs
-             '(python-ts-mode
-               . ("lspx"
-                  "--lsp" "basedpyright-langserver --stdio"
-		  "--lsp" "ruff server")))
 
 (use-package consult-eglot
   :ensure t)
@@ -198,6 +193,11 @@
             :branch "main"))
 
 (require 'eglot)
+(add-to-list 'eglot-server-programs
+             '(python-ts-mode
+               . ("lspx"
+                  "--lsp" "basedpyright-langserver --stdio"
+		  "--lsp" "ruff server")))
 (add-to-list 'eglot-server-programs '(marc-mode . ("marc-lsp-server")))
 (add-hook 'marc-mode-hook 'eglot-ensure)
 
