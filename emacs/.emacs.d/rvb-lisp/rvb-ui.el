@@ -5,6 +5,11 @@
 (load-theme 'inkpot t)
 ;; (stimmung-themes-load-light)
 
+
+;; Dired Preview
+(use-package dired-preview
+  :ensure t)
+
 ;; Dirvish
 (use-package dirvish
   :ensure t
@@ -50,10 +55,10 @@
 
 ;; use-package with package.el:
 
-(add-hook 'after-init-hook (lambda ()
-			     (org-agenda nil "a")
-			     (delete-other-windows)
-			     (olivetti-mode 1)))
+;; (add-hook 'after-init-hook (lambda ()
+;; 			     (org-agenda nil "a")
+;; 			     (delete-other-windows)
+;; 			     (olivetti-mode 1)))
 
 
 (use-package page-break-lines
@@ -64,7 +69,7 @@
   (global-page-break-lines-mode))
 
 ;;; Make it count lines for correct line number width
-(setq display-line-numbers-width-start t)
+;; (setq display-line-numbers-width-start t)
 
 (set-frame-parameter nil 'ns-appearance 'light)
 (set-frame-parameter nil 'ns-transparent-titlebar nil)
@@ -91,7 +96,7 @@
 (tool-bar-mode -1)
 
 ;; Relative line numbers
-(add-hook 'prog-mode-hook 'menu-bar--display-line-numbers-mode-relative)
+;; (add-hook 'prog-mode-hook 'menu-bar--display-line-numbers-mode-relative)
 
 ;; Make a clearer division between windows
 ;; (window-divider-mode)
