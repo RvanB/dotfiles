@@ -7,7 +7,12 @@
   :ensure t
   :config
   (setq adaptive-wrap-extra-indent 2) ; Adjust this value for desired extra indentation
-  (adaptive-wrap-prefix-mode 1))
+  (adaptive-wrap-prefix-mode 1)
+  :hook (prog-mode . adaptive-wrap-prefix-mode))
+
+(setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
+(global-visual-line-mode 1) ; Enable visual line mode globally
+
 
 (dtrt-indent-global-mode 1)
 

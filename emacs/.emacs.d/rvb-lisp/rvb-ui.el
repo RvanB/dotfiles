@@ -2,8 +2,8 @@
 (fringe-mode 0)
 
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
-(load-theme 'inkpot t)
-;; (stimmung-themes-load-light)
+;; (load-theme 'inkpot t)
+(stimmung-themes-load-light)
 
 
 ;; Dired Preview
