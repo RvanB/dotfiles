@@ -1,11 +1,10 @@
-;; (use-package eat
-;;   :ensure t
-;;   :config
-;;   )
-
-;; --- TRAMP-aware eshell prompt ---------------------------------------------
+(use-package eat
+  :ensure t
+  :config
+  )
 
 (require 'tramp)
+(add-to-list 'tramp-remote-path 'tramp-own-remote-path)
 
 (defgroup my/eshell-prompt nil
   "TRAMP-aware eshell prompt."
