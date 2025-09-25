@@ -23,6 +23,7 @@
 (require 'rvb-org)
 (require 'rvb-bindings)
 (require 'rvb-exwm)
+(require 'rvb-aws)
 
 ;;; Project tabs
 ;; (setq tab-bar-format

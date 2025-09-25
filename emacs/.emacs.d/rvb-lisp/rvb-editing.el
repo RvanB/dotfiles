@@ -14,7 +14,7 @@
 (global-visual-line-mode 1) ; Enable visual line mode globally
 
 
-(dtrt-indent-global-mode 1)
+;; (dtrt-indent-global-mode 1)
 
 (use-package expand-region
   :ensure t
