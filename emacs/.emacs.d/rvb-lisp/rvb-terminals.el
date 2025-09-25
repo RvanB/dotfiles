@@ -50,7 +50,7 @@ Keys: :method :user :host :local"
     ('local   'success)
     ('remote  'warning)
     ('root    'error)
-    ('dir     'font-lock-string-face)
+    ('dir     'eshell-ls-directory)
     ('symbol  'font-lock-keyword-face)
     (_        'default)))
 
@@ -73,7 +73,7 @@ Keys: :method :user :host :local"
                         (t      (my/eshell--face 'local)))))
     (concat
      ;; Line 1
-     (propertize (format "%3d" (max 0 my/eshell-cmd-count)) 'face (my/eshell--face 'count))
+     (propertize (format "%3d" eshell-last-command-status) 'face (my/eshell--face 'count))
      " "
      (propertize time 'face (my/eshell--face 'time))
      " "
