@@ -8,7 +8,11 @@
 (use-package graphviz-dot-mode
   :ensure t
   :config
-  (setq graphviz-dot-indent-width 4))  
+  (setq graphviz-dot-indent-width 4))
+
+;; Docker
+(use-package docker
+  :ensure t)
 
 ;;; Magit
 (use-package magit
