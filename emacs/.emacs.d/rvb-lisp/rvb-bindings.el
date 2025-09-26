@@ -30,10 +30,10 @@
                      magit-log-mode-map
                      magit-diff-mode-map
                      magit-revision-mode-map))
-    (define-key map (kbd "C-c C-w") nil)))
+    (define-key map (kbd "C-c w") nil)))
 
 (windmove-default-keybindings)
-(defhydra window-nav (global-map "C-c C-w")
+(defhydra window-nav (global-map "C-c w")
   "Navigate windows"
   ("f" windmove-right "right")
   ("b" windmove-left "left")

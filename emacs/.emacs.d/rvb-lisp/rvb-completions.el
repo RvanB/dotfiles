@@ -148,8 +148,7 @@
   :init
   (add-hook 'completion-at-point-functions #'cape-dabbrev)
   (add-hook 'completion-at-point-functions #'cape-file)
-  (add-hook 'completion-at-point-functions #'cape-elisp-block)
-  (add-hook 'completion-at-point-functions #'cape-history))
+  (add-hook 'completion-at-point-functions #'cape-elisp-block))
 
 ;;; Snippets
 (use-package yasnippet
