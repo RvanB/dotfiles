@@ -64,4 +64,6 @@
 
 (keymap-global-set "C-x C-b" 'ibuffer)
 
+(keymap-global-set "C-c n" 'display-line-numbers-mode)
+
 (provide 'rvb-bindings)

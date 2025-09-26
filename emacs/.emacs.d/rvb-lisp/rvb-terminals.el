@@ -45,15 +45,15 @@ Keys: :method :user :host :local"
 (defun my/eshell--face (sym)
   "Pick a face by semantic role SYM."
   (pcase sym
-    ('count   'shadow)
-    ('time    'font-lock-constant-face)
+    ('status  'shadow)
+    ('time    'default)
     ('local   'success)
     ('remote  'warning)
     ('root    'error)
     ('dir     'eshell-ls-directory)
-    ('symbol  'font-lock-keyword-face)
-    ('prompt  'font-lock-builtin-face)  ; distinct color for prompt arrow
-    ('pipe    'shadow)                   ; subtle color for connecting pipes
+    ('symbol  'default)
+    ('prompt  'shadow)
+    ('pipe    'shadow)
     (_        'default)))
 
 (defun my/eshell--prompt ()
@@ -76,7 +76,7 @@ Keys: :method :user :host :local"
     (concat
      ;; Line 1
      (propertize "╭─" 'face (my/eshell--face 'pipe))
-     (propertize (format "%3d" eshell-last-command-status) 'face (my/eshell--face 'count))
+     (propertize (format "%3d" eshell-last-command-status) 'face (my/eshell--face 'status))
      " "
      (propertize time 'face (my/eshell--face 'time))
      " "

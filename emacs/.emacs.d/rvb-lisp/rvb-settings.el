@@ -21,7 +21,7 @@
 (load custom-file 'noerror 'nomessage)
 
 ;;; Auto revert EVERYTHING
-(global-auto-revert-mode 1)
+(global-auto-revert-mode)
 (setq global-auto-revert-non-file-buffers t)
 
 ;;; Winner mode
