@@ -52,6 +52,8 @@ Keys: :method :user :host :local"
     ('root    'error)
     ('dir     'eshell-ls-directory)
     ('symbol  'font-lock-keyword-face)
+    ('prompt  'font-lock-builtin-face)  ; distinct color for prompt arrow
+    ('pipe    'shadow)                   ; subtle color for connecting pipes
     (_        'default)))
 
 (defun my/eshell--prompt ()
@@ -73,6 +75,7 @@ Keys: :method :user :host :local"
                         (t      (my/eshell--face 'local)))))
     (concat
      ;; Line 1
+     (propertize "╭─" 'face (my/eshell--face 'pipe))
      (propertize (format "%3d" eshell-last-command-status) 'face (my/eshell--face 'count))
      " "
      (propertize time 'face (my/eshell--face 'time))
@@ -81,15 +84,17 @@ Keys: :method :user :host :local"
      " "
      (propertize dir-disp 'face (my/eshell--face 'dir))
      "\n"
-     ;; Line 2: actual prompt
-     (propertize (format " %s " prompt-char) 'face (my/eshell--face 'symbol)))))
+     ;; Line 2: actual prompt with curved pipe connection
+     (propertize "╰─" 'face (my/eshell--face 'pipe))
+     (propertize prompt-char 'face (my/eshell--face 'prompt))
+     " ")))
 
 (setq eshell-prompt-function #'my/eshell--prompt)
 (setq eshell-highlight-prompt t)
 
-;; Because our prompt starts at the beginning of the second line with a space,
+;; Because our prompt now starts with curved pipe + prompt char + space,
 ;; keep the regexp simple and robust (properties are ignored).
-(setq eshell-prompt-regexp "^ [#>] ")
+(setq eshell-prompt-regexp "^╰─[#>] ")
 
 ;; Optional: don't let eshell add extra newlines around prompts
 (setq eshell-echo-input nil)
