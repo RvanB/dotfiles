@@ -6,6 +6,8 @@
 (require 'tramp)
 (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
 
+
+
 (defgroup my/eshell-prompt nil
   "TRAMP-aware eshell prompt."
   :group 'eshell)
@@ -75,7 +77,7 @@ Keys: :method :user :host :local"
                         (t      (my/eshell--face 'local)))))
     (concat
      ;; Line 1
-     (propertize "╭─" 'face (my/eshell--face 'pipe))
+     (propertize "┌─" 'face (my/eshell--face 'pipe))
      (propertize (format "%3d" eshell-last-command-status) 'face (my/eshell--face 'status))
      " "
      (propertize time 'face (my/eshell--face 'time))
@@ -85,7 +87,7 @@ Keys: :method :user :host :local"
      (propertize dir-disp 'face (my/eshell--face 'dir))
      "\n"
      ;; Line 2: actual prompt with curved pipe connection
-     (propertize "╰─" 'face (my/eshell--face 'pipe))
+     (propertize "└─" 'face (my/eshell--face 'pipe))
      (propertize prompt-char 'face (my/eshell--face 'prompt))
      " ")))
 
@@ -94,11 +96,23 @@ Keys: :method :user :host :local"
 
 ;; Because our prompt now starts with curved pipe + prompt char + space,
 ;; keep the regexp simple and robust (properties are ignored).
-(setq eshell-prompt-regexp "^╰─[#>] ")
+(setq eshell-prompt-regexp "^└─[#>] ")
 
 ;; Optional: don't let eshell add extra newlines around prompts
 (setq eshell-echo-input nil)
 
+;; Aweshell - a better eshell
+(use-package aweshell
+  :vc (:url "https://github.com/manateelazycat/aweshell.git"
+	    :rev :newest
+	    :branch "master")
+  :config
+  (setq eshell-prompt-function #'my/eshell--prompt)
+  (setq eshell-highlight-prompt t)
 
+  ;; Because our prompt now starts with curved pipe + prompt char + space,
+  ;; keep the regexp simple and robust (properties are ignored).
+  (setq eshell-prompt-regexp "^└─[#>] ")
+  )
 
 (provide 'rvb-terminals)

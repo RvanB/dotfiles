@@ -51,7 +51,6 @@
   (if (executable-find "emacs-lsp-booster")
       'eglot-booster-mode))
 
-
 (use-package consult-eglot
   :ensure t)
 

@@ -85,7 +85,7 @@ ARG and REDISPLAY are identical to the original function."
 	    :rev :newest
 	    :branch "main")
   :init
-  (setq scroll-conservatively 101 ; important!
+  (setq scroll-conservatively 1
         scroll-margin 0)
   (add-hook 'ultra-scroll-mode-hook
             (lambda ()

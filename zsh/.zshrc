@@ -83,7 +83,8 @@ function git_prompt() {
   fi
 }
 
-PROMPT='$(exit_code_prompt) %f%B%T%b %{$fg[blue]%}%n@%m%f %B%{$fg[magenta]%}${PWD/#$HOME/~}%b%f $(git_prompt)> %{$reset_color%}'
+PROMPT='┌─ $(exit_code_prompt) %f%B%T%b %{$fg[blue]%}%n@%m%f %B${PWD/#$HOME/~}%b%f $(git_prompt)
+└─> %{$reset_color%}'
 
 ########## ALIASES AND UTILITY FUNCTIONS ###########
 

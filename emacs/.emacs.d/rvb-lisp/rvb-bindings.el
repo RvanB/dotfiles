@@ -66,4 +66,10 @@
 
 (keymap-global-set "C-c n" 'display-line-numbers-mode)
 
+;;; Terminals
+(keymap-global-set "<f5>" 'aweshell-dedicated-toggle)
+
+;;; Theme changing with consult
+(keymap-global-set "<f6>" 'consult-theme)
+
 (provide 'rvb-bindings)

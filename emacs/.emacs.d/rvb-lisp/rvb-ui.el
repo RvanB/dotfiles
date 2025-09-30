@@ -3,8 +3,15 @@
 
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
 ;; (load-theme 'inkpot t)
-(stimmung-themes-load-light)
+;; (stimmung-themes-load-light)
 
+(use-package doom-themes
+  :ensure t)
+
+(use-package vertico-posframe
+  :ensure t
+  :config
+  (vertico-posframe-mode 1))
 
 ;; Dired Preview
 (use-package dired-preview
@@ -82,6 +89,13 @@
 	ef-themes-bold-constructs t
 	ef-themes-italic-comments t))
 
+(load-theme 'ef-owl t)
+
+(use-package standard-themes
+  :ensure t)
+
+(load-theme 'standard-light t)
+
 ;; Stimmung themes
 (use-package stimmung-themes
   :ensure t)  
@@ -104,8 +118,8 @@
 ;;; Set the font
 ;; To disable font smoothing:
 ;; defaults write org.gnu.Emacs AppleFontSmoothing -int 0
-(set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 16")
-(set-face-attribute 'variable-pitch nil :font "Aporetic Sans 16")
+(set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 12")
+(set-face-attribute 'variable-pitch nil :font "Berkeley Mono Variable Z8XX46Z7 12")
 
 ;; Ligatures
 (use-package ligature
