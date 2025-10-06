@@ -165,7 +165,6 @@ go to the real end-of-line.  Useful as an alternative to `end-of-line`."
 (keymap-set visual-line-mode-map "C-a" 'rvb/back-to-indentation-or-beginning)
 (keymap-set visual-line-mode-map "C-e" 'rvb/move-to-code-end)
 
-
 ;;; i-search changes
 ;; https://emacs.stackexchange.com/questions/53004/improving-isearch/53006#53006
 (defun rvb/isearch-repeat-forward+ ()

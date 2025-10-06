@@ -13,6 +13,11 @@
 (setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
 (global-visual-line-mode 1) ; Enable visual line mode globally
 
+(use-package bbww
+  :ensure t
+  :config
+  (bbww-mode 1)
+  (bbww-init-global-bindings))
 
 ;; (dtrt-indent-global-mode 1)
 

@@ -78,8 +78,8 @@
 ;;; Make it count lines for correct line number width
 ;; (setq display-line-numbers-width-start t)
 
-(set-frame-parameter nil 'ns-appearance 'light)
-(set-frame-parameter nil 'ns-transparent-titlebar nil)
+(set-frame-parameter nil 'ns-appearance 'dark)
+(set-frame-parameter nil 'ns-transparent-titlebar t)
 
 ;; ef themes
 (use-package ef-themes
@@ -93,8 +93,6 @@
 
 (use-package standard-themes
   :ensure t)
-
-(load-theme 'standard-light t)
 
 ;; Stimmung themes
 (use-package stimmung-themes
