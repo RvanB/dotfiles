@@ -108,6 +108,55 @@ ARG and REDISPLAY are identical to the original function."
   (if (= (point) (progn (back-to-indentation) (point)))
       (beginning-of-line)))
 
+(defun rvb/code-end-column ()
+  "Return the column of the logical end-of-code on the current line.
+
+If the line contains a comment, return the column just *after* the last
+non-whitespace character that precedes the comment (so the point will be on
+the following space if one exists, or immediately before the comment if not).
+If there's no comment on the line, return the visual end-of-line column."
+  (save-excursion
+    (beginning-of-line)
+    ;; find the buffer position of the comment start on this line, if any
+    (let ((comment-pos
+           (catch 'found
+             (while (not (eolp))
+               (let ((ppss (syntax-ppss)))
+                 (when (nth 4 ppss)
+                   (throw 'found (nth 8 ppss))))
+               (forward-char 1))
+             nil)))
+      (if (not comment-pos)
+          ;; no comment: return column at end of line
+          (progn (end-of-line) (current-column))
+        ;; there's a comment: compute the column just after the last non-space
+        (save-excursion
+          (goto-char comment-pos)                     ; land on the first comment char
+          ;; Move back over any spaces/tabs between code and comment; then,
+          ;; if possible, step back one more char to be on the last code char.
+          (skip-chars-backward " \t" (line-beginning-position))
+          (when (> (point) (line-beginning-position))
+            (backward-char 1))
+          ;; If we've backed all the way to column 0, return 0.
+          ;; Otherwise return one column after the current column.
+          (if (= (current-column) 0)
+              0
+            (1+ (current-column))))))))
+
+(defun rvb/move-to-code-end ()
+  "Toggle move: go to the logical end-of-code on the line, or, if already there,
+go to the real end-of-line.  Useful as an alternative to `end-of-line`."
+  (interactive)
+  (let ((code-col (rvb/code-end-column)))
+    (if (= (current-column) code-col)
+        (end-of-line)
+      (move-to-column code-col))))
+
+;; Set visual line mode C-a and C-e to use rvb/back-to-indentation-or-beginning and rvb/move-to-code-end
+(keymap-set visual-line-mode-map "C-a" 'rvb/back-to-indentation-or-beginning)
+(keymap-set visual-line-mode-map "C-e" 'rvb/move-to-code-end)
+
+
 ;;; i-search changes
 ;; https://emacs.stackexchange.com/questions/53004/improving-isearch/53006#53006
 (defun rvb/isearch-repeat-forward+ ()

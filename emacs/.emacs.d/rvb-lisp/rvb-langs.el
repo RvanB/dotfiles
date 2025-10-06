@@ -198,6 +198,9 @@
                   "--lsp" "basedpyright-langserver --stdio"
 		  "--lsp" "ruff server")))
 (add-to-list 'eglot-server-programs '(marc-mode . ("marc-lsp-server")))
+
+(add-to-list 'eglot-server-programs '(perl-mode . ("pls")))
+
 (add-hook 'marc-mode-hook 'eglot-ensure)
 
 (provide 'rvb-langs)
