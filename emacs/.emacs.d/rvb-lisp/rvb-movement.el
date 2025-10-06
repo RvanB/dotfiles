@@ -132,27 +132,36 @@ If there's no comment on the line, return the visual end-of-line column."
         ;; there's a comment: compute the column just after the last non-space
         (save-excursion
           (goto-char comment-pos)                     ; land on the first comment char
-          ;; Move back over any spaces/tabs between code and comment; then,
-          ;; if possible, step back one more char to be on the last code char.
+          ;; Move back over any spaces/tabs between code and comment
           (skip-chars-backward " \t" (line-beginning-position))
-          (when (> (point) (line-beginning-position))
-            (backward-char 1))
-          ;; If we've backed all the way to column 0, return 0.
-          ;; Otherwise return one column after the current column.
-          (if (= (current-column) 0)
-              0
+          ;; Check if we're at the beginning of the line (comment-only line)
+          (if (= (point) (line-beginning-position))
+              ;; Comment-only line: return indentation column
+              (progn
+                (back-to-indentation)
+                (current-column))
+            ;; There's code before the comment: step back one more char to be on the last code char
+            (backward-char 1)
             (1+ (current-column))))))))
+
 
 (defun rvb/move-to-code-end ()
   "Toggle move: go to the logical end-of-code on the line, or, if already there,
 go to the real end-of-line.  Useful as an alternative to `end-of-line`."
   (interactive)
-  (let ((code-col (rvb/code-end-column)))
-    (if (= (current-column) code-col)
-        (end-of-line)
-      (move-to-column code-col))))
+  (let* ((code-col (rvb/code-end-column))
+         (indent-col (save-excursion
+                       (back-to-indentation)
+                       (current-column)))
+         (line-is-comment (= code-col indent-col)))
+    (if line-is-comment
+        (if (>= (current-column) indent-col)
+            (end-of-line)
+          (move-to-column indent-col))
+      (if (>= (current-column) code-col)
+          (end-of-line)
+        (move-to-column code-col)))))
 
-;; Set visual line mode C-a and C-e to use rvb/back-to-indentation-or-beginning and rvb/move-to-code-end
 (keymap-set visual-line-mode-map "C-a" 'rvb/back-to-indentation-or-beginning)
 (keymap-set visual-line-mode-map "C-e" 'rvb/move-to-code-end)
 
