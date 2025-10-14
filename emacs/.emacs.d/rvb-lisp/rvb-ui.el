@@ -1,28 +1,11 @@
-;; disable fringes
-(fringe-mode 0)
-
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
-;; (load-theme 'inkpot t)
-;; (stimmung-themes-load-light)
 
 (use-package doom-themes
   :ensure t)
 
-(use-package vertico-posframe
-  :ensure t
-  :config
-  (vertico-posframe-mode 1))
-
 ;; Dired Preview
 (use-package dired-preview
   :ensure t)
-
-;; Dirvish
-(use-package dirvish
-  :ensure t
-  :config
-  ;; Make project switch command dirvish
-  (dirvish-override-dired-mode))
 
 ;; Rainbow delimiters
 (use-package rainbow-delimiters
@@ -89,7 +72,11 @@
 	ef-themes-bold-constructs t
 	ef-themes-italic-comments t))
 
-(load-theme 'ef-owl t)
+(setq modus-themes-italic-constructs t
+      modus-themes-bold-constructs t
+      modus-themes-italic-comments t)
+
+(load-theme 'modus-operandi t)
 
 (use-package standard-themes
   :ensure t)
@@ -116,8 +103,11 @@
 ;;; Set the font
 ;; To disable font smoothing:
 ;; defaults write org.gnu.Emacs AppleFontSmoothing -int 0
-(set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 12")
-(set-face-attribute 'variable-pitch nil :font "Berkeley Mono Variable Z8XX46Z7 12")
+(set-face-attribute 'default nil :font "SF Mono 16")
+(set-face-attribute 'variable-pitch nil :font "SF Mono 16")
+
+;; (set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 12")
+;; (set-face-attribute 'variable-pitch nil :font "Berkeley Mono Variable Z8XX46Z7 12")
 
 ;; Ligatures
 (use-package ligature
