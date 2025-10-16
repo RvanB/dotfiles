@@ -181,8 +181,96 @@
    `(compilation-info ((,class (:foreground ,fg-primary))))
 
    `(show-paren-match ((,class (:background ,paren-match-bg :foreground ,fg-primary))))
-   )
-  )
+
+   ;; Links
+   `(link ((,class (:foreground ,keyword-color :underline t))))
+   `(link-visited ((,class (:foreground ,git-branch-remote :underline t))))
+
+   ;; Info mode
+   `(info-xref ((,class (:foreground ,keyword-color :underline t))))
+
+   ;; Warning/Error faces
+   `(warning ((,class (:foreground ,string-color :weight bold))))
+   `(error ((,class (:foreground ,number-color :weight bold))))
+
+   ;; Flymake/Flycheck diagnostics
+   `(flymake-error ((,class (:underline (:style wave :color ,number-color)))))
+   `(flymake-warning ((,class (:underline (:style wave :color ,string-color)))))
+   `(flymake-note ((,class (:underline (:style wave :color ,keyword-color)))))
+   `(flycheck-error ((,class (:underline (:style wave :color ,number-color)))))
+   `(flycheck-warning ((,class (:underline (:style wave :color ,string-color)))))
+   `(flycheck-info ((,class (:underline (:style wave :color ,keyword-color)))))
+
+   ;; Company completion
+   `(company-tooltip ((,class (:foreground ,fg-primary :background ,bg-secondary))))
+   `(company-tooltip-selection ((,class (:foreground ,fg-primary :background ,bg-highlight))))
+   `(company-tooltip-common ((,class (:foreground ,keyword-color :weight bold))))
+   `(company-tooltip-common-selection ((,class (:foreground ,keyword-color :weight bold))))
+   `(company-scrollbar-bg ((,class (:background ,bg-secondary))))
+   `(company-scrollbar-fg ((,class (:background ,fg-secondary))))
+
+   ;; Vertico
+   `(vertico-current ((,class (:foreground ,fg-primary :background ,bg-highlight))))
+
+   ;; Orderless
+   `(orderless-match-face-0 ((,class (:foreground ,keyword-color :weight bold))))
+   `(orderless-match-face-1 ((,class (:foreground ,git-branch-remote :weight bold))))
+   `(orderless-match-face-2 ((,class (:foreground ,type-color :weight bold))))
+   `(orderless-match-face-3 ((,class (:foreground ,string-color :weight bold))))
+
+   ;; Diff mode
+   `(diff-added ((,class (:foreground ,git-added))))
+   `(diff-removed ((,class (:foreground ,git-removed))))
+   `(diff-header ((,class (:foreground ,keyword-color :weight bold))))
+   `(diff-file-header ((,class (:foreground ,function-color :weight bold))))
+   `(diff-context ((,class (:inherit default))))
+
+   ;; Org mode
+   `(org-level-1 ((,class (:foreground ,keyword-color :weight bold :height 1.3))))
+   `(org-level-2 ((,class (:foreground ,function-color :weight bold :height 1.2))))
+   `(org-level-3 ((,class (:foreground ,type-color :weight bold :height 1.1))))
+   `(org-level-4 ((,class (:foreground ,git-branch-remote :weight bold))))
+   `(org-level-5 ((,class (:foreground ,string-color :weight bold))))
+   `(org-level-6 ((,class (:foreground ,keyword-color))))
+   `(org-level-7 ((,class (:foreground ,function-color))))
+   `(org-level-8 ((,class (:foreground ,type-color))))
+   `(org-todo ((,class (:foreground ,number-color :weight bold))))
+   `(org-done ((,class (:foreground ,success-color :weight bold))))
+   `(org-block ((,class (:foreground ,fg-primary :background ,bg-secondary))))
+   `(org-block-begin-line ((,class (:foreground ,fg-secondary :background ,bg-secondary :slant italic))))
+   `(org-block-end-line ((,class (:inherit org-block-begin-line))))
+   `(org-code ((,class (:foreground ,string-color :background ,string-bg))))
+   `(org-verbatim ((,class (:foreground ,type-color))))
+
+   ;; Markdown mode
+   `(markdown-header-face-1 ((,class (:foreground ,keyword-color :weight bold :height 1.3))))
+   `(markdown-header-face-2 ((,class (:foreground ,function-color :weight bold :height 1.2))))
+   `(markdown-header-face-3 ((,class (:foreground ,type-color :weight bold :height 1.1))))
+   `(markdown-header-face-4 ((,class (:foreground ,git-branch-remote :weight bold))))
+   `(markdown-header-face-5 ((,class (:foreground ,string-color :weight bold))))
+   `(markdown-header-face-6 ((,class (:foreground ,keyword-color))))
+   `(markdown-code-face ((,class (:foreground ,fg-primary :background ,bg-secondary))))
+   `(markdown-inline-code-face ((,class (:foreground ,string-color :background ,string-bg))))
+
+   ;; Miscellaneous
+   `(trailing-whitespace ((,class (:background ,number-color))))
+   `(secondary-selection ((,class (:background ,bg-secondary))))
+   `(shadow ((,class (:foreground ,fg-secondary))))
+   `(header-line ((,class (:foreground ,fg-primary :background ,bg-secondary))))
+
+   ;; Tab bar/line
+   `(tab-bar ((,class (:foreground ,fg-primary :background ,bg-secondary))))
+   `(tab-bar-tab ((,class (:foreground ,fg-primary :background ,bg-highlight :weight bold))))
+   `(tab-bar-tab-inactive ((,class (:foreground ,fg-secondary :background ,bg-secondary))))
+   `(tab-line ((,class (:foreground ,fg-primary :background ,bg-secondary))))
+   `(tab-line-tab ((,class (:foreground ,fg-primary :background ,bg-highlight))))
+   `(tab-line-tab-inactive ((,class (:foreground ,fg-secondary :background ,bg-secondary))))
+   `(tab-line-tab-current ((,class (:foreground ,fg-primary :background ,bg-highlight :weight bold))))
+
+   ;; Font lock warning
+   `(font-lock-warning-face ((,class (:foreground ,number-color :weight bold))))
+   `(font-lock-negation-char-face ((,class (:foreground ,number-color :weight bold))))
+   ))
 
 ;;;###autoload
 (when load-file-name

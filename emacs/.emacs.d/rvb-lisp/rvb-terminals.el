@@ -117,9 +117,9 @@ Keys: :method :user :host :local"
 
 ;;; Mana Terminal Launcher
 
-(defcustom rvb/mana-terminal-backend 'term
+(defcustom rvb/mana-terminal-backend 'vterm
   "Terminal backend to use for launching mana.
-Valid values are 'term, 'ansi-term, 'vterm, or 'eat."
+Valid values are 'term, 'ansi-term, 'vterm"
   :type '(choice (const :tag "term" term)
                  (const :tag "ansi-term" ansi-term)
                  (const :tag "vterm" vterm))

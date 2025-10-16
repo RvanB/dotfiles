@@ -105,8 +105,8 @@
 ;; To disable font smoothing:
 ;; defaults write org.gnu.Emacs AppleFontSmoothing -int 0
 
-(set-face-attribute 'default nil :font "Aporetic Sans Mono 18")
-(set-face-attribute 'variable-pitch nil :font "Aporetic Sans 18")
+(set-face-attribute 'default nil :font "Berkeley Mono 14")
+(set-face-attribute 'variable-pitch nil :font "Berkeley Mono 14")
 
 ;; Ligatures
 (use-package ligature
