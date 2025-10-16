@@ -117,6 +117,26 @@
    `(eat-term-color-14 ((,class (:foreground ,term-cyan-bright))))
    `(eat-term-color-7  ((,class (:foreground ,term-white))))
    `(eat-term-color-15 ((,class (:foreground ,term-white))))
+
+   ;; Ansi-term / term-mode colors
+   `(term-color-black ((,class (:foreground ,term-black :background ,term-black))))
+   `(term-color-red ((,class (:foreground ,term-red :background ,term-red))))
+   `(term-color-green ((,class (:foreground ,term-green :background ,term-green))))
+   `(term-color-yellow ((,class (:foreground ,term-yellow :background ,term-yellow))))
+   `(term-color-blue ((,class (:foreground ,term-blue :background ,term-blue))))
+   `(term-color-magenta ((,class (:foreground ,term-magenta :background ,term-magenta))))
+   `(term-color-cyan ((,class (:foreground ,term-cyan :background ,term-cyan))))
+   `(term-color-white ((,class (:foreground ,term-white :background ,term-white))))
+
+   ;; Vterm colors
+   `(vterm-color-black ((,class (:foreground ,term-black :background ,term-black))))
+   `(vterm-color-red ((,class (:foreground ,term-red :background ,term-red))))
+   `(vterm-color-green ((,class (:foreground ,term-green :background ,term-green))))
+   `(vterm-color-yellow ((,class (:foreground ,term-yellow :background ,term-yellow))))
+   `(vterm-color-blue ((,class (:foreground ,term-blue :background ,term-blue))))
+   `(vterm-color-magenta ((,class (:foreground ,term-magenta :background ,term-magenta))))
+   `(vterm-color-cyan ((,class (:foreground ,term-cyan :background ,term-cyan))))
+   `(vterm-color-white ((,class (:foreground ,term-white :background ,term-white))))
    
    ;; Minibuffer
    `(minibuffer-prompt ((,class (:foreground ,minibuffer-prompt :weight bold))))

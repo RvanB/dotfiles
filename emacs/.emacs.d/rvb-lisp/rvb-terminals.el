@@ -115,4 +115,42 @@ Keys: :method :user :host :local"
   (setq eshell-prompt-regexp "^└─[#>] ")
   )
 
+;;; Mana Terminal Launcher
+
+(defcustom rvb/mana-terminal-backend 'vterm
+  "Terminal backend to use for launching mana.
+Valid values are 'term, 'ansi-term, 'vterm, or 'eat."
+  :type '(choice (const :tag "term" term)
+                 (const :tag "ansi-term" ansi-term)
+                 (const :tag "vterm" vterm))
+  :group 'rvb-terminals)
+
+(defcustom rvb/mana-executable "mana"
+  "Path to the mana executable."
+  :type 'string
+  :group 'rvb-terminals)
+
+(defun rvb/launch-mana ()
+  "Launch mana in the configured terminal backend."
+  (interactive)
+  (pcase rvb/mana-terminal-backend
+    ('term
+     (let ((term-buffer (make-term "mana" rvb/mana-executable)))
+       (set-buffer term-buffer)
+       (term-mode)
+       (term-char-mode)
+       (switch-to-buffer term-buffer)))
+
+    ('ansi-term
+     (ansi-term rvb/mana-executable "mana"))
+
+    ('vterm
+     (if (require 'vterm nil t)
+         (let ((vterm-shell rvb/mana-executable))
+           (vterm "*mana*"))
+       (user-error "vterm is not available. Please install it or choose a different backend")))
+
+    (_
+     (user-error "Unknown terminal backend: %s" rvb/mana-terminal-backend))))
+
 (provide 'rvb-terminals)

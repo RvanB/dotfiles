@@ -76,7 +76,8 @@
       modus-themes-bold-constructs t
       modus-themes-italic-comments t)
 
-(load-theme 'modus-operandi t)
+;; (load-theme 'modus-operandi t)
+(load-theme 'inkpot t)
 
 (use-package standard-themes
   :ensure t)
