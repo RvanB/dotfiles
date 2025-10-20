@@ -36,6 +36,17 @@
   (doom-modeline-mode 1))
 
 
+(use-package otpp
+  :ensure t
+  :after project
+  :init
+  ;; Enable `otpp-mode` globally
+  (otpp-mode 1)
+  ;; If you want to advice the commands in `otpp-override-commands`
+  ;; to be run in the current's tab (so, current project's) root directory
+  (otpp-override-mode 1))
+
+(tab-bar-mode 1)
 
 ;; Hide eldoc mode
 (diminish 'eldoc-mode)
@@ -62,7 +73,7 @@
 ;; (setq display-line-numbers-width-start t)
 
 (set-frame-parameter nil 'ns-appearance 'dark)
-(set-frame-parameter nil 'ns-transparent-titlebar t)
+(set-frame-parameter nil 'ns-transparent-titlebar nil)
 
 ;; ef themes
 (use-package ef-themes
