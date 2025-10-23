@@ -116,8 +116,8 @@
 ;; To disable font smoothing:
 ;; defaults write org.gnu.Emacs AppleFontSmoothing -int 0
 
-(set-face-attribute 'default nil :font "Berkeley Mono 14")
-(set-face-attribute 'variable-pitch nil :font "Berkeley Mono 14")
+(set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 14")
+(set-face-attribute 'variable-pitch nil :font "Helvetica 14")
 
 ;; Ligatures
 (use-package ligature
@@ -131,17 +131,17 @@
   (ligature-set-ligatures 'eww-mode '("ff" "fi" "ffi"))
   ;; Enable all Cascadia Code ligatures in programming modes
   (ligature-set-ligatures 'prog-mode '("|||>" "<|||" "<==>" "<!--" "~~>" "***" "||=" "||>"
-				       ":::" "::=" "=:=" "===" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
-				       "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "---" "-<<"
+				       ":::" "::=" "=:=" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
+				       "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "-<<"
 				       "<~~" "<~>" "<*>" "<||" "<|>" "<$>" "<==" "<=>" "<=<" "<->"
 				       "<--" "<-<" "<<=" "<<-" "<<<" "<+>" "</>" "#_(" "..<"
 				       "..." "+++" "/==" "///" "_|_" "www" "&&" "^=" "~~" "~@" "~="
 				       "~>" "~-" "**" "*>" "*/" "||" "|}" "|]" "|=" "|>" "|-" "{|"
-				       "[|" "]#" "::" ":=" ":>" ":<" "$>" "==" "=>" "!=" "!!" ">:"
-				       ">=" ">>" ">-" "-~" "-|" "->" "--" "-<" "<~" "<*" "<|" "<:"
+				       "[|" "]#" "::" ":=" ":>" ":<" "$>" "=>" "!=" "!!" ">:"
+				       ">=" ">>" ">-" "-~" "-|" "->" "-<" "<~" "<*" "<|" "<:"
 				       "<$" "<=" "<>" "<-" "<<" "<+" "</" "#{" "#[" "#:" "#=" "#!"
 				       "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++" "?:"
-				       "?=" "?." "??" "/*" "/=" "/>" "//" "__" "~~" "(*" "*)"
+				       "?=" "?." "??" "/*" "/=" "/>" "//" "~~" "(*" "*)"
 				       "\\\\" "://"))
   ;; Enables ligature checks globally in all buffers. You can also do it
   ;; per mode with `ligature-mode'.
