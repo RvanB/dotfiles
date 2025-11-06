@@ -72,4 +72,12 @@
 ;;; Theme changing with consult
 (keymap-global-set "<f6>" 'consult-theme)
 
+;; Make C-x b only show project buffers
+;; (keymap-global-unset "C-x b")
+;; (keymap-global-set "C-x b" 'consult-project-buffer)
+
+;; (keymap-global-set "C-x C-b" 'persp-ibuffer)
+;; (keymap-global-set "C-x b" 'persp-switch-to-buffer*)
+;; (keymap-global-set "C-x k" 'persp-kill-buffer*)
+
 (provide 'rvb-bindings)

@@ -35,18 +35,76 @@
   (setq doom-modeline-env-version nil)
   (doom-modeline-mode 1))
 
-
-(use-package otpp
-  :ensure t
-  :after project
-  :init
-  ;; Enable `otpp-mode` globally
-  (otpp-mode 1)
-  ;; If you want to advice the commands in `otpp-override-commands`
-  ;; to be run in the current's tab (so, current project's) root directory
-  (otpp-override-mode 1))
+;; (use-package perspective
+;;   :ensure t
+;;   ;; :bind
+;;   ;; ("C-x C-b" . persp-list-buffers)         ; or use a nicer switcher, see below
+;;   :config
+;;   (setq switch-to-prev-buffer-skip
+;;       (lambda (win buff bury-or-kill)
+;;         (not (persp-is-current-buffer buff))))
+;;   :custom
+;;   (persp-mode-prefix-key (kbd "C-c M-p"))  ; pick your own prefix key here
+;;   :init
+;;   (persp-mode))
 
 (tab-bar-mode 1)
+
+(use-package tabspaces
+  ;; use this next line only if you also use straight, otherwise ignore it. 
+  :ensure t
+  :hook (after-init . tabspaces-mode) ;; use this only if you want the minor-mode loaded at startup. 
+  :commands (tabspaces-switch-or-create-workspace
+             tabspaces-open-or-create-project-and-workspace)
+  :custom
+  (tabspaces-use-filtered-buffers-as-default t)
+  (tabspaces-default-tab "Default")
+  (tabspaces-remove-to-default t)
+  ;; sessions
+  (tabspaces-session nil)
+  (tabspaces-session-auto-restore nil)
+  (tab-bar-new-tab-choice "*scratch*"))
+
+;; (use-package otpp
+;;   :ensure t
+;;   :after project
+;;   :custom
+;;   ;; Don't reconnect/create tab immediately when selecting project
+;;   (otpp-reconnect-tab nil)
+;;   :init
+;;   ;; Enable `otpp-mode` globally
+;;   (otpp-mode 1)
+;;   ;; If you want to advice the commands in `otpp-override-commands`
+;;   ;; to be run in the current's tab (so, current project's) root directory
+;;   (otpp-override-mode 1)
+;;   :config
+;;   ;; Remove the advice on project-current to prevent immediate tab switching
+;;   (advice-remove 'project-current #'otpp--project-current-a))
+
+;; (tab-bar-mode 1)
+
+;; Create project-specific scratch buffer for new tabs
+;; (defun rvb/create-project-scratch-buffer ()
+;;   "Create a project-specific scratch buffer for the current tab."
+;;   (let* ((project-root (otpp-get-tab-root-dir))
+;;          (project-name (when project-root
+;;                          (file-name-nondirectory (directory-file-name project-root))))
+;;          (scratch-name (if project-name
+;;                            (format "*scratch:%s*" project-name)
+;;                          "*scratch*"))
+;;          (scratch-buffer (get-buffer-create scratch-name)))
+;;     (with-current-buffer scratch-buffer
+;;       (unless (eq major-mode 'lisp-interaction-mode)
+;;         (lisp-interaction-mode))
+;;       (when (= (buffer-size) 0)
+;;         (insert (substitute-command-keys
+;;                  ";; This buffer is for notes you don't want to save.\n\
+;; ;; If you want to create a file, visit that file with \\[find-file],\n\
+;; ;; then enter the text in that file's own buffer.\n\n"))))
+;;     (switch-to-buffer scratch-buffer)))
+
+;; (add-hook 'tab-bar-tab-post-open-functions
+;;           (lambda (_tab) (rvb/create-project-scratch-buffer)))
 
 ;; Hide eldoc mode
 (diminish 'eldoc-mode)

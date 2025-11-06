@@ -3,10 +3,34 @@
   :config
   )
 
+(use-package vterm
+  :ensure t
+  :init
+  (setq vterm-max-scrollback 100000)
+  )
+
+;; https://mocompute.codeberg.page/item/2024/2024-09-03-emacs-project-vterm.html
+(defun my-project-shell ()
+  "Start an inferior shell in the current project's root directory.
+If a buffer already exists for running a shell in the project's root,
+switch to it.  Otherwise, create a new shell buffer.
+With \\[universal-argument] prefix arg, create a new inferior shell buffer even
+if one already exists."
+  (interactive)
+  (require 'comint)
+  (let* ((default-directory (project-root (project-current t)))
+         (default-project-shell-name (project-prefixed-buffer-name "shell"))
+         (shell-buffer (get-buffer default-project-shell-name)))
+    (if (and shell-buffer (not current-prefix-arg))
+        (if (comint-check-proc shell-buffer)
+            (pop-to-buffer shell-buffer (bound-and-true-p display-comint-buffer-action))
+          (vterm shell-buffer))
+      (vterm (generate-new-buffer-name default-project-shell-name)))))
+
+(advice-add 'project-shell :override #'my-project-shell)
+
 (require 'tramp)
 (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
-
-
 
 (defgroup my/eshell-prompt nil
   "TRAMP-aware eshell prompt."

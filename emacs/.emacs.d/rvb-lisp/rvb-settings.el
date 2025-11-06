@@ -35,6 +35,7 @@
   :ensure t
   :config
   (when (memq window-system '(mac ns x))
+    (exec-path-from-shell-copy-env "JAVA_HOME")
     (exec-path-from-shell-initialize)))
   
 
