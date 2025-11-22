@@ -6,7 +6,6 @@ export PATH="$HOME/.local/bin:$PATH"
 
 # Deno (lspx)
 export PATH="/Users/rvanbron/.deno/bin:$PATH"
-
 # Cargo binaries
 export PATH="$HOME/.cargo/bin/:$PATH"
 
@@ -35,7 +34,12 @@ setopt appendhistory
 
 ########## SECRETS ##########
 # Set environment variables for Claude on Bedrock:
-$(pass show aws.com/bedrock/inference-profile 2> /dev/null)
+# $(pass show aws.com/bedrock/inference-profile 2> /dev/null)
+
+export ANTHROPIC_DEFAULT_SONNET_MODEL=$(pass show aws.com/bedrock/sonnet)
+export ANTHROPIC_DEFAULT_HAIKU_MODEL=$(pass show aws.com/bedrock/haiku)
+export ANTHROPIC_MODEL=$ANTHROPIC_DEFAULT_HAIKU_MODEL
+export CLAUDE_CODE_SUBAGENT_MODEL=$ANTHROPIC_DEFAULT_HAIKU_MODEL
 
 # export OPENAI_API_BASE="https://api.githubcopilot.com"
 # export OPENAI_API_KEY=$(pass show github.com/copilot/token > 2>&1)
@@ -138,6 +142,9 @@ fi
 
 # sdkman
 export SDKMAN_DIR="$HOME/.sdkman"
-if [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
-  source "$HOME/.sdkman/bin/sdkman-init.sh"
-fi
+source "$HOME/.sdkman/bin/sdkman-init.sh"
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/rvanbron/.lmstudio/bin"
+# End of LM Studio CLI section
+

@@ -3,6 +3,8 @@
 
 (setq tab-always-indent 'complete)
 
+(setq indent-tabs-mode nil) ;; use spaces instead of tabs
+
 ;;; Only bring up warnings at error level
 (setq warning-minimum-level :error)
 

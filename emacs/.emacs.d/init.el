@@ -22,7 +22,7 @@
 (require 'rvb-ai)
 (require 'rvb-org)
 (require 'rvb-bindings)
-(require 'rvb-exwm)
+;; (require 'rvb-exwm)
 (require 'rvb-aws)
 
 ;;; Project tabs

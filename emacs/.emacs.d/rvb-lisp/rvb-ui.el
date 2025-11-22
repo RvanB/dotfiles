@@ -50,20 +50,20 @@
 
 (tab-bar-mode 1)
 
-(use-package tabspaces
-  ;; use this next line only if you also use straight, otherwise ignore it. 
-  :ensure t
-  :hook (after-init . tabspaces-mode) ;; use this only if you want the minor-mode loaded at startup. 
-  :commands (tabspaces-switch-or-create-workspace
-             tabspaces-open-or-create-project-and-workspace)
-  :custom
-  (tabspaces-use-filtered-buffers-as-default t)
-  (tabspaces-default-tab "Default")
-  (tabspaces-remove-to-default t)
-  ;; sessions
-  (tabspaces-session nil)
-  (tabspaces-session-auto-restore nil)
-  (tab-bar-new-tab-choice "*scratch*"))
+;; (use-package tabspaces
+;;   ;; use this next line only if you also use straight, otherwise ignore it. 
+;;   :ensure t
+;;   :hook (after-init . tabspaces-mode) ;; use this only if you want the minor-mode loaded at startup. 
+;;   :commands (tabspaces-switch-or-create-workspace
+;;              tabspaces-open-or-create-project-and-workspace)
+;;   :custom
+;;   (tabspaces-use-filtered-buffers-as-default t)
+;;   (tabspaces-default-tab "Default")
+;;   (tabspaces-remove-to-default t)
+;;   ;; sessions
+;;   (tabspaces-session nil)
+;;   (tabspaces-session-auto-restore nil)
+;;   (tab-bar-new-tab-choice "*scratch*"))
 
 ;; (use-package otpp
 ;;   :ensure t
