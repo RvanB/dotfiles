@@ -3,6 +3,9 @@
 (use-package doom-themes
   :ensure t)
 
+(use-package modus-themes
+  :ensure t)
+
 ;; Dired Preview
 (use-package dired-preview
   :ensure t)
@@ -48,7 +51,7 @@
 ;;   :init
 ;;   (persp-mode))
 
-(tab-bar-mode 1)
+;; (tab-bar-mode 1)
 
 ;; (use-package tabspaces
 ;;   ;; use this next line only if you also use straight, otherwise ignore it. 
@@ -146,7 +149,7 @@
       modus-themes-italic-comments t)
 
 ;; (load-theme 'modus-operandi t)
-(load-theme 'inkpot t)
+;; (load-theme 'inkpot t)
 
 (use-package standard-themes
   :ensure t)
@@ -175,7 +178,7 @@
 ;; defaults write org.gnu.Emacs AppleFontSmoothing -int 0
 
 (set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 14")
-(set-face-attribute 'variable-pitch nil :font "Helvetica 14")
+(set-face-attribute 'variable-pitch nil :font "Helvetica Neue 14")
 
 ;; Ligatures
 (use-package ligature

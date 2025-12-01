@@ -93,12 +93,12 @@ ARG and REDISPLAY are identical to the original function."
                (pixel-scroll-precision-mode
                 (advice-add 'scroll-up-command :override 'kb/pixel-scroll-up)
                 (advice-add 'scroll-down-command :override 'kb/pixel-scroll-down)
-                ;; (advice-add 'recenter-top-bottom :override 'kb/pixel-recenter)
+                (advice-add 'recenter-top-bottom :override 'kb/pixel-recenter)
                 )
                (t
                 (advice-remove 'scroll-up-command 'kb/pixel-scroll-up)
                 (advice-remove 'scroll-down-command 'kb/pixel-scroll-down)
-                ;; (advice-remove 'recenter-top-bottom 'kb/pixel-recenter)
+                (advice-remove 'recenter-top-bottom 'kb/pixel-recenter)
                 ))))
   :config
   (ultra-scroll-mode 1))

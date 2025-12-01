@@ -1,7 +1,8 @@
-theme = Apple System Colors
+theme = Apple System Colors Light
 font-family = "Berkeley Mono Variable Z8XX46Z7"
 font-size = 14
 font-thicken = true
 font-thicken-strength = 50
 shell-integration-features = no-cursor
 cursor-style = "block"
+keybind = shift+enter=text:\x1b\r
