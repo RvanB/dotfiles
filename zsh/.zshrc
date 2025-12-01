@@ -102,8 +102,22 @@ PROMPT='┌─ $(exit_code_prompt) %f%B%T%b %{$fg[blue]%}%n@%m%f %B${PWD/#$HOME/
 
 ########## ALIASES AND UTILITY FUNCTIONS ###########
 
-export EDITOR="emacsclient -n -r"
-alias e="emacsclient -n -r"
+function e() {
+  # Check if Emacs server is running and if any frame exists
+  local has_frame
+
+  has_frame=$(emacsclient -e '(> (length (frame-list)) 1)' 2>/dev/null)
+
+  if [[ "$has_frame" == "t" ]]; then
+    # A GUI or TTY frame already exists
+    emacsclient -n "$@"
+  else
+    # No frame OR no server → start a new one
+    emacsclient -n -c "$@"
+  fi
+}
+
+export EDITOR="e -n"
 
 alias tmux="TERM=xterm-256color tmux"
 alias cfzsh="$EDITOR ~/.zshrc"
