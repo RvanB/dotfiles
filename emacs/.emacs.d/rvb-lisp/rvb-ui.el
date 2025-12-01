@@ -156,7 +156,9 @@
 
 ;; Stimmung themes
 (use-package stimmung-themes
-  :ensure t)  
+  :ensure t)
+
+(stimmung-themes-load-light)
 
 (require 'rvb-movement)
 

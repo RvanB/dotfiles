@@ -83,18 +83,18 @@ autoload -U colors && colors
 setopt PROMPT_SUBST
 
 function exit_code_prompt {
-  local EXIT_CODE=$?
-  local COLOR="%{$fg[green]%}"
-  if [[ $EXIT_CODE -ne 0 ]]; then
-      echo "%{$fg[red]%}$EXIT_CODE%{$reset_color%}"
-  fi
+    local EXIT_CODE=$?
+    local COLOR="%{$fg[green]%}"
+    if [[ $EXIT_CODE -ne 0 ]]; then
+	echo "%{$fg[red]%}$EXIT_CODE%{$reset_color%}"
+    fi
 }
 
 function git_prompt() {
-  local STATUS=$(git status --short 2> /dev/null)
-  if [[ -n $STATUS ]]; then
-    echo "%{$fg[red]%}*%{$reset_color%} "
-  fi
+    local STATUS=$(git status --short 2> /dev/null)
+    if [[ -n $STATUS ]]; then
+	echo "%{$fg[red]%}*%{$reset_color%} "
+    fi
 }
 
 PROMPT='┌─ $(exit_code_prompt) %f%B%T%b %{$fg[blue]%}%n@%m%f %B${PWD/#$HOME/~}%b%f $(git_prompt)
@@ -102,14 +102,21 @@ PROMPT='┌─ $(exit_code_prompt) %f%B%T%b %{$fg[blue]%}%n@%m%f %B${PWD/#$HOME/
 
 ########## ALIASES AND UTILITY FUNCTIONS ###########
 
+export EDITOR="emacsclient -n -r"
+alias e="emacsclient -n -r"
+
 alias tmux="TERM=xterm-256color tmux"
+alias cfzsh="$EDITOR ~/.zshrc"
+alias cfemacs="$EDITOR ~/.emacs.d/init.el"
+alias cfghostty="$EDITOR ~/.config/ghostty/config"
+alias cfnvim="$EDITOR ~/.config/nvim/init.vim"
 
 # if [[ "$TERM" == "dumb" ]]
 # then
-    # unsetopt zle
-    # unsetopt prompt_cr
-    # unsetopt prompt_subst
-    # PS1='$ '
+# unsetopt zle
+# unsetopt prompt_cr
+# unsetopt prompt_subst
+# PS1='$ '
 # fi
 
 export SESSION_SCRIPT_DIR=~/.cdl-ssm-util
@@ -147,12 +154,12 @@ export FZF_DEFAULT_COMMAND='find .'
 
 # Krita AI integration
 if [[ -s "$HOME/Library/Application Support/krita/ai_diffusion/server/uv/env" ]]; then
-  . "$HOME/Library/Application Support/krita/ai_diffusion/server/uv/env"
+    . "$HOME/Library/Application Support/krita/ai_diffusion/server/uv/env"
 fi
 
 # sdkman
 export SDKMAN_DIR="$HOME/.sdkman"
-source "$HOME/.sdkman/bin/sdkman-init.sh"
+[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
 
 # Added by LM Studio CLI (lms)
 export PATH="$PATH:/Users/rvanbron/.lmstudio/bin"
