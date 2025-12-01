@@ -4,6 +4,12 @@
 ########## ZSH CONFIGURATIONS ##########
 export PATH="$HOME/.local/bin:$PATH"
 
+# Add Emacs to path on MacOS 
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # Expects Emacs.app from jimeh/emacs-builds
+    export PATH="/Applications/Emacs.app/Contents/MacOS/bin:$PATH"
+fi
+
 # Deno (lspx)
 export PATH="/Users/rvanbron/.deno/bin:$PATH"
 # Cargo binaries
@@ -16,8 +22,8 @@ export PATH="$HOME/bin:$PATH"
 
 # CPAN
 if [[ -d "$HOME/perl5/lib/perl5/local" ]]; then
-  eval "$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib=$HOME/perl5)"
-  export PATH="$HOME/perl5/bin:$PATH"
+    eval "$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib=$HOME/perl5)"
+    export PATH="$HOME/perl5/bin:$PATH"
 fi
 
 # OpenCode
@@ -36,10 +42,14 @@ setopt appendhistory
 # Set environment variables for Claude on Bedrock:
 # $(pass show aws.com/bedrock/inference-profile 2> /dev/null)
 
-export ANTHROPIC_DEFAULT_SONNET_MODEL=$(pass show aws.com/bedrock/sonnet)
-export ANTHROPIC_DEFAULT_HAIKU_MODEL=$(pass show aws.com/bedrock/haiku)
-export ANTHROPIC_MODEL=$ANTHROPIC_DEFAULT_HAIKU_MODEL
-export CLAUDE_CODE_SUBAGENT_MODEL=$ANTHROPIC_DEFAULT_HAIKU_MODEL
+ANTHROPIC_DEFAULT_SONNET_MODEL=$(pass show aws.com/bedrock/sonnet 2>/dev/null)
+[[ -n "$ANTHROPIC_DEFAULT_SONNET_MODEL" ]] && export ANTHROPIC_DEFAULT_SONNET_MODEL
+
+ANTHROPIC_DEFAULT_HAIKU_MODEL=$(pass show aws.com/bedrock/haiku 2>/dev/null)
+[[ -n "$ANTHROPIC_DEFAULT_HAIKU_MODEL" ]] && export ANTHROPIC_DEFAULT_HAIKU_MODEL
+
+[[ -n "$ANTHROPIC_DEFAULT_HAIKU_MODEL" ]] && export ANTHROPIC_MODEL=$ANTHROPIC_DEFAULT_HAIKU_MODEL
+[[ -n "$ANTHROPIC_DEFAULT_HAIKU_MODEL" ]] && export CLAUDE_CODE_SUBAGENT_MODEL=$ANTHROPIC_DEFAULT_HAIKU_MODEL
 
 # export OPENAI_API_BASE="https://api.githubcopilot.com"
 # export OPENAI_API_KEY=$(pass show github.com/copilot/token > 2>&1)
