@@ -10,8 +10,8 @@
 ;; Hide eldoc mode
 (diminish 'eldoc-mode)
 
-(set-frame-parameter nil 'ns-appearance 'dark)
-(set-frame-parameter nil 'ns-transparent-titlebar nil)
+(set-frame-parameter nil 'ns-appearance 'light)
+(set-frame-parameter nil 'ns-transparent-titlebar t)
 
 ;; ef themes
 (use-package ef-themes
