@@ -1,25 +1,19 @@
 ;;; Detect indentation
 (use-package dtrt-indent
   :ensure t
-  :diminish 'dtrt-indent-mode)
-
-(use-package adaptive-wrap
-  :ensure t
   :config
-  (setq adaptive-wrap-extra-indent 2) ; Adjust this value for desired extra indentation
-  (adaptive-wrap-prefix-mode 1)
-  :hook (prog-mode . adaptive-wrap-prefix-mode))
+  (dtrt-indent-global-mode 1))
 
-(setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
-(global-visual-line-mode 1) ; Enable visual line mode globally
+;; (setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
+;; (global-visual-line-mode 1) ; Enable visual line mode globally
 
+;; Better BackWard Word
 (use-package bbww
   :ensure t
+  :diminish 'bbww-mode
   :config
   (bbww-mode 1)
   (bbww-init-global-bindings))
-
-;; (dtrt-indent-global-mode 1)
 
 (use-package expand-region
   :ensure t
@@ -50,11 +44,6 @@
 	 ([remap delete-backward-char] . smart-hungry-delete-backward-char)
 	 ([remap delete-char] . smart-hungry-delete-forward-char))
   :init (smart-hungry-delete-add-default-hooks))
-
-(use-package meow-tree-sitter
-  :ensure t
-  :config
-  (meow-tree-sitter-register-defaults))
 
 ;;; Surround
 (use-package surround

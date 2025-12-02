@@ -1,7 +1,5 @@
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
 
-
-
 (use-package olivetti
   :ensure t)
 
@@ -11,12 +9,6 @@
 
 ;; Hide eldoc mode
 (diminish 'eldoc-mode)
-
-;; Show line numbers in programming buffers
-(add-hook 'prog-mode-hook 'display-line-numbers-mode)
-
-;;; Make it count lines for correct line number width
-(setq display-line-numbers-width-start t)
 
 (set-frame-parameter nil 'ns-appearance 'dark)
 (set-frame-parameter nil 'ns-transparent-titlebar nil)

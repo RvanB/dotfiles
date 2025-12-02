@@ -1,4 +1,3 @@
-
 ;;; Window management
 
 (defun rvb/kill-buffer-and-close-window ()
@@ -28,7 +27,6 @@
     (goto-char target-pos)))
 
 ;;; Buffer movement
-
 (autoload 'View-scroll-half-page-forward "view")
 (autoload 'View-scroll-half-page-backward "view")
 

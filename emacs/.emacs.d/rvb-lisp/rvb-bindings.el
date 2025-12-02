@@ -1,11 +1,5 @@
-;; (global-set-key (kbd "C-v") 'View-scroll-half-page-forward)
-;; (global-set-key (kbd "M-v") 'View-scroll-half-page-backward)
-
 (keymap-global-set "s-f" 'forward-symbol)
 (keymap-global-set "s-b" 'backward-symbol)
-
-;; (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
-;; (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
 
 (keymap-global-set "C-c y" 'consult-yasnippet)
 
@@ -13,6 +7,7 @@
 (keymap-global-unset "C-/")
 (keymap-global-unset "C-?")
 (keymap-global-unset "C-M-_")
+(keymap-global-unset "C-_")
 
 (keymap-global-set "C-/" 'undo-fu-only-undo)
 (keymap-global-set "C-?" 'undo-fu-only-redo)
@@ -21,6 +16,8 @@
   :ensure t)
 
 ;;; Window navigation
+(keymap-global-set "C-x O" 'rvb/other-window-backward)
+
 (require 'magit)
 (keymap-unset magit-status-mode-map "C-c C-w" t)
 (with-eval-after-load 'magit
@@ -66,18 +63,7 @@
 
 (keymap-global-set "C-c n" 'display-line-numbers-mode)
 
-;;; Terminals
-(keymap-global-set "<f5>" 'aweshell-dedicated-toggle)
-
 ;;; Theme changing with consult
 (keymap-global-set "<f6>" 'consult-theme)
-
-;; Make C-x b only show project buffers
-;; (keymap-global-unset "C-x b")
-;; (keymap-global-set "C-x b" 'consult-project-buffer)
-
-;; (keymap-global-set "C-x C-b" 'persp-ibuffer)
-;; (keymap-global-set "C-x b" 'persp-switch-to-buffer*)
-;; (keymap-global-set "C-x k" 'persp-kill-buffer*)
 
 (provide 'rvb-bindings)
