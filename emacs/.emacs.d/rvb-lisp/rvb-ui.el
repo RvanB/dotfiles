@@ -54,6 +54,7 @@
 		  (lambda (frame)
 			(with-selected-frame frame
 			  (set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 14"))))
+(set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 14")
 
 ;; Ligatures
 (use-package ligature
