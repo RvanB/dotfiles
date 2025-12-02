@@ -35,7 +35,7 @@
   :ensure t)
 
 ;; Load preferred theme
-(load-theme 'ef-dream t)
+(load-theme 'modus-operandi t)
 
 (require 'rvb-movement)
 
