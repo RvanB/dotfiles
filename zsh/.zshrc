@@ -4,7 +4,7 @@
 ########## ZSH CONFIGURATIONS ##########
 export PATH="$HOME/.local/bin:$PATH"
 
-# Add Emacs to path on MacOS 
+# Add Emacs to path on MacOS
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # Expects Emacs.app from jimeh/emacs-builds
     export PATH="/Applications/Emacs.app/Contents/MacOS/bin:$PATH"
@@ -19,6 +19,11 @@ export PKG_CONFIG_PATH=/opt/local/lib/opencv4/pkgconfig:$PKG_CONFIG_PATH
 
 # My own programs
 export PATH="$HOME/bin:$PATH"
+
+# Go
+if [[ -d "$HOME/go" ]]; then
+    export PATH="$HOME/go/bin:$PATH"
+fi
 
 # CPAN
 if [[ -d "$HOME/perl5/lib/perl5/local" ]]; then
@@ -178,4 +183,3 @@ export SDKMAN_DIR="$HOME/.sdkman"
 # Added by LM Studio CLI (lms)
 export PATH="$PATH:/Users/rvanbron/.lmstudio/bin"
 # End of LM Studio CLI section
-
