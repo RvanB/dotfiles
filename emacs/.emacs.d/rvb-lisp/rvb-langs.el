@@ -66,33 +66,14 @@
   ;; In prog-mode, ,run eglot ensure and eglot-inlay-hints-mode
   (prog-mode . eglot-ensure))
 
+;;; Java
 (use-package eglot-java
   :ensure t
   :after eglot)
 
+(exec-path-from-shell-copy-env "JAVA_HOME")
 
-;; (use-package lsp-mode
-;;   :init
-;;   ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
-;;   (setq lsp-keymap-prefix "C-c l")
-;;   :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-;;          (prog-mode . lsp)
-;;          ;; if you want which-key integration
-;;          (lsp-mode . lsp-enable-which-key-integration))
-;;   :commands lsp)
-
-;; (use-package lsp-pyright
-;;   :ensure t
-;;   :custom (lsp-pyright-langserver-command "basedpyright") ;; or basedpyright
-;;   :hook (python-mode . (lambda ()
-;;                           (require 'lsp-pyright)
-;;                           (lsp))))  ; or lsp-deferred
-
-;; (use-package lsp-java
-;;   :ensure t)
-
-;;; Python stuff
-
+;;; Python
 ;; NOTE TO SELF: This is causing problems with syntax highlighting on python-ts-mode startup.
 ;;; PET - Python Executable Tracker
 (use-package pet
@@ -113,22 +94,6 @@
       (message "VIRTUAL_ENV set to: %s" (getenv "VIRTUAL_ENV")))))
 
 (advice-add 'pet-mode :before #'rvb/set-venv)
-    
-;; Flymake ruff
-;; (use-package flymake-ruff
-;;   :ensure t
-;;   :hook (eglot-managed-mode . flymake-ruff-load))
-
-;; This function isn't working for some reason, provided by the flymake-ruff git repo
-;; (defun rvb/filter-eglot-diagnostics (diags)
-;;     "Drop Pyright 'variable not accessed' notes from DIAGS."
-;;     (list (seq-remove (lambda (d)
-;;                         (and (eq (flymake-diagnostic-type d) 'eglot-note)
-;;                              (s-starts-with? "Pyright:" (flymake-diagnostic-text d))
-;;                              (s-ends-with? "is not accessed" (flymake-diagnostic-text d))))
-;;                       (car diags))))
-
-;; (advice-add 'eglot--report-to-flymake :filter-args #'rvb/filter-eglot-diagnostics)
 
 ;;; Pyright configuration
 (defun rvb/pyright-config ()
@@ -184,7 +149,7 @@
       (local-set-key "q" (lambda () (interactive) (quit-window t))))
     (display-buffer output-buffer)))
 
-;; MARC Mode
+;;; MARC
 (use-package marc-mode
   :pin "manual"
   :vc (:url "https://github.com/rvanb/marc-mode.el"
@@ -198,11 +163,12 @@
                   "--lsp" "basedpyright-langserver --stdio"
 		  "--lsp" "ruff server")))
 (add-to-list 'eglot-server-programs '(marc-mode . ("marc-lsp-server")))
-
-(add-to-list 'eglot-server-programs '(perl-mode . ("pls")))
-
 (add-hook 'marc-mode-hook 'eglot-ensure)
 
+;;; Perl
+(add-to-list 'eglot-server-programs '(perl-mode . ("pls")))
+
+;;; JavaScript/JSX
 (use-package rjsx-mode
   :ensure t
   :mode ("\\.js\\'" . rjsx-mode))

@@ -3,7 +3,12 @@
 
 (setq tab-always-indent 'complete)
 
-(setq indent-tabs-mode nil) ;; use spaces instead of tabs
+
+;;; Indentation
+;; use spaces instead of tabs
+(setq indent-tabs-mode nil)
+;; Delete trailing whitespace before saving
+(add-hook 'before-save-hook 'delete-trailing-whitespace)
 
 ;;; Only bring up warnings at error level
 (setq warning-minimum-level :error)
@@ -26,20 +31,15 @@
 (global-auto-revert-mode)
 (setq global-auto-revert-non-file-buffers t)
 
-;;; Winner mode
-(winner-mode)
-
 ;;; Mac OS X Settings
-(when (string= system-type "darwin")       
+(when (string= system-type "darwin")
   (setq dired-use-ls-dired nil))
 
 (use-package exec-path-from-shell
   :ensure t
   :config
   (when (memq window-system '(mac ns x))
-    (exec-path-from-shell-copy-env "JAVA_HOME")
     (exec-path-from-shell-initialize)))
-  
 
 ;;; Misc settings
 (setq make-backup-files nil)
@@ -50,7 +50,6 @@
 (setq lazy-count-prefix-format "(%s/%s) ")
 (setq lazy-count-suffix-format nil)
 (setq search-whitespace-regexp ".*?")
-
 
 ;;; Persist history over Emacs restarts. Vertico sorts by history position.
 (use-package savehist
