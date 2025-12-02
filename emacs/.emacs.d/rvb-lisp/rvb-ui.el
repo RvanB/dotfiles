@@ -30,12 +30,15 @@
 	modus-themes-italic-comments t)
   )
 
+;; Standard themes
+(use-package standard-themes
+  :ensure t)
+
 ;; Stimmung themes
 (use-package stimmung-themes
   :ensure t)
 
-;; Load preferred theme
-(load-theme 'modus-operandi t)
+(standard-themes-load-theme 'standard-light)
 
 (require 'rvb-movement)
 
@@ -49,12 +52,12 @@
 ;; Make a clearer division between windows
 (window-divider-mode)
 
-;;; Set the font whenever frame is created
+;; Set the font whenever frame is created
 (add-hook 'after-make-frame-functions
 		  (lambda (frame)
 			(with-selected-frame frame
-			  (set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 14"))))
-(set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 14")
+			  (set-face-attribute 'default nil :font "NanumGothicCoding 18"))))
+(set-face-attribute 'default nil :font "NanumGothicCoding 18")
 
 ;; Ligatures
 (use-package ligature
