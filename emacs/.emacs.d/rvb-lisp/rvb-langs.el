@@ -66,6 +66,10 @@
   ;; In prog-mode, ,run eglot ensure and eglot-inlay-hints-mode
   (prog-mode . eglot-ensure))
 
+;;; Go
+(use-package go-mode
+  :ensure t)
+
 ;;; Java
 (use-package eglot-java
   :ensure t
