@@ -7,8 +7,6 @@
 ;;; Indentation
 ;; use spaces instead of tabs
 (setq indent-tabs-mode nil)
-;; Delete trailing whitespace before saving
-(add-hook 'before-save-hook 'delete-trailing-whitespace)
 
 ;;; Only bring up warnings at error level
 (setq warning-minimum-level :error)

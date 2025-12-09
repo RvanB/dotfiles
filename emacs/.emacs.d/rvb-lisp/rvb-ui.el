@@ -11,7 +11,7 @@
 (diminish 'eldoc-mode)
 
 (set-frame-parameter nil 'ns-appearance 'light)
-(set-frame-parameter nil 'ns-transparent-titlebar t)
+(set-frame-parameter nil 'ns-transparent-titlebar nil)
 
 ;; ef themes
 (use-package ef-themes
@@ -30,6 +30,8 @@
 	modus-themes-italic-comments t)
   )
 
+(load-theme 'modus-operandi t)
+
 ;; Standard themes
 (use-package standard-themes
   :ensure t)
@@ -37,8 +39,6 @@
 ;; Stimmung themes
 (use-package stimmung-themes
   :ensure t)
-
-(standard-themes-load-theme 'standard-light)
 
 (require 'rvb-movement)
 
