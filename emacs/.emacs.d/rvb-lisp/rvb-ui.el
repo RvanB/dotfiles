@@ -21,16 +21,7 @@
 	ef-themes-bold-constructs t
 	ef-themes-italic-comments t))
 
-;; Modus themes
-(use-package modus-themes
-  :ensure t
-  :init
-  (setq modus-themes-italic-constructs t
-	modus-themes-bold-constructs t
-	modus-themes-italic-comments t)
-  )
-
-(load-theme 'modus-operandi t)
+(load-theme 'ef-owl t)
 
 ;; Standard themes
 (use-package standard-themes
