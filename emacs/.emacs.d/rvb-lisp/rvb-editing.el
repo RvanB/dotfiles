@@ -1,8 +1,11 @@
 ;;; Detect indentation
 (use-package dtrt-indent
   :ensure t
+  :init
+  (setq dtrt-indent-verbosity 0)
   :config
   (dtrt-indent-global-mode 1))
+
 
 ;; (setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
 ;; (global-visual-line-mode 1) ; Enable visual line mode globally
