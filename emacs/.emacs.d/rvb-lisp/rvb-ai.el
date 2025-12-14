@@ -14,6 +14,11 @@
   :bind
   (("C-c g m" . gptel-menu)))
 
+(use-package gptel-magit
+  :ensure t
+  :after gptel
+  :hook (magit-mode . gptel-magit-install))
+
 ;;; GitHub Copilot
 (use-package copilot
   :vc (:url "https://github.com/copilot-emacs/copilot.el"
