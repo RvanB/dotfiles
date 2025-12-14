@@ -1,6 +1,6 @@
-theme = Apple System Colors Light
+theme = light:Tomorrow,dark:Tomorrow Night 
 font-family = "Berkeley Mono Variable Z8XX46Z7"
-font-size = 14
+font-size = 16
 font-thicken = true
 font-thicken-strength = 50
 shell-integration-features = no-cursor
