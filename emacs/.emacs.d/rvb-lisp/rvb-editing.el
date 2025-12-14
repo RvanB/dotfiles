@@ -55,7 +55,48 @@
 ;;; Delete selection on type
 (delete-selection-mode 1)
 
+;;; Auto horizontal scroll after fill-paragraph
+(defun rvb/scroll-to-left-after-fill ()
+  "Scroll to the beginning of the line after filling paragraph."
+  (when (and (boundp 'truncate-lines) truncate-lines)
+    (set-window-hscroll (selected-window) 0)))
+
+(advice-add 'fill-paragraph :after #'rvb/scroll-to-left-after-fill)
+
 (use-package undo-fu
   :ensure t)
+
+(use-package undo-fu-session
+  :ensure t
+  :config
+  (undo-fu-session-global-mode))
+
+(use-package evil
+  :ensure t
+  :init
+  ;; Must be set before evil loads
+  (setq evil-want-C-u-scroll nil)  ; Keep C-u as universal argument prefix
+  (setq evil-want-C-d-scroll nil)  ; We'll bind C-d to our custom scroll
+  (setq evil-undo-system 'undo-fu) ; Use undo-fu instead of built-in undo
+  (setq evil-want-integration t)
+  (setq evil-want-keybinding t)
+  :config
+  ;; (evil-mode 1)
+
+  ;; Use custom scrolling commands
+  (define-key evil-normal-state-map (kbd "C-u") 'kb/pixel-scroll-down)
+  (define-key evil-normal-state-map (kbd "C-d") 'kb/pixel-scroll-up)
+  (define-key evil-visual-state-map (kbd "C-u") 'kb/pixel-scroll-down)
+  (define-key evil-visual-state-map (kbd "C-d") 'kb/pixel-scroll-up)
+
+  ;; Keep some Emacs bindings in insert state
+  (define-key evil-insert-state-map (kbd "C-a") 'rvb/back-to-indentation-or-beginning)
+  (define-key evil-insert-state-map (kbd "C-e") 'rvb/move-to-code-end)
+  (define-key evil-insert-state-map (kbd "C-k") 'kill-line)
+  (define-key evil-insert-state-map (kbd "C-y") 'yank)
+
+  ;; Use j and k to move by visual lines
+  (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
+  (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line))
 
 (provide 'rvb-editing)
