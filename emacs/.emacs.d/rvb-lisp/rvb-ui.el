@@ -10,7 +10,6 @@
 ;; Hide eldoc mode
 (diminish 'eldoc-mode)
 
-(set-frame-parameter nil 'ns-appearance 'light)
 (set-frame-parameter nil 'ns-transparent-titlebar nil)
 
 ;; ef themes
@@ -21,8 +20,6 @@
 	ef-themes-bold-constructs t
 	ef-themes-italic-comments t))
 
-(load-theme 'ef-owl t)
-
 ;; Standard themes
 (use-package standard-themes
   :ensure t)
@@ -30,6 +27,33 @@
 ;; Stimmung themes
 (use-package stimmung-themes
   :ensure t)
+
+(use-package color-theme-sanityinc-tomorrow
+  :ensure t)
+
+(setq custom-safe-themes t)
+
+(use-package auto-dark
+  :ensure t
+  :custom
+  (auto-dark-themes nil)
+  (auto-dark-allow-osascript t)
+  (auto-dark-polling-interval-seconds 5)
+  :hook
+  (auto-dark-dark-mode
+   . (lambda ()
+       (set-frame-parameter nil 'ns-appearance 'dark)
+       (disable-theme 'sanityinc-tomorrow-day)
+       (load-theme 'sanityinc-tomorrow-night)
+       ))
+  (auto-dark-light-mode
+   . (lambda ()
+       (set-frame-parameter nil 'ns-appearance 'light)
+       (disable-theme 'sanityinc-tomorrow-night)
+       (load-theme 'sanityinc-tomorrow-day)
+       ))
+  :config
+  (auto-dark-mode))
 
 (require 'rvb-movement)
 
@@ -47,8 +71,8 @@
 (add-hook 'after-make-frame-functions
 		  (lambda (frame)
 			(with-selected-frame frame
-			  (set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 14"))))
-(set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 14")
+			  (set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 16"))))
+(set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 16")
 
 ;; Ligatures
 (use-package ligature

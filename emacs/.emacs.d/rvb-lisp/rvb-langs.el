@@ -1,7 +1,7 @@
 (use-package treesit
   :ensure nil
   :init
-  (setq treesit-font-lock-level 4)
+  (setq treesit-font-lock-level 3)
   :config
   (setq treesit-language-source-alist
         '(
@@ -34,13 +34,13 @@
           (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src"))
           (vue        . ("https://github.com/tree-sitter-grammars/tree-sitter-vue")))))
 
-(use-package treesit-auto
-  :ensure t
-  ;; :custom
-  ;; (treesit-auto-install 'prompt)
-  :config
-  ;; (treesit-auto-add-to-auto-mode-alist 'all)
-  (global-treesit-auto-mode))
+;; (use-package treesit-auto
+;;   :ensure t
+;;   ;; :custom
+;;   ;; (treesit-auto-install 'prompt)
+;;   :config
+;;   ;; (treesit-auto-add-to-auto-mode-alist 'all)
+;;   (global-treesit-auto-mode))
 
 (use-package eglot-booster
   :vc (:url "https://github.com/jdtsmith/eglot-booster"
