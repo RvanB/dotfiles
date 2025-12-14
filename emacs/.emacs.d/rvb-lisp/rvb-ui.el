@@ -10,7 +10,7 @@
 ;; Hide eldoc mode
 (diminish 'eldoc-mode)
 
-(set-frame-parameter nil 'ns-transparent-titlebar nil)
+(set-frame-parameter nil 'ns-transparent-titlebar t)
 
 ;; ef themes
 (use-package ef-themes
@@ -67,6 +67,10 @@
 ;; Make a clearer division between windows
 (window-divider-mode)
 
+;; Mixed pitch buffers
+(use-package mixed-pitch
+  :ensure t)
+
 ;; Set the font whenever frame is created
 (add-hook 'after-make-frame-functions
 		  (lambda (frame)
@@ -99,5 +103,29 @@
   :ensure t
   :after magit
   :config (magit-todos-mode 1))
+
+;;; Window splitting preferences - prefer horizontal (side-by-side) splits
+(setq split-height-threshold nil)  ; Never split vertically (top-bottom)
+(setq split-width-threshold 0)     ; Always prefer horizontal splits (side-by-side)
+
+;;; Auto-select help and temporary windows
+(setq help-window-select t)  ; Automatically select help windows
+
+;; Make help windows easier to quit
+(with-eval-after-load 'help-mode
+  (define-key help-mode-map (kbd "q") 'quit-window))
+
+;; Auto-select other common temporary windows
+(defun rvb/auto-select-window (buffer-or-name &rest _)
+  "Automatically select certain temporary windows."
+  (let ((buffer (get-buffer buffer-or-name)))
+    (when buffer
+      (let ((window (get-buffer-window buffer)))
+        (when (and window
+                   (or (string-match-p "\\*Help\\|\\*info\\|\\*Apropos\\|\\*Messages\\|\\*Warnings\\|\\*Completions\\|\\*Occur\\|\\*grep\\|\\*compilation\\|\\*Backtrace\\*"
+                                      (buffer-name buffer))))
+          (select-window window))))))
+
+(advice-add 'display-buffer :after #'rvb/auto-select-window)
 
 (provide 'rvb-ui)

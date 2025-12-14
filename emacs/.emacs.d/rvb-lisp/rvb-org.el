@@ -16,6 +16,9 @@
 ;;; Set agenda files to the org directory
 (setq org-agenda-files (list org-directory))
 
+(add-hook 'org-mode-hook 'mixed-pitch-mode)
+
+
 (use-package org-modern
   :ensure t
   :init
