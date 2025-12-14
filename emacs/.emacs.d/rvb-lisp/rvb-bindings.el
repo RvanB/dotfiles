@@ -66,4 +66,7 @@
 ;;; Theme changing with consult
 (keymap-global-set "<f6>" 'consult-theme)
 
+;;; Project dashboard
+(keymap-global-set "C-c p" 'rvb/project-dashboard)
+
 (provide 'rvb-bindings)
