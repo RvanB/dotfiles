@@ -1,5 +1,7 @@
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
 
+(add-hook 'prog-mode-hook 'hl-line-mode)
+
 (use-package olivetti
   :ensure t)
 

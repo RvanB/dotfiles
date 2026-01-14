@@ -29,13 +29,19 @@
                      magit-revision-mode-map))
     (define-key map (kbd "C-c w") nil)))
 
+(which-key-mode)
+
 (windmove-default-keybindings)
 (defhydra window-nav (global-map "C-c w")
   "Navigate windows"
   ("f" windmove-right "right")
   ("b" windmove-left "left")
   ("p" windmove-up "up")
-  ("n" windmove-down "down"))
+  ("n" windmove-down "down")
+  ("h" windmove-left "left")
+  ("j" windmove-down "down")
+  ("k" windmove-up "up")
+  ("l" windmove-right "right"))
 
 (keymap-global-set "s-k" 'rvb/kill-buffer-and-close-window)
 
