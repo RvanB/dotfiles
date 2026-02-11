@@ -108,7 +108,7 @@
 
 ;;; Window splitting preferences - prefer horizontal (side-by-side) splits
 (setq split-height-threshold nil)  ; Never split vertically (top-bottom)
-(setq split-width-threshold 0)     ; Always prefer horizontal splits (side-by-side)
+(setq split-width-threshold nil)     ; Always prefer horizontal splits (side-by-side)
 
 ;;; Auto-select help and temporary windows
 (setq help-window-select t)  ; Automatically select help windows

@@ -39,5 +39,16 @@
   :config
   (global-org-modern-mode))
 
+;;; Website publishing
+(let ((publish-config "~/RvanB.github.io/org-publish-config.el")
+      (template-config "~/RvanB.github.io/post-template.el")
+      (chapbook-config "~/RvanB.github.io/chapbook-export.el"))
+  (when (file-exists-p publish-config)
+    (load-file publish-config))
+  (when (file-exists-p template-config)
+    (load-file template-config))
+  (when (file-exists-p chapbook-config)
+    (load-file chapbook-config)))
+
 
 (provide 'rvb-org)
