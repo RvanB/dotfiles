@@ -161,11 +161,12 @@
             :branch "main"))
 
 (require 'eglot)
-(add-to-list 'eglot-server-programs
-             '(python-ts-mode
-               . ("lspx"
-                  "--lsp" "basedpyright-langserver --stdio"
-		  "--lsp" "ruff server")))
+;; (add-to-list 'eglot-server-programs
+;;              '(python-mode
+;;                . ("lspx"
+;;                   "--lsp" "ruff server"
+;;                   "--lsp" "basedpyright-langserver --stdio")))
+
 (add-to-list 'eglot-server-programs '(marc-mode . ("marc-lsp-server")))
 (add-hook 'marc-mode-hook 'eglot-ensure)
 
