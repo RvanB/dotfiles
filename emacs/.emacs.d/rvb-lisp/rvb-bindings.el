@@ -75,4 +75,8 @@
 ;;; Project dashboard
 (keymap-global-set "C-c p" 'rvb/project-dashboard)
 
+;;; Make C-` shorthand for C-x ` (next-error), and C-~ for previous error
+(keymap-global-set "C-`" 'next-error)
+(keymap-global-set "C-~" 'previous-error)
+
 (provide 'rvb-bindings)
