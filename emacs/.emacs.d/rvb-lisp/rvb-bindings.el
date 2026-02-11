@@ -53,7 +53,7 @@
 (keymap-set isearch-mode-map "C-s" 'rvb/isearch-repeat-forward+)
 (keymap-set isearch-mode-map "C-r" 'rvb/isearch-repeat-backward+)
 
-(keymap-global-set "C-c l" 'rvb/isearch-visible-region)
+(keymap-global-set "C-c j" 'rvb/isearch-visible-region)
 
 (keymap-global-set "C-c t" nil)
 (keymap-global-set "C-c t e" 'eat)

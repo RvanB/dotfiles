@@ -229,4 +229,11 @@ This is the opposite of `forward-symbol`."
   (interactive "p")
   (forward-symbol (- (or n 1))))
 
+(use-package avy
+  :ensure t
+  :config
+  (global-set-key (kbd "C-c j") 'avy-goto-word-or-subword-1)
+  (global-set-key (kbd "s-.") 'avy-goto-word-or-subword-1)
+  )
+
 (provide 'rvb-movement)
