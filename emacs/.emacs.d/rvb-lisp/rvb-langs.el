@@ -178,4 +178,8 @@
   :ensure t
   :mode ("\\.js\\'" . rjsx-mode))
 
+;;; Ruff formatting for Python
+(use-package ruff-format
+  :ensure t)
+
 (provide 'rvb-langs)
