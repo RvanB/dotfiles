@@ -14,6 +14,8 @@
 
 (set-frame-parameter nil 'ns-transparent-titlebar t)
 
+(add-hook 'markdown-mode-hook 'mixed-pitch-mode)
+
 ;; ef themes
 (use-package ef-themes
   :ensure t
@@ -45,14 +47,17 @@
   (auto-dark-dark-mode
    . (lambda ()
        (set-frame-parameter nil 'ns-appearance 'dark)
-       (disable-theme 'sanityinc-tomorrow-day)
-       (load-theme 'sanityinc-tomorrow-night)
+       (disable-theme 'modus-operandi)
+       (load-theme 'modus-vivendi)
+       ;; (disable-theme 'sanityinc-tomorrow-day)
+       ;; (load-theme 'sanityinc-tomorrow-night)
        ))
   (auto-dark-light-mode
    . (lambda ()
        (set-frame-parameter nil 'ns-appearance 'light)
-       (disable-theme 'sanityinc-tomorrow-night)
-       (load-theme 'sanityinc-tomorrow-day)
+       ;; (disable-theme 'sanityinc-tomorrow-night)
+       ;; (load-theme 'sanityinc-tomorrow-day)
+       (load-theme 'modus-operandi)
        ))
   :config
   (auto-dark-mode))
