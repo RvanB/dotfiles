@@ -182,4 +182,15 @@
 (use-package ruff-format
   :ensure t)
 
+;;; CSV and TSV files
+(use-package csv-mode
+  :ensure t
+  :mode ("\\.csv\\'" . csv-mode)
+  :mode ("\\.tsv\\'" . csv-mode)
+  :hook ((csv-mode . csv-guess-set-separator)
+         (csv-mode . csv-align-mode))
+  :bind (:map csv-mode-map
+         ("C->" . csv-increase-column-width)
+         ("C-<" . csv-decrease-column-width)))
+
 (provide 'rvb-langs)
