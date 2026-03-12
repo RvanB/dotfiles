@@ -6,3 +6,5 @@ font-thicken-strength = 50
 shell-integration-features = no-cursor
 cursor-style = "block"
 keybind = shift+enter=text:\x1b\r
+window-inherit-working-directory = false
+tab-inherit-working-directory = false
