@@ -16,7 +16,29 @@
 ;;; Set agenda files to the org directory
 (setq org-agenda-files (list org-directory))
 
+;;; Auto-add CLOSED timestamp when marking items DONE
+(setq org-log-done 'time)
+
+;;; Auto-delete completed items older than a month
+(defun rvb/cleanup-old-done-items ()
+  "Remove DONE items with CLOSED timestamp older than 30 days."
+  (interactive)
+  (when (eq major-mode 'org-mode)
+    (let ((now (time-to-seconds))
+          (cutoff-days 30))
+      (org-map-entries
+       (lambda ()
+         (when (and (member (org-get-todo-state) org-done-keywords)
+                    (org-entry-get nil "CLOSED"))
+           (let* ((closed-str (org-entry-get nil "CLOSED"))
+                  (closed-time (org-time-string-to-seconds closed-str))
+                  (days-old (/ (- now closed-time) 86400)))
+             (when (> days-old cutoff-days)
+               (org-cut-subtree)))))
+       nil 'file))))
+
 (add-hook 'org-mode-hook 'mixed-pitch-mode)
+(add-hook 'org-mode-hook (lambda () (add-hook 'before-save-hook 'rvb/cleanup-old-done-items nil t)))
 
 
 (use-package org-modern
