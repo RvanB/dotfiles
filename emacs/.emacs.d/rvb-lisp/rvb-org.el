@@ -39,6 +39,8 @@
 
 (add-hook 'org-mode-hook 'mixed-pitch-mode)
 (add-hook 'org-mode-hook (lambda () (add-hook 'before-save-hook 'rvb/cleanup-old-done-items nil t)))
+(add-hook 'org-mode-hook 'toggle-truncate-lines)
+(add-hook 'org-mode-hook 'toggle-word-wrap)
 
 
 (use-package org-modern

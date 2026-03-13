@@ -49,14 +49,17 @@
        (set-frame-parameter nil 'ns-appearance 'dark)
        ;; (disable-theme 'modus-operandi)
        ;; (load-theme 'modus-vivendi)
-       (disable-theme 'sanityinc-tomorrow-day)
-       (load-theme 'sanityinc-tomorrow-night)
+       ;; (disable-theme 'sanityinc-tomorrow-day)
+       ;; (load-theme 'sanityinc-tomorrow-night)
+       (stimmung-themes-load-dark)
        ))
   (auto-dark-light-mode
    . (lambda ()
        (set-frame-parameter nil 'ns-appearance 'light)
-       (disable-theme 'sanityinc-tomorrow-night)
-       (load-theme 'sanityinc-tomorrow-day)
+
+       (stimmung-themes-load-light)
+       ;; (disable-theme 'sanityinc-tomorrow-night)
+       ;; (load-theme 'sanityinc-tomorrow-day)
        ;; (load-theme 'modus-operandi)
        ))
   :config
