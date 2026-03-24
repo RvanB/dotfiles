@@ -57,4 +57,12 @@
 (put 'narrow-to-page 'disabled nil)
 (put 'narrow-to-region 'disabled nil)
 
+;;; Project switch commands
+(setq project-switch-commands
+      '((project-find-file "Find file" ?f)
+        (project-find-regexp "Find regexp" ?r)
+        (project-eshell "Eshell" ?e)
+        (magit-project-status "Magit" ?m)
+        (project-any-command "Other" ?o)))
+
 (provide 'rvb-settings)

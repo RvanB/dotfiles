@@ -16,6 +16,11 @@
 
 (add-hook 'markdown-mode-hook 'mixed-pitch-mode)
 
+(use-package vertico-posframe
+  :ensure t
+  :config
+  (vertico-posframe-mode 1))
+
 ;; ef themes
 (use-package ef-themes
   :ensure t
@@ -47,20 +52,14 @@
   (auto-dark-dark-mode
    . (lambda ()
        (set-frame-parameter nil 'ns-appearance 'dark)
-       ;; (disable-theme 'modus-operandi)
-       ;; (load-theme 'modus-vivendi)
-       ;; (disable-theme 'sanityinc-tomorrow-day)
-       ;; (load-theme 'sanityinc-tomorrow-night)
-       (stimmung-themes-load-dark)
+       (disable-theme 'modus-operandi)
+       (load-theme 'sanityinc-tomorrow-night)
        ))
   (auto-dark-light-mode
    . (lambda ()
        (set-frame-parameter nil 'ns-appearance 'light)
-
-       (stimmung-themes-load-light)
-       ;; (disable-theme 'sanityinc-tomorrow-night)
-       ;; (load-theme 'sanityinc-tomorrow-day)
-       ;; (load-theme 'modus-operandi)
+       (disable-theme 'sanityinc-tomorrow-night)
+       (load-theme 'modus-operandi)
        ))
   :config
   (auto-dark-mode))
@@ -85,8 +84,8 @@
 (add-hook 'after-make-frame-functions
 		  (lambda (frame)
 			(with-selected-frame frame
-			  (set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 16"))))
-(set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 16")
+			  (set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 14"))))
+(set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 14")
 
 ;; Ligatures
 (use-package ligature
