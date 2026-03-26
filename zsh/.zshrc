@@ -1,65 +1,68 @@
 # Raiden van Bronkhorst
 # zsh configuration
 
-########## ZSH CONFIGURATIONS ##########
-export PATH="$HOME/.local/bin:$PATH"
+########## PATH ##########
 
-# Add Emacs to path on MacOS
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    # Expects Emacs.app from jimeh/emacs-builds
-    export PATH="/Applications/Emacs.app/Contents/MacOS/bin:$PATH"
-fi
+typeset -U path PATH
+
+[[ -d "$HOME/.local/bin" ]] && path=("$HOME/.local/bin" $path)
+
+# Expects Emacs.app from jimeh/emacs-builds
+[[ -d "/Applications/Emacs.app/Contents/MacOS/bin" ]] && \
+  path=("/Applications/Emacs.app/Contents/MacOS/bin" $path)
 
 # Deno (lspx)
-export PATH="/Users/rvanbron/.deno/bin:$PATH"
-# Cargo binaries
-export PATH="$HOME/.cargo/bin/:$PATH"
+[[ -d "$HOME/.deno/bin" ]] && path=("$HOME/.deno/bin" $path)
 
-export PKG_CONFIG_PATH=/opt/local/lib/opencv4/pkgconfig:$PKG_CONFIG_PATH
+# Cargo binaries
+[[ -d "$HOME/.cargo/bin" ]] && path=("$HOME/.cargo/bin" $path)
 
 # My own programs
-export PATH="$HOME/bin:$PATH"
+[[ -d "$HOME/bin" ]] && path=("$HOME/bin" $path)
 
 # Go
-if [[ -d "$HOME/go" ]]; then
-    export PATH="$HOME/go/bin:$PATH"
-fi
-
-# CPAN
-if [[ -d "$HOME/perl5/lib/perl5/local" ]]; then
-    eval "$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib=$HOME/perl5)"
-    export PATH="$HOME/perl5/bin:$PATH"
-fi
+[[ -d "$HOME/go/bin" ]] && path=("$HOME/go/bin" $path)
 
 # OpenCode
-export PATH=/Users/rvan/.opencode/bin:$PATH
+[[ -d "$HOME/.opencode/bin" ]] && path=("$HOME/.opencode/bin" $path)
 
-export HISTFILE=~/.zsh_history
+# LM Studio CLI
+[[ -d "$HOME/.lmstudio/bin" ]] && path=("$HOME/.lmstudio/bin" $path)
+
+# CPAN
+if [[ -d "$HOME/perl5/lib/perl5/local" ]] && command -v perl >/dev/null 2>&1; then
+    eval "$(perl -I"$HOME/perl5/lib/perl5" -Mlocal::lib="$HOME/perl5")"
+    [[ -d "$HOME/perl5/bin" ]] && path=("$HOME/perl5/bin" $path)
+fi
+
+# pkg-config for OpenCV via MacPorts
+[[ -d /opt/local/lib/opencv4/pkgconfig ]] && \
+  export PKG_CONFIG_PATH="/opt/local/lib/opencv4/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+
+########## zsh settings ##########
+
+export HISTFILE="$HOME/.zsh_history"
 HISTSIZE=100000
 SAVEHIST=$HISTSIZE
 setopt appendhistory
-# # pyenv
-# export PYENV_ROOT="$HOME/.pyenv"
-# command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
-# eval "$(pyenv init -)"
+setopt promptsubst
 
 ########## SECRETS ##########
 # Set environment variables for Claude on Bedrock:
-# $(pass show aws.com/bedrock/inference-profile 2> /dev/null)
+# $(pass show aws.com/bedrock/inference-profile 2>/dev/null)
 
-ANTHROPIC_DEFAULT_SONNET_MODEL=$(pass show aws.com/bedrock/sonnet 2>/dev/null)
-[[ -n "$ANTHROPIC_DEFAULT_SONNET_MODEL" ]] && export ANTHROPIC_DEFAULT_SONNET_MODEL
+if command -v pass >/dev/null 2>&1; then
+    ANTHROPIC_DEFAULT_SONNET_MODEL="$(pass show aws.com/bedrock/sonnet 2>/dev/null)"
+    [[ -n "$ANTHROPIC_DEFAULT_SONNET_MODEL" ]] && export ANTHROPIC_DEFAULT_SONNET_MODEL
 
-ANTHROPIC_DEFAULT_HAIKU_MODEL=$(pass show aws.com/bedrock/haiku 2>/dev/null)
-[[ -n "$ANTHROPIC_DEFAULT_HAIKU_MODEL" ]] && export ANTHROPIC_DEFAULT_HAIKU_MODEL
+    OPENAI_API_KEY="$(pass show github.com/copilot/token 2>/dev/null)"
+    [[ -n "$OPENAI_API_KEY" ]] && export OPENAI_API_KEY
 
-[[ -n "$ANTHROPIC_DEFAULT_HAIKU_MODEL" ]] && export ANTHROPIC_MODEL=$ANTHROPIC_DEFAULT_HAIKU_MODEL
-[[ -n "$ANTHROPIC_DEFAULT_HAIKU_MODEL" ]] && export CLAUDE_CODE_SUBAGENT_MODEL=$ANTHROPIC_DEFAULT_HAIKU_MODEL
+    CODEIUM_API_KEY="$(pass show windsurf.com/api 2>/dev/null)"
+    [[ -n "$CODEIUM_API_KEY" ]] && export CODEIUM_API_KEY
 
-# export OPENAI_API_BASE="https://api.githubcopilot.com"
-# export OPENAI_API_KEY=$(pass show github.com/copilot/token > 2>&1)
-
-# export CODEIUM_API_KEY=$(pass show windsurf.com/api 2> /dev/null)
+    [[ -n "$OPENAI_API_KEY" ]] && export OPENAI_API_BASE="https://api.githubcopilot.com"
+fi
 
 ########## COMPLETIONS ##########
 
@@ -71,115 +74,144 @@ zstyle ':completion:*' completer _complete
 # Case insensitivity
 zstyle ':completion:*' matcher-list '' 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' '+l:|=* r:|=*'
 
-# autoload -Uz compinit && compinit -i
-
 ########## THEMING ##########
 
-# Load version control information
-# autoload -Uz vcs_info
-#zstyle ':vcs_info:*' enable git svn
-# precmd() { vcs_info }
-
-# Enable colors
 autoload -U colors && colors
+autoload -U add-zsh-hook
+autoload -Uz compinit
 
-# zstyle ':vcs_info:git*' formats "%b"
-
-setopt PROMPT_SUBST
-
-function exit_code_prompt {
-    local EXIT_CODE=$?
-    local COLOR="%{$fg[green]%}"
-    if [[ $EXIT_CODE -ne 0 ]]; then
-	echo "%{$fg[red]%}$EXIT_CODE%{$reset_color%}"
+exit_code_prompt() {
+    local exit_code=$?
+    if [[ $exit_code -ne 0 ]]; then
+        echo "%{$fg[red]%}$exit_code%{$reset_color%}"
     fi
 }
 
-function git_prompt() {
-    local STATUS=$(git status --short 2> /dev/null)
-    if [[ -n $STATUS ]]; then
-	echo "%{$fg[red]%}*%{$reset_color%} "
+git_prompt() {
+    local gitstatus="$(git status --short 2>/dev/null)"
+    if [[ -n "$gitstatus" ]]; then
+        echo "%{$fg[red]%}*%{$reset_color%} "
     fi
 }
 
-PROMPT='┌─ $(exit_code_prompt) %f%B%T%b %{$fg[blue]%}%n@%m%f %B${PWD/#$HOME/~}%b%f $(git_prompt)
-└─> %{$reset_color%}'
+auto_activate_uv() {
+    local uv_python venv_dir activate_script
+    local found_env=0
+
+    # Deactivate if outside the virtual environment directory
+    if [[ -n "$VIRTUAL_ENV" && $PWD != "$VIRTUAL_ENV"/* ]]; then
+        if typeset -f deactivate >/dev/null; then
+            deactivate
+        else
+            unset VIRTUAL_ENV
+            hash -r
+        fi
+    fi
+
+    if (( $+commands[uv] )); then
+        uv_python="$(uv python find 2>/dev/null)"
+
+        if [[ -n "$uv_python" ]]; then
+            venv_dir="$(dirname "$(dirname "$uv_python")")"
+            activate_script="$venv_dir/bin/activate"
+
+            if [[ -f "$activate_script" ]]; then
+                found_env=1
+
+                if [[ "$VIRTUAL_ENV" != "$venv_dir" ]]; then
+                    if [[ -n "$VIRTUAL_ENV" ]] && typeset -f deactivate >/dev/null; then
+                        deactivate
+                    fi
+                    source "$activate_script"
+                fi
+            fi
+        fi
+    fi
+}
+
+add-zsh-hook chpwd auto_activate_uv
+auto_activate_uv
+
+PROMPT='$(exit_code_prompt) %f%B%T%b %{$fg[blue]%}%n@%m%f %B${PWD/#$HOME/~}%b%f $(git_prompt)> %{$reset_color%}'
 
 ########## ALIASES AND UTILITY FUNCTIONS ###########
 
-function e() {
-  # Check if Emacs server is running and if any frame exists
-  local has_frame
+if command -v vim >/dev/null 2>&1; then
+    export EDITOR="vim"
+elif command -v nvim >/dev/null 2>&1; then
+    export EDITOR="nvim"
+elif command -v vi >/dev/null 2>&1; then
+    export EDITOR="vi"
+fi
 
-  has_frame=$(emacsclient -e '(> (length (frame-list)) 1)' 2>/dev/null)
+command -v tmux >/dev/null 2>&1 && alias tmux="TERM=xterm-256color tmux"
 
-  if [[ "$has_frame" == "t" ]]; then
-    # A GUI or TTY frame already exists
-    emacsclient -n "$@"
-  else
-    # No frame OR no server → start a new one
-    emacsclient -n -c "$@"
-  fi
-}
+[[ -n "$EDITOR" ]] && alias cfzsh="$EDITOR ~/.zshrc"
+[[ -n "$EDITOR" ]] && alias cfemacs="$EDITOR ~/.emacs.d/init.el"
+[[ -n "$EDITOR" ]] && alias cfghostty="$EDITOR ~/.config/ghostty/config"
+[[ -n "$EDITOR" ]] && alias cfnvim="$EDITOR ~/.config/nvim/init.vim"
 
-export EDITOR="e -n"
-
-alias tmux="TERM=xterm-256color tmux"
-alias cfzsh="$EDITOR ~/.zshrc"
-alias cfemacs="$EDITOR ~/.emacs.d/init.el"
-alias cfghostty="$EDITOR ~/.config/ghostty/config"
-alias cfnvim="$EDITOR ~/.config/nvim/init.vim"
-
-# if [[ "$TERM" == "dumb" ]]
-# then
-# unsetopt zle
-# unsetopt prompt_cr
-# unsetopt prompt_subst
-# PS1='$ '
+# if [[ "$TERM" == "dumb" ]]; then
+#     unsetopt zle
+#     unsetopt prompt_cr
+#     unsetopt promptsubst
+#     PS1='$ '
 # fi
 
-export SESSION_SCRIPT_DIR=~/.cdl-ssm-util
+if [[ -d "$HOME/.cdl-ssm-util" ]]; then
+    export SESSION_SCRIPT_DIR="$HOME/.cdl-ssm-util"
+fi
 
 # Start a session on an instance by name. Searches within every SSO profile defined in
 # ~/.aws/config for the instance name (with a cache for speed).
 #
 # Usage e.g. `session pub-aws2-ops`
 session() {
-    "$SESSION_SCRIPT_DIR/session.py" "$@"
+    if [[ -n "$SESSION_SCRIPT_DIR" ]] && [[ -x "$SESSION_SCRIPT_DIR/session.py" ]]; then
+        "$SESSION_SCRIPT_DIR/session.py" "$@"
+    else
+        echo "session.py not found in SESSION_SCRIPT_DIR" >&2
+        return 1
+    fi
 }
 
-# Autocomplete for session
-autoload -Uz compinit
 compinit
+
 _session() {
-    local words
-    words=($(cut -f2 ~/.aws/cdl-inst-cache/*))
-    _describe 'hosts' words
+    local -a words cache_files
+    cache_files=("$HOME"/.aws/cdl-inst-cache/*(N))
+
+    if (( ${#cache_files} )); then
+        words=($(cut -f2 $cache_files 2>/dev/null))
+        _describe 'hosts' words
+    fi
 }
+
 compdef _session session
 
 ########## PROGRAM SETUP ##########
 
-# echo "Loading nvm..."
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh" # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-export FZF_DEFAULT_COMMAND='find .'
-
-# Eat
-[ -n "$EAT_SHELL_INTEGRATION_DIR" ] && source "$EAT_SHELL_INTEGRATION_DIR/zsh"
-
-# Krita AI integration
-if [[ -s "$HOME/Library/Application Support/krita/ai_diffusion/server/uv/env" ]]; then
-    . "$HOME/Library/Application Support/krita/ai_diffusion/server/uv/env"
+# nvm
+if [[ -d "$HOME/.nvm" ]]; then
+    export NVM_DIR="$HOME/.nvm"
+    [[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
+    [[ -s "$NVM_DIR/bash_completion" ]] && source "$NVM_DIR/bash_completion"
 fi
 
-# sdkman
-export SDKMAN_DIR="$HOME/.sdkman"
-[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+# fzf
+[[ -f "$HOME/.fzf.zsh" ]] && source "$HOME/.fzf.zsh"
+command -v find >/dev/null 2>&1 && export FZF_DEFAULT_COMMAND='find .'
 
-# Added by LM Studio CLI (lms)
-export PATH="$PATH:/Users/rvanbron/.lmstudio/bin"
-# End of LM Studio CLI section
+# Eat
+[[ -n "$EAT_SHELL_INTEGRATION_DIR" ]] && [[ -f "$EAT_SHELL_INTEGRATION_DIR/zsh" ]] && \
+  source "$EAT_SHELL_INTEGRATION_DIR/zsh"
+
+# Krita AI integration
+[[ -f "$HOME/Library/Application Support/krita/ai_diffusion/server/uv/env" ]] && \
+  source "$HOME/Library/Application Support/krita/ai_diffusion/server/uv/env"
+
+# sdkman
+if [[ -d "$HOME/.sdkman" ]]; then
+    export SDKMAN_DIR="$HOME/.sdkman"
+    [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+fi
