@@ -126,21 +126,20 @@ Keys: :method :user :host :local"
 (setq eshell-echo-input nil)
 
 ;; Aweshell - a better eshell
-(use-package aweshell
-  :vc (:url "https://github.com/manateelazycat/aweshell.git"
-	    :rev :newest
-	    :branch "master")
-  :config
-  (setq eshell-prompt-function #'my/eshell--prompt)
-  (setq eshell-highlight-prompt t)
+;; (use-package aweshell
+;;   :vc (:url "https://github.com/manateelazycat/aweshell.git"
+;; 	    :rev :newest
+;; 	    :branch "master")
+;;   :config
+;;   (setq eshell-prompt-function #'my/eshell--prompt)
+;;   (setq eshell-highlight-prompt nil)
 
-  ;; Because our prompt now starts with curved pipe + prompt char + space,
-  ;; keep the regexp simple and robust (properties are ignored).
-  (setq eshell-prompt-regexp "^└─[#>] ")
-  )
+;;   ;; Because our prompt now starts with curved pipe + prompt char + space,
+;;   ;; keep the regexp simple and robust (properties are ignored).
+;;   (setq eshell-prompt-regexp "^└─[#>] ")
+;;   )
 
 ;;; Mana Terminal Launcher
-
 (defcustom rvb/mana-terminal-backend 'vterm
   "Terminal backend to use for launching mana.
 Valid values are 'term, 'ansi-term, 'vterm"

@@ -42,27 +42,26 @@
 
 (setq custom-safe-themes t)
 
-(use-package auto-dark
-  :ensure t
-  :custom
-  (auto-dark-themes nil)
-  (auto-dark-allow-osascript t)
-  (auto-dark-polling-interval-seconds 5)
-  :hook
-  (auto-dark-dark-mode
-   . (lambda ()
-       (set-frame-parameter nil 'ns-appearance 'dark)
-       (disable-theme 'modus-operandi)
-       (load-theme 'sanityinc-tomorrow-night)
-       ))
-  (auto-dark-light-mode
-   . (lambda ()
-       (set-frame-parameter nil 'ns-appearance 'light)
-       (disable-theme 'sanityinc-tomorrow-night)
-       (load-theme 'modus-operandi)
-       ))
-  :config
-  (auto-dark-mode))
+;; Theme toggling
+(defvar current-theme 'light
+  "Variable to track the current theme ('light or 'dark).")
+
+(defun toggle-theme ()
+  "Toggle between light and dark themes."
+  (interactive)
+  (cond
+   ((eq current-theme 'light)
+    (set-frame-parameter nil 'ns-appearance 'dark)
+    (disable-theme 'modus-operandi)
+    (load-theme 'inkpot t)
+    (setq current-theme 'dark))
+   ((eq current-theme 'dark)
+    (set-frame-parameter nil 'ns-appearance 'light)
+    (disable-theme 'inkpot)
+    (load-theme 'modus-operandi t)
+    (setq current-theme 'light))))
+
+(global-set-key (kbd "<f7>") 'toggle-theme)
 
 (require 'rvb-movement)
 

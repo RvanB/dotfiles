@@ -64,6 +64,11 @@
   :config
   (global-org-modern-mode))
 
+;; Fix font face for org tables
+(set-face-attribute 'org-table nil
+                    :inherit 'default
+                    :background 'unspecified)
+
 ;;; Website publishing
 (let ((publish-config "~/RvanB.github.io/org-publish-config.el")
       (template-config "~/RvanB.github.io/post-template.el")
