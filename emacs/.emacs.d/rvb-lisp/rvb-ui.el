@@ -46,6 +46,10 @@
 (defvar current-theme 'light
   "Variable to track the current theme ('light or 'dark).")
 
+(set-frame-parameter nil 'ns-appearance 'light)
+(load-theme 'modus-operandi t)
+
+
 (defun toggle-theme ()
   "Toggle between light and dark themes."
   (interactive)

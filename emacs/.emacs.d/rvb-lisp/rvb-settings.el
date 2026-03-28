@@ -65,4 +65,10 @@
         (magit-project-status "Magit" ?m)
         (project-any-command "Other" ?o)))
 
+(defun reload-init-file ()
+  (interactive)
+  (load-file user-init-file))
+
+(global-set-key (kbd "C-c r") 'reload-init-file)
+
 (provide 'rvb-settings)

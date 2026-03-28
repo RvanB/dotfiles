@@ -136,7 +136,9 @@ PROMPT='$(exit_code_prompt) %f%B%T%b %{$fg[blue]%}%n@%m%f %B${PWD/#$HOME/~}%b%f 
 
 ########## ALIASES AND UTILITY FUNCTIONS ###########
 
-if command -v vim >/dev/null 2>&1; then
+if command -v emacs >/dev/null 2>&1; then
+    export EDITOR="emacsclient -n"
+elif command -v vim >/dev/null 2>&1; then
     export EDITOR="vim"
 elif command -v nvim >/dev/null 2>&1; then
     export EDITOR="nvim"
@@ -150,6 +152,7 @@ command -v tmux >/dev/null 2>&1 && alias tmux="TERM=xterm-256color tmux"
 [[ -n "$EDITOR" ]] && alias cfemacs="$EDITOR ~/.emacs.d/init.el"
 [[ -n "$EDITOR" ]] && alias cfghostty="$EDITOR ~/.config/ghostty/config"
 [[ -n "$EDITOR" ]] && alias cfnvim="$EDITOR ~/.config/nvim/init.vim"
+[[ -n "$EDITOR" ]] && alias e="$EDITOR"
 
 # if [[ "$TERM" == "dumb" ]]; then
 #     unsetopt zle
@@ -188,6 +191,50 @@ _session() {
 }
 
 compdef _session session
+
+# Better ls
+ls() {
+  if (( $+commands[eza] )); then
+    eza --group-directories-first --icons -a --git
+  elif (( $+commands[exa] )); then
+    exa --group-directories-first --icons -a --git
+  else
+    command ls
+  fi
+}
+
+# What to show after clearing
+post-clear-list() {
+    ls
+}
+
+# Make `clear` also show directory contents
+clear() {
+  command clear
+  post-clear-list
+}
+
+# Directory navigation
+setopt AUTO_CD
+autoload -U add-zsh-hook
+
+dir-context() {
+  [[ -o interactive ]] || return
+  clear
+}
+
+add-zsh-hook chpwd dir-context
+
+up-directory-widget() {
+  builtin cd .. || return
+  zle reset-prompt
+}
+zle -N up-directory-widget
+
+down-directory-widget() {
+  local -a dirs
+  dirs=(./*(/N))
+}
 
 ########## PROGRAM SETUP ##########
 
