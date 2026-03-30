@@ -19,6 +19,17 @@ config.font = wezterm.font(
     { weight = 'Regular' }
 )
 
+config.keys = {
+  -- Navigate panes with ALT + hjkl
+  { key = 'h', mods = 'CTRL', action = wezterm.action.ActivatePaneDirection 'Left' },
+  { key = 'j', mods = 'CTRL', action = wezterm.action.ActivatePaneDirection 'Down' },
+  { key = 'k', mods = 'CTRL', action = wezterm.action.ActivatePaneDirection 'Up' },
+  { key = 'l', mods = 'CTRL', action = wezterm.action.ActivatePaneDirection 'Right' },
+
+  -- Visual pane selection (numbers)
+  { key = '0', mods = 'CTRL', action = wezterm.action.PaneSelect({ alphabet = '1234567890' }) },
+}
+
 config.enable_scroll_bar = false
 
 -- Finally, return the configuration to wezterm:
