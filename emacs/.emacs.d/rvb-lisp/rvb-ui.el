@@ -110,6 +110,38 @@
 				       "\\\\" "://"))
   (global-ligature-mode t))
 
+(use-package nerd-icons
+  :ensure t)
+
+(use-package nerd-icons-dired
+  :ensure t
+  :config
+  (add-hook 'dired-mode-hook #'nerd-icons-dired-mode))
+
+(use-package nerd-icons-corfu
+  :ensure t
+  :config
+  (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter)
+
+  ;; Optionally:
+  (setq nerd-icons-corfu-mapping
+	'((array :style "cod" :icon "symbol_array" :face font-lock-type-face)
+          (boolean :style "cod" :icon "symbol_boolean" :face font-lock-builtin-face)
+          ;; You can alternatively specify a function to perform the mapping,
+          ;; use this when knowing the exact completion candidate is important.
+          ;; Don't pass `:face' if the function already returns string with the
+          ;; face property, though.
+          (file :fn nerd-icons-icon-for-file :face font-lock-string-face)
+          ;; ...
+          (t :style "cod" :icon "code" :face font-lock-warning-face)))
+  ;; If you add an entry for t, the library uses that as fallback.
+  ;; The default fallback (when it's not specified) is the ? symbol.
+
+  ;; The Custom interface is also supported for tuning the variable above.
+  )
+
+
+
 ;;; Magit todos
 (use-package magit-todos
   :ensure t

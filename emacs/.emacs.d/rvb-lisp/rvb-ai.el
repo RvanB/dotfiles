@@ -19,6 +19,8 @@
   :after gptel
   :hook (magit-mode . gptel-magit-install))
 
+(require 'project)
+
 ;;; GitHub Copilot
 (use-package copilot
   :vc (:url "https://github.com/copilot-emacs/copilot.el"
