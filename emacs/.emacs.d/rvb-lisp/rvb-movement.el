@@ -77,6 +77,10 @@ ARG and REDISPLAY are identical to the original function."
       (pixel-scroll-precision-interpolate pixels nil 1)
       (rvb/move-point-to-window-center)))))
 
+(defcustom smooth-scroll t
+  "Variable to enable/disable smooth scrolling"
+  :type 'boolean)
+
 (use-package ultra-scroll
   :pin "manual"
   :vc (:url "https://github.com/jdtsmith/ultra-scroll"
@@ -88,16 +92,14 @@ ARG and REDISPLAY are identical to the original function."
   (add-hook 'ultra-scroll-mode-hook
             (lambda ()
               (cond
-               (pixel-scroll-precision-mode
+               (smooth-scroll
                 (advice-add 'scroll-up-command :override 'kb/pixel-scroll-up)
                 (advice-add 'scroll-down-command :override 'kb/pixel-scroll-down)
-                (advice-add 'recenter-top-bottom :override 'kb/pixel-recenter)
-                )
+                (advice-add 'recenter-top-bottom :override 'kb/pixel-recenter))
                (t
                 (advice-remove 'scroll-up-command 'kb/pixel-scroll-up)
                 (advice-remove 'scroll-down-command 'kb/pixel-scroll-down)
-                (advice-remove 'recenter-top-bottom 'kb/pixel-recenter)
-                ))))
+                (advice-remove 'recenter-top-bottom 'kb/pixel-recenter)))))
   :config
   (ultra-scroll-mode 1))
 

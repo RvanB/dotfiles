@@ -16,10 +16,10 @@
 
 (add-hook 'markdown-mode-hook 'mixed-pitch-mode)
 
-(use-package vertico-posframe
-  :ensure t
-  :config
-  (vertico-posframe-mode 1))
+;; (use-package vertico-posframe
+;;   :ensure t
+;;   :config
+;;   (vertico-posframe-mode 1))
 
 ;; ef themes
 (use-package ef-themes
@@ -79,16 +79,62 @@
 ;; Make a clearer division between windows
 (window-divider-mode)
 
-;; Mixed pitch buffers
 (use-package mixed-pitch
   :ensure t)
 
-;; Set the font whenever frame is created
-(add-hook 'after-make-frame-functions
-		  (lambda (frame)
-			(with-selected-frame frame
-			  (set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 14"))))
-(set-face-attribute 'default nil :font "Berkeley Mono Variable Z8XX46Z7 14")
+(defcustom fontfamily nil
+  "The font family to use as the default. If nil, uses the Emacs default."
+  :type '(choice (const :tag "Use default font" nil)
+                 (string :tag "Custom font family"))
+  :group 'appearance)
+
+(defcustom fontsize 14
+  "The font size to use as the default. If nil, uses the Emacs default."
+  :type '(choice (const :tag "Use default font size" nil)
+                 (integer :tag "Custom font size"))
+  :group 'appearance)
+
+(defun update-default-font ()
+  "Update the default font based on `fontfamily` and `fontsize`."
+  (let ((font-spec (if (and fontfamily fontsize) 
+                       (format "%s-%d" fontfamily fontsize)
+                     nil)))
+    (if font-spec
+        (set-face-attribute 'default nil :font font-spec)
+      (set-face-attribute 'default nil :font (face-attribute 'default :font)))))
+
+(defun increase-font-size ()
+  "Increase the font size by 1 and update the font."
+  (interactive)
+  (setq fontsize (if fontsize (1+ fontsize) 14)) ;; Start from 14 if nil
+  (customize-save-variable 'fontsize fontsize)
+  (update-default-font))
+
+(defun decrease-font-size ()
+  "Decrease the font size by 1 and update the font."
+  (interactive)
+  (setq fontsize (if fontsize (max 1 (1- fontsize)) 13)) ;; Start from 13 if nil
+  (customize-save-variable 'fontsize fontsize)
+  (update-default-font))
+
+(defun list-available-fonts ()
+  "Retrieve a list of available fonts on the current system."
+  (delete-dups (sort (font-family-list) #'string-lessp)))
+
+(defun select-font-family ()
+  "Prompt the user to select a font family live via completion."
+  (interactive)
+  (let ((selected-font (completing-read "Select font family: " (list-available-fonts) nil t)))
+    (setq fontfamily selected-font)
+    (customize-save-variable 'fontfamily fontfamily)
+    (update-default-font)))
+
+(global-set-key (kbd "C-+") 'increase-font-size)
+(global-set-key (kbd "C--") 'decrease-font-size)
+(global-set-key (kbd "C-c f") 'select-font-family)
+
+;; Ensure the font is set initially
+(update-default-font)
 
 ;; Ligatures
 (use-package ligature
