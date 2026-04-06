@@ -1,6 +1,6 @@
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
 
-(add-hook 'prog-mode-hook 'hl-line-mode)
+;; (add-hook 'prog-mode-hook 'hl-line-mode)
 
 (use-package olivetti
   :ensure t)
@@ -12,7 +12,7 @@
 ;; Hide eldoc mode
 (diminish 'eldoc-mode)
 
-(set-frame-parameter nil 'ns-transparent-titlebar t)
+(set-frame-parameter nil 'ns-transparent-titlebar nil)
 
 (add-hook 'markdown-mode-hook 'mixed-pitch-mode)
 
@@ -50,22 +50,21 @@
 (load-theme 'modus-operandi t)
 
 
-(defun toggle-theme ()
-  "Toggle between light and dark themes."
-  (interactive)
-  (cond
-   ((eq current-theme 'light)
-    (set-frame-parameter nil 'ns-appearance 'dark)
-    (disable-theme 'modus-operandi)
-    (load-theme 'inkpot t)
-    (setq current-theme 'dark))
-   ((eq current-theme 'dark)
-    (set-frame-parameter nil 'ns-appearance 'light)
-    (disable-theme 'inkpot)
-    (load-theme 'modus-operandi t)
-    (setq current-theme 'light))))
+;; (defun toggle-theme ()
+;;   "Toggle between light and dark themes."
+;;   (interactive)
+;;   (cond
+;;    ((eq current-theme 'light)
+;;     (set-frame-parameter nil 'ns-appearance 'dark)
+;;     (disable-theme 'modus-operandi)
+;;     (load-theme 'inkpot t)
+;;     (setq current-theme 'dark))
+;;    ((eq current-theme 'dark)
+;;     (set-frame-parameter nil 'ns-appearance 'light)
+;;     (disable-theme 'inkpot)
+;;     (load-theme 'modus-operandi t)
+;;     (setq current-theme 'light))))
 
-(global-set-key (kbd "<f7>") 'toggle-theme)
 
 (require 'rvb-movement)
 
@@ -75,9 +74,6 @@
 (scroll-bar-mode -1)
 ;;; Disable tool bar
 (tool-bar-mode -1)
-
-;; Make a clearer division between windows
-(window-divider-mode)
 
 (use-package mixed-pitch
   :ensure t)
@@ -129,9 +125,10 @@
     (customize-save-variable 'fontfamily fontfamily)
     (update-default-font)))
 
-(global-set-key (kbd "C-+") 'increase-font-size)
-(global-set-key (kbd "C--") 'decrease-font-size)
-(global-set-key (kbd "C-c f") 'select-font-family)
+(keymap-global-set "<f7>" 'select-font-family)
+(keymap-global-set "<f8>" 'decrease-font-size)
+(keymap-global-set "<f9>" 'increase-font-size)
+
 
 ;; Ensure the font is set initially
 (update-default-font)
@@ -187,6 +184,8 @@
   )
 
 
+;; Clearer separation between buffers
+(window-divider-mode)
 
 ;;; Magit todos
 (use-package magit-todos
@@ -217,5 +216,91 @@
           (select-window window))))))
 
 (advice-add 'display-buffer :after #'rvb/auto-select-window)
+
+
+(defgroup c64-frame nil
+  "Make the current frame look a bit like a Commodore 64."
+  :group 'frames)
+
+(defcustom c64-frame-border-width 80
+  "Width of the fake C64 border, in pixels."
+  :type 'integer)
+
+(defcustom c64-frame-border-color "#2b1f8f"
+  "Color of the outer C64-style border."
+  :type 'color)
+
+(defvar c64-frame--saved-state nil
+  "Alist mapping frames to their saved visual state.")
+
+(defun c64-frame--save-state (frame)
+  "Save FRAME settings so they can be restored later."
+  (setf (alist-get frame c64-frame--saved-state nil nil #'eq)
+        (list
+         :internal-border-width (frame-parameter frame 'internal-border-width)
+         :background-color      (face-background 'default frame t)
+         :foreground-color      (face-foreground 'default frame t)
+         :internal-border-color (face-background 'internal-border frame t)
+         :mode-line-box         (face-attribute 'mode-line :box frame 'default)
+         :menu-bar-lines        (frame-parameter frame 'menu-bar-lines)
+         :tool-bar-lines        (frame-parameter frame 'tool-bar-lines)
+         :vertical-scroll-bars  (frame-parameter frame 'vertical-scroll-bars))))
+
+(defun c64-frame--restore-state (frame)
+  "Restore FRAME settings previously saved by `c64-frame-mode'."
+  (when-let ((state (alist-get frame c64-frame--saved-state nil nil #'eq)))
+    (set-frame-parameter frame 'internal-border-width
+                         (plist-get state :internal-border-width))
+    (set-frame-parameter frame 'menu-bar-lines
+                         (plist-get state :menu-bar-lines))
+    (set-frame-parameter frame 'tool-bar-lines
+                         (plist-get state :tool-bar-lines))
+    (set-frame-parameter frame 'vertical-scroll-bars
+                         (plist-get state :vertical-scroll-bars))
+
+    ;; Restore frame-local face settings.
+    (set-face-attribute 'default frame
+                        :background (plist-get state :background-color)
+                        :foreground (plist-get state :foreground-color))
+    (set-face-attribute 'internal-border frame
+                        :background (plist-get state :internal-border-color))
+    (set-face-attribute 'mode-line frame
+                        :box (plist-get state :mode-line-box))
+
+    ;; Remove saved entry
+    (setq c64-frame--saved-state
+          (assq-delete-all frame c64-frame--saved-state))))
+
+(defun c64-frame--apply (frame)
+  "Apply the C64 look to FRAME."
+  (c64-frame--save-state frame)
+
+  ;; Big fake CRT border
+  (set-frame-parameter frame 'internal-border-width c64-frame-border-width)
+
+  ;; Optional cleanup
+  (set-frame-parameter frame 'vertical-scroll-bars nil)
+  (set-frame-parameter frame 'tool-bar-lines 0)
+  (set-frame-parameter frame 'menu-bar-lines 0)
+
+  ;; Frame-local face changes
+  ;; (set-face-attribute 'default frame
+  ;;                     :background c64-frame-screen-color)
+  ;; (set-face-attribute 'internal-border frame
+  ;;                     :background c64-frame-border-color)
+  ;; (set-face-attribute 'mode-line frame
+  ;;                     :box nil)
+
+  )
+
+;;;###autoload
+(define-minor-mode c64-frame-mode
+  "Toggle a Commodore-64-style border on the selected frame."
+  :init-value nil
+  :global nil
+  :lighter " C64"
+  (if c64-frame-mode
+      (c64-frame--apply (selected-frame))
+    (c64-frame--restore-state (selected-frame))))
 
 (provide 'rvb-ui)

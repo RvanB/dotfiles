@@ -92,7 +92,7 @@ ARG and REDISPLAY are identical to the original function."
   (add-hook 'ultra-scroll-mode-hook
             (lambda ()
               (cond
-               (smooth-scroll
+               (smooth-scroll ;; TODO: This shouldn't just be on the ultra scroll mode hook
                 (advice-add 'scroll-up-command :override 'kb/pixel-scroll-up)
                 (advice-add 'scroll-down-command :override 'kb/pixel-scroll-down)
                 (advice-add 'recenter-top-bottom :override 'kb/pixel-recenter))
