@@ -14,6 +14,9 @@ typeset -U path PATH
 # Deno (lspx)
 [[ -d "$HOME/.deno/bin" ]] && path=("$HOME/.deno/bin" $path)
 
+# Built-in Python
+[[ -d "/$HOME/Library/Python/3.9/bin" ]] && path=("$HOME/Library/Python/3.9/bin" $path)
+
 # Cargo binaries
 [[ -d "$HOME/.cargo/bin" ]] && path=("$HOME/.cargo/bin" $path)
 
@@ -122,7 +125,7 @@ auto_activate_uv() {
                     if [[ -n "$VIRTUAL_ENV" ]] && typeset -f deactivate >/dev/null; then
                         deactivate
                     fi
-                    source "$activate_script"
+                    VIRTUAL_ENV_DISABLE_PROMPT=1 source "$activate_script"
                 fi
             fi
         fi
@@ -132,7 +135,11 @@ auto_activate_uv() {
 add-zsh-hook chpwd auto_activate_uv
 auto_activate_uv
 
-PROMPT='$(exit_code_prompt) %f%B%T%b %{$fg[blue]%}%n@%m%f %B${PWD/#$HOME/~}%b%f $(git_prompt)> %{$reset_color%}'
+venv_prompt() {
+    [[ -n "$VIRTUAL_ENV" ]] && echo "(${VIRTUAL_ENV:h:t}) "
+}
+
+PROMPT='$(exit_code_prompt) $(venv_prompt)%f%B%T%b %{$fg[blue]%}%n@%m%f %B${PWD/#$HOME/~}%b%f $(git_prompt)> %{$reset_color%}'
 
 ########## ALIASES AND UTILITY FUNCTIONS ###########
 
@@ -223,7 +230,7 @@ dir-context() {
   clear
 }
 
-add-zsh-hook chpwd dir-context
+# add-zsh-hook chpwd dir-context
 
 up-directory-widget() {
   builtin cd .. || return

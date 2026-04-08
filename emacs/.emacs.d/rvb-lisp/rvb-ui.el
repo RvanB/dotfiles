@@ -29,6 +29,15 @@
 	ef-themes-bold-constructs t
 	ef-themes-italic-comments t))
 
+(use-package doric-themes
+  :ensure t
+  :demand t
+  :config
+  ;; These are the default values.
+  (setq doric-themes-to-toggle '(doric-light doric-dark))
+  (setq doric-themes-to-rotate doric-themes-collection)
+)
+
 ;; Standard themes
 (use-package standard-themes
   :ensure t)
