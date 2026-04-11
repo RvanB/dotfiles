@@ -33,6 +33,9 @@
   (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
   )
 
+(use-package agent-shell
+  :ensure t)
+
 ;; ;;; Claude Code IDE
 ;; (use-package claude-code-ide
 ;;   :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)

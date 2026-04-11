@@ -55,11 +55,11 @@ setopt promptsubst
 # $(pass show aws.com/bedrock/inference-profile 2>/dev/null)
 
 if command -v pass >/dev/null 2>&1; then
-    ANTHROPIC_DEFAULT_SONNET_MODEL="$(pass show aws.com/bedrock/sonnet 2>/dev/null)"
-    [[ -n "$ANTHROPIC_DEFAULT_SONNET_MODEL" ]] && export ANTHROPIC_DEFAULT_SONNET_MODEL
+    # ANTHROPIC_DEFAULT_SONNET_MODEL="$(pass show aws.com/bedrock/sonnet 2>/dev/null)"
+    # [[ -n "$ANTHROPIC_DEFAULT_SONNET_MODEL" ]] && export ANTHROPIC_DEFAULT_SONNET_MODEL
 
-    OPENAI_API_KEY="$(pass show github.com/copilot/token 2>/dev/null)"
-    [[ -n "$OPENAI_API_KEY" ]] && export OPENAI_API_KEY
+    # OPENAI_API_KEY="$(pass show github.com/copilot/token 2>/dev/null)"
+    # [[ -n "$OPENAI_API_KEY" ]] && export OPENAI_API_KEY
 
     CODEIUM_API_KEY="$(pass show windsurf.com/api 2>/dev/null)"
     [[ -n "$CODEIUM_API_KEY" ]] && export CODEIUM_API_KEY
