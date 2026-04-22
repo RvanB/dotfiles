@@ -12,14 +12,14 @@
 ;; Hide eldoc mode
 (diminish 'eldoc-mode)
 
-(set-frame-parameter nil 'ns-transparent-titlebar nil)
-
 (add-hook 'markdown-mode-hook 'mixed-pitch-mode)
 
 ;; (use-package vertico-posframe
 ;;   :ensure t
 ;;   :config
 ;;   (vertico-posframe-mode 1))
+
+(add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
 ;; ef themes
 (use-package ef-themes
@@ -55,8 +55,23 @@
 (defvar current-theme 'light
   "Variable to track the current theme ('light or 'dark).")
 
-(set-frame-parameter nil 'ns-appearance 'light)
-(load-theme 'modus-operandi t)
+(defconst rvb-default-theme 'modus-operandi
+  "Theme to load when Emacs starts without any enabled theme.")
+
+(defun rvb/set-default-frame-parameter (parameter value)
+  "Set default frame PARAMETER to VALUE for future frames."
+  (setf (alist-get parameter default-frame-alist) value))
+
+(defun rvb/ensure-theme-loaded ()
+  "Load the default theme when no theme is currently enabled."
+  (unless custom-enabled-themes
+    (load-theme rvb-default-theme t)))
+
+(defun rvb/apply-frame-appearance (&optional frame)
+  "Apply frame-specific appearance settings to FRAME."
+  (with-selected-frame (or frame (selected-frame))
+    (set-frame-parameter nil 'ns-transparent-titlebar nil)
+    (set-frame-parameter nil 'ns-appearance current-theme)))
 
 
 ;; (defun toggle-theme ()
@@ -99,14 +114,33 @@
                  (integer :tag "Custom font size"))
   :group 'appearance)
 
-(defun update-default-font ()
-  "Update the default font based on `fontfamily` and `fontsize`."
-  (let ((font-spec (if (and fontfamily fontsize) 
-                       (format "%s-%d" fontfamily fontsize)
-                     nil)))
+(defun rvb/default-font-spec ()
+  "Build the configured default font string."
+  (when (and fontfamily fontsize)
+    (format "%s-%d" fontfamily fontsize)))
+
+(defun update-default-font (&optional frame)
+  "Update the default font for FRAME and future frames."
+  (let ((font-spec (rvb/default-font-spec)))
     (if font-spec
-        (set-face-attribute 'default nil :font font-spec)
-      (set-face-attribute 'default nil :font (face-attribute 'default :font)))))
+        (progn
+          (rvb/set-default-frame-parameter 'font font-spec)
+          (when (display-graphic-p frame)
+            (set-face-attribute 'default frame :font font-spec)))
+      (setq default-frame-alist (assq-delete-all 'font default-frame-alist))
+      (when (display-graphic-p frame)
+        (set-face-attribute
+         'default
+         frame
+         :font (face-attribute 'default :font frame 'default))))))
+
+(defun rvb/initialize-ui (&optional frame)
+  "Apply the configured UI to FRAME and future client frames."
+  (rvb/set-default-frame-parameter 'ns-transparent-titlebar nil)
+  (rvb/set-default-frame-parameter 'ns-appearance current-theme)
+  (rvb/ensure-theme-loaded)
+  (rvb/apply-frame-appearance frame)
+  (update-default-font frame))
 
 (defun increase-font-size ()
   "Increase the font size by 1 and update the font."
@@ -138,9 +172,9 @@
 (keymap-global-set "<f8>" 'decrease-font-size)
 (keymap-global-set "<f9>" 'increase-font-size)
 
-
 ;; Ensure the font is set initially
-(update-default-font)
+(rvb/initialize-ui)
+(add-hook 'after-make-frame-functions #'rvb/initialize-ui)
 
 ;; Ligatures
 (use-package ligature
