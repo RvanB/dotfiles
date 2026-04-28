@@ -132,8 +132,8 @@ auto_activate_uv() {
     fi
 }
 
-add-zsh-hook chpwd auto_activate_uv
-auto_activate_uv
+# add-zsh-hook chpwd auto_activate_uv
+# auto_activate_uv
 
 venv_prompt() {
     [[ -n "$VIRTUAL_ENV" ]] && echo "(${VIRTUAL_ENV:h:t}) "
@@ -211,15 +211,16 @@ ls() {
 }
 
 # What to show after clearing
-post-clear-list() {
-    ls
-}
+# post-clear-list() {
+#     ls
+# }
+
 
 # Make `clear` also show directory contents
-clear() {
-  command clear
-  post-clear-list
-}
+# clear() {
+#   command clear
+#   post-clear-list
+# }
 
 # Directory navigation
 setopt AUTO_CD
