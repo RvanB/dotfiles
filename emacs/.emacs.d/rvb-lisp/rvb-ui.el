@@ -228,7 +228,7 @@
 
 
 ;; Clearer separation between buffers
-(window-divider-mode)
+;; (window-divider-mode)
 
 ;;; Magit todos
 (use-package magit-todos
