@@ -55,7 +55,7 @@
 (defvar current-theme 'light
   "Variable to track the current theme ('light or 'dark).")
 
-(defconst rvb-default-theme 'modus-operandi
+(defcustom rvb-default-theme 'modus-operandi
   "Theme to load when Emacs starts without any enabled theme.")
 
 (defun rvb/set-default-frame-parameter (parameter value)
