@@ -70,7 +70,7 @@
 (defun rvb/apply-frame-appearance (&optional frame)
   "Apply frame-specific appearance settings to FRAME."
   (with-selected-frame (or frame (selected-frame))
-    (set-frame-parameter nil 'ns-transparent-titlebar nil)
+    (set-frame-parameter nil 'ns-transparent-titlebar t)
     (set-frame-parameter nil 'ns-appearance current-theme)))
 
 

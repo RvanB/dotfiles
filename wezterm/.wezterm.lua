@@ -30,7 +30,9 @@ config.initial_rows = 28
 
 -- or, changing the font size and color scheme.
 config.font_size = 14
-config.color_scheme = 'Modus-Operandi'
+config.color_scheme = 'Modus Operandi Tinted (Gogh)'
+
+config.window_decorations = "TITLE|RESIZE|MACOS_USE_BACKGROUND_COLOR_AS_TITLEBAR_COLOR"
 
 config.font = wezterm.font(
     'Berkeley Mono Variable Z8XX46Z7',
@@ -42,7 +44,7 @@ local tabline = wezterm.plugin.require("https://github.com/michaelbrusegard/tabl
 tabline.setup({
   options = {
     icons_enabled = true,
-    theme = 'Modus-Operandi',
+    theme = config.color_scheme,
     tabs_enabled = true,
     theme_overrides = {
         normal_mode = {
