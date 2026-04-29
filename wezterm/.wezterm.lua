@@ -10,15 +10,15 @@ config.colors = {
   tab_bar = {
     -- The color of the strip that goes along the top of the window
     -- (does not apply when fancy tab bar is in use)
-    background = '#ffffff',
+    background = '#efe9dd',
     new_tab = {
-        bg_color = '#ffffff',
+        bg_color = '#fbf7f0',
         fg_color = '#000000',
     },
     new_tab_hover = {
-        bg_color = '#ffffff',
+        bg_color = '#fbf7f0',
         fg_color = '#000000',
-        italic = false,
+        italic = true,
     },
   },
 }
@@ -48,7 +48,8 @@ tabline.setup({
     tabs_enabled = true,
     theme_overrides = {
         normal_mode = {
-            f = { bg = '#ff0000' },
+            c = { bg = '#efe9dd' },
+            b = { bg = '#efe9dd' },
         },
     },
     section_separators = '',
