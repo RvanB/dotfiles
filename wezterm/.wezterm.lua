@@ -10,13 +10,13 @@ config.colors = {
   tab_bar = {
     -- The color of the strip that goes along the top of the window
     -- (does not apply when fancy tab bar is in use)
-    background = '#efe9dd',
+    background = '#ffffff',
     new_tab = {
-        bg_color = '#fbf7f0',
+        bg_color = '#ffffff',
         fg_color = '#000000',
     },
     new_tab_hover = {
-        bg_color = '#fbf7f0',
+        bg_color = '#ffffff',
         fg_color = '#000000',
         italic = true,
     },
@@ -30,9 +30,7 @@ config.initial_rows = 28
 
 -- or, changing the font size and color scheme.
 config.font_size = 14
-config.color_scheme = 'Modus Operandi Tinted (Gogh)'
-
-config.window_decorations = "TITLE|RESIZE|MACOS_USE_BACKGROUND_COLOR_AS_TITLEBAR_COLOR"
+config.color_scheme = 'Modus-Operandi'
 
 config.font = wezterm.font(
     'Berkeley Mono Variable Z8XX46Z7',
@@ -44,14 +42,8 @@ local tabline = wezterm.plugin.require("https://github.com/michaelbrusegard/tabl
 tabline.setup({
   options = {
     icons_enabled = true,
-    theme = config.color_scheme,
+    theme = "Modus-Operandi",
     tabs_enabled = true,
-    theme_overrides = {
-        normal_mode = {
-            c = { bg = '#efe9dd' },
-            b = { bg = '#efe9dd' },
-        },
-    },
     section_separators = '',
     component_separators= '',
     tab_separators = '',
