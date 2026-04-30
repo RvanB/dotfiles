@@ -12,13 +12,13 @@ config.colors = {
     -- (does not apply when fancy tab bar is in use)
     background = '#ffffff',
     new_tab = {
-        bg_color = '#ffffff',
+        bg_color = '#f2f2f2',
         fg_color = '#000000',
     },
     new_tab_hover = {
         bg_color = '#ffffff',
         fg_color = '#000000',
-        italic = true,
+        italic = false,
     },
   },
 }
