@@ -77,6 +77,20 @@ config.keys = {
 
   -- Visual pane selection (numbers)
   { key = '0', mods = 'CTRL', action = wezterm.action.PaneSelect({ alphabet = '1234567890' }) },
+
+  -- Emacs-like keybinds
+  -- Option-Left/Right for word navigation
+  { key = 'b', mods = 'OPT', action = wezterm.action.SendString '\x1bb' },
+  { key = 'f', mods = 'OPT', action = wezterm.action.SendString '\x1bf' },
+  -- Ctrl+K for kill line
+  {
+      key = 'k', mods = 'CTRL', action = wezterm.action.SendKey {
+      key = 'U',
+      mods = 'CTRL'
+    },
+  },
+  -- M-backspace (Delete a Word backwards)
+  { key = 'Backspace',  mods = 'ALT', action = wezterm.action.SendKey({ key = 'w', mods = 'CTRL' }) }
 }
 
 config.enable_scroll_bar = false

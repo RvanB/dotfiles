@@ -8,12 +8,12 @@
   :ensure t
   :config
   ;; (setq gptel-backend (gptel-make-gh-copilot "Copilot"))
-  (setq gptel-model 'qwen2.5-coder:14b
+  (setq gptel-model 'qwen3.5:9b
         gptel-include-reasoning t
         gptel-backend (gptel-make-ollama "Ollama"
                         :host ollama-ip
                         :stream t
-                        :models '(qwen2.5-coder:14b qwen3.5:9b)))
+                        :models '(qwen3.5:9b)))
   (add-hook 'gptel-post-stream-hook 'gptel-auto-scroll)
   (add-hook 'gptel-post-response-functions 'gptel-end-of-response)
   :bind
