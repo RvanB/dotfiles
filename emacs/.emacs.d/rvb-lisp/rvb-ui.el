@@ -2,6 +2,11 @@
 
 ;; (add-hook 'prog-mode-hook 'hl-line-mode)
 
+(use-package annotate
+  :ensure t
+  :config
+  (add-hook 'prog-mode-hook 'annotate-mode))
+
 (use-package olivetti
   :ensure t)
 
