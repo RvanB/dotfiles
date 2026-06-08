@@ -125,14 +125,13 @@
   :config
   (marginalia-mode))
 
-(use-package corfu
+(use-package company
   :ensure t
-  :init
-  (setq corfu-auto t
-        corfu-quit-no-match 'separator)
+  :custom
+  (company-backends '(company-capf))
+  (company-tooltip-align-annotations t)
   :config
-  (global-corfu-mode)
-  (corfu-popupinfo-mode))
+  (add-hook 'after-init-hook 'global-company-mode))
 
 (use-package orderless
   :ensure t
@@ -145,9 +144,18 @@
 (use-package cape
   :ensure t
   :init
-  (add-hook 'completion-at-point-functions #'cape-dabbrev)
-  (add-hook 'completion-at-point-functions #'cape-file)
-  (add-hook 'completion-at-point-functions #'cape-elisp-block))
+  (defvar-local my/cape-fallback-capf nil)
+  (defvar-local my/eglot-super-capf nil)
+
+  (defun my/setup-completion-capfs ()
+    (add-hook 'completion-at-point-functions #'cape-file nil t)
+    (add-hook 'completion-at-point-functions #'cape-elisp-block nil t)
+    (unless my/cape-fallback-capf
+      (setq-local my/cape-fallback-capf
+                  (cape-capf-super #'yasnippet-capf #'cape-dabbrev)))
+    (add-hook 'completion-at-point-functions my/cape-fallback-capf t t))
+
+  (add-hook 'prog-mode-hook #'my/setup-completion-capfs))
 
 ;;; Snippets
 (use-package yasnippet
@@ -161,20 +169,20 @@
 
 (use-package yasnippet-capf
   :ensure t
-  :after cape
-  :init
-  (defun my/yasnippet-capf-h ()
-    (add-to-list 'completion-at-point-functions #'yasnippet-capf))
-  :config
-  (add-hook 'prog-mode-hook 'my/yasnippet-capf-h))
+  :after (cape yasnippet))
 
 (defun my/eglot-capf ()
+  (when my/cape-fallback-capf
+    (remove-hook 'completion-at-point-functions my/cape-fallback-capf t))
   (setq-local completion-at-point-functions
-              (cons (cape-capf-super
-                     #'eglot-completion-at-point
-                     #'yasnippet-capf)
-                    (remove #'eglot-completion-at-point
-                            completion-at-point-functions))))
+              (remove #'eglot-completion-at-point completion-at-point-functions))
+  (unless my/eglot-super-capf
+    (setq-local my/eglot-super-capf
+                (cape-capf-super
+                 #'eglot-completion-at-point
+                 #'yasnippet-capf
+                 #'cape-dabbrev)))
+  (add-hook 'completion-at-point-functions my/eglot-super-capf nil t))
 
 (add-hook 'eglot-managed-mode-hook #'my/eglot-capf)
 

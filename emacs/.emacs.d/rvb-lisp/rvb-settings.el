@@ -3,6 +3,8 @@
 
 (setq tab-always-indent 'complete)
 
+(setq-default indent-tabs-mode nil)
+
 
 ;;; Indentation
 ;; use spaces instead of tabs
