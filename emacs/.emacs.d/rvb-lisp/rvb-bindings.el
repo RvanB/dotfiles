@@ -75,6 +75,12 @@
 ;;; Project dashboard
 (keymap-global-set "C-c p" 'rvb/project-dashboard)
 
+;;; GitHub Projects
+(keymap-global-set "C-c g S" 'rvb-gh-project-configure-sources)
+(keymap-global-set "C-c g o" 'rvb-gh-project-menu)
+(keymap-global-set "C-c g s" 'rvb-gh-project-sync-org)
+(keymap-global-set "C-c g f" 'rvb-gh-project-open-org-file)
+
 ;;; Make C-` shorthand for C-x ` (next-error), and C-~ for previous error
 (keymap-global-set "C-`" 'next-error)
 (keymap-global-set "C-~" 'previous-error)

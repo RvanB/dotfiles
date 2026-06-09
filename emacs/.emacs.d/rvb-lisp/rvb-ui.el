@@ -17,8 +17,6 @@
 ;; Hide eldoc mode
 (diminish 'eldoc-mode)
 
-(add-hook 'markdown-mode-hook 'mixed-pitch-mode)
-
 ;; (use-package vertico-posframe
 ;;   :ensure t
 ;;   :config
@@ -30,9 +28,7 @@
 (use-package ef-themes
   :ensure t
   :init
-  (setq ef-themes-italic-constructs t
-	ef-themes-bold-constructs t
-	ef-themes-italic-comments t))
+  (setq ef-themes-italic-comments t))
 
 (use-package doric-themes
   :ensure t
@@ -57,7 +53,7 @@
 (setq custom-safe-themes t)
 
 ;; Theme toggling
-(defvar current-theme 'light
+(defvar current-theme 'dark
   "Variable to track the current theme ('light or 'dark).")
 
 (defcustom rvb-default-theme 'modus-operandi
@@ -79,20 +75,20 @@
     (set-frame-parameter nil 'ns-appearance current-theme)))
 
 
-;; (defun toggle-theme ()
-;;   "Toggle between light and dark themes."
-;;   (interactive)
-;;   (cond
-;;    ((eq current-theme 'light)
-;;     (set-frame-parameter nil 'ns-appearance 'dark)
-;;     (disable-theme 'modus-operandi)
-;;     (load-theme 'inkpot t)
-;;     (setq current-theme 'dark))
-;;    ((eq current-theme 'dark)
-;;     (set-frame-parameter nil 'ns-appearance 'light)
-;;     (disable-theme 'inkpot)
-;;     (load-theme 'modus-operandi t)
-;;     (setq current-theme 'light))))
+(defun toggle-theme ()
+  "Toggle between light and dark themes."
+  (interactive)
+  (cond
+   ((eq current-theme 'light)
+    (set-frame-parameter nil 'ns-appearance 'dark)
+    (disable-theme 'modus-operandi)
+    (load-theme 'sanityinc-tomorrow-bright t)
+    (setq current-theme 'dark))
+   ((eq current-theme 'dark)
+    (set-frame-parameter nil 'ns-appearance 'light)
+    (disable-theme 'sanityinc-tomorrow-bright)
+    (load-theme 'modus-operandi t)
+    (setq current-theme 'light))))
 
 
 (require 'rvb-movement)
@@ -104,8 +100,37 @@
 ;;; Disable tool bar
 (tool-bar-mode -1)
 
+(defvar mixed-pitch-fixed-pitch-faces)
+
+(defconst rvb/markdown-fixed-pitch-faces
+  '(markdown-code-face
+    markdown-inline-code-face
+    markdown-pre-face
+    markdown-language-info-face
+    markdown-language-keyword-face)
+  "Markdown faces that should stay fixed-pitch in mixed-pitch buffers.")
+
+(defun rvb/markdown-face-p (face)
+  "Return non-nil when FACE belongs to markdown-mode."
+  (and (symbolp face)
+       (string-prefix-p "markdown-" (symbol-name face))))
+
+(defun rvb/configure-markdown-mixed-pitch-faces ()
+  "Keep only Markdown code faces fixed-pitch for `mixed-pitch-mode'."
+  (setq mixed-pitch-fixed-pitch-faces
+        (append (delq nil
+                      (mapcar (lambda (face)
+                                (unless (rvb/markdown-face-p face)
+                                  face))
+                              mixed-pitch-fixed-pitch-faces))
+                rvb/markdown-fixed-pitch-faces)))
+
 (use-package mixed-pitch
-  :ensure t)
+  :ensure t
+  :hook ((markdown-mode . mixed-pitch-mode)
+         (gfm-mode . mixed-pitch-mode))
+  :config
+  (rvb/configure-markdown-mixed-pitch-faces))
 
 (defcustom fontfamily nil
   "The font family to use as the default. If nil, uses the Emacs default."
@@ -209,27 +234,27 @@
   :config
   (add-hook 'dired-mode-hook #'nerd-icons-dired-mode))
 
-(use-package nerd-icons-corfu
-  :ensure t
-  :config
-  (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter)
+;; (use-package nerd-icons-corfu
+;;   :ensure t
+;;   :config
+;;   (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter)
 
-  ;; Optionally:
-  (setq nerd-icons-corfu-mapping
-	'((array :style "cod" :icon "symbol_array" :face font-lock-type-face)
-          (boolean :style "cod" :icon "symbol_boolean" :face font-lock-builtin-face)
-          ;; You can alternatively specify a function to perform the mapping,
-          ;; use this when knowing the exact completion candidate is important.
-          ;; Don't pass `:face' if the function already returns string with the
-          ;; face property, though.
-          (file :fn nerd-icons-icon-for-file :face font-lock-string-face)
-          ;; ...
-          (t :style "cod" :icon "code" :face font-lock-warning-face)))
-  ;; If you add an entry for t, the library uses that as fallback.
-  ;; The default fallback (when it's not specified) is the ? symbol.
+;;   ;; Optionally:
+;;   (setq nerd-icons-corfu-mapping
+;; 	'((array :style "cod" :icon "symbol_array" :face font-lock-type-face)
+;;           (boolean :style "cod" :icon "symbol_boolean" :face font-lock-builtin-face)
+;;           ;; You can alternatively specify a function to perform the mapping,
+;;           ;; use this when knowing the exact completion candidate is important.
+;;           ;; Don't pass `:face' if the function already returns string with the
+;;           ;; face property, though.
+;;           (file :fn nerd-icons-icon-for-file :face font-lock-string-face)
+;;           ;; ...
+;;           (t :style "cod" :icon "code" :face font-lock-warning-face)))
+;;   ;; If you add an entry for t, the library uses that as fallback.
+;;   ;; The default fallback (when it's not specified) is the ? symbol.
 
-  ;; The Custom interface is also supported for tuning the variable above.
-  )
+;;   ;; The Custom interface is also supported for tuning the variable above.
+;;   )
 
 
 ;; Clearer separation between buffers

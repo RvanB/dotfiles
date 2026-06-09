@@ -1,9 +1,16 @@
 ;;; Org mode
-(setq org-directory "~/orgfiles/")
+(require 'cl-lib)
+
+(defvar org-src-block-faces)
+
+(setq org-directory
+      (file-name-as-directory
+       (expand-file-name "orgfiles" user-emacs-directory)))
+(make-directory org-directory t)
 
 (custom-set-faces
  ;; Emacs 27 and later
- '(org-block ((t (:inherit fixed-pitch :background unspecified))))
+ '(org-block ((t (:inherit nil :background unspecified))))
  ;; For older Emacs versions
  '(org-block-background ((t (:background nil))))
  )
@@ -13,8 +20,33 @@
  '(org-block-end-line ((t (:background nil))))
  )
 
+(defface rvb/org-markdown-src-block
+  '((t (:inherit variable-pitch :background unspecified)))
+  "Face used for prose inside Markdown Org source blocks."
+  :group 'org)
+
+(defun rvb/set-org-src-block-face (language face)
+  "Use FACE for Org source blocks named LANGUAGE."
+  (setq org-src-block-faces
+        (cl-remove-if (lambda (entry)
+                        (and (consp entry)
+                             (string= language (car entry))))
+                      org-src-block-faces))
+  (push (list language face) org-src-block-faces))
+
+(defun rvb/configure-org-markdown-src-blocks ()
+  "Render Markdown source block prose as variable-pitch in Org buffers."
+  (dolist (language '("markdown" "md" "gfm"))
+    (rvb/set-org-src-block-face language 'rvb/org-markdown-src-block)))
+
+(with-eval-after-load 'org-src
+  (rvb/configure-org-markdown-src-blocks))
+
 ;;; Set agenda files to the org directory
 (setq org-agenda-files (list org-directory))
+(setq org-hide-drawer-startup t)
+(setq org-use-sub-superscripts '{})
+(add-hook 'org-cycle-hook #'org-cycle-hide-drawers)
 
 ;;; Auto-add CLOSED timestamp when marking items DONE
 (setq org-log-done 'time)

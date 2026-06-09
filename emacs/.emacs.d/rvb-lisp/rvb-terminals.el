@@ -1,7 +1,6 @@
-(use-package eat
-  :ensure t
-  :config
-  )
+;; (use-package eat
+;;   :ensure t
+;;   )
 
 ;; (use-package vterm
 ;;   :ensure t
