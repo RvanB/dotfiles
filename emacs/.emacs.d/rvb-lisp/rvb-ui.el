@@ -7,8 +7,17 @@
   :config
   (add-hook 'prog-mode-hook 'annotate-mode))
 
+(defun rvb/configure-olivetti-wrapping ()
+  "Use word wrapping without visual wrap indicators in Olivetti buffers."
+  (setq-local truncate-lines nil)
+  (setq-local word-wrap t)
+  (setq-local visual-line-fringe-indicators '(nil nil))
+  (visual-line-mode 1))
+
 (use-package olivetti
-  :ensure t)
+  :ensure t
+  :config
+  (add-hook 'olivetti-mode-on-hook #'rvb/configure-olivetti-wrapping t))
 
 ;; Diminish minor modes
 (use-package diminish
@@ -53,26 +62,60 @@
 (setq custom-safe-themes t)
 
 ;; Theme toggling
-(defvar current-theme 'dark
+(defcustom current-theme 'light
   "Variable to track the current theme ('light or 'dark).")
 
 (defcustom rvb-default-theme 'modus-operandi
-  "Theme to load when Emacs starts without any enabled theme.")
+  "Theme to load when Emacs starts without any enabled theme."
+  :type '(choice (const :tag "Do not load a default theme" nil)
+                 (symbol :tag "Theme"))
+  :group 'appearance)
+
+(declare-function consult-theme "consult" (theme))
+
+(defun rvb/set-frame-alist-parameter (alist-symbol parameter value)
+  "Set PARAMETER to VALUE in frame alist ALIST-SYMBOL."
+  (set alist-symbol
+       (cons (cons parameter value)
+             (assq-delete-all parameter (symbol-value alist-symbol)))))
 
 (defun rvb/set-default-frame-parameter (parameter value)
   "Set default frame PARAMETER to VALUE for future frames."
-  (setf (alist-get parameter default-frame-alist) value))
+  (rvb/set-frame-alist-parameter 'default-frame-alist parameter value))
+
+(defun rvb/set-initial-frame-parameter (parameter value)
+  "Set initial frame PARAMETER to VALUE for the startup frame."
+  (rvb/set-frame-alist-parameter 'initial-frame-alist parameter value))
+
+(defun rvb/set-frame-parameter-defaults (parameter value)
+  "Set PARAMETER to VALUE for initial and future frames."
+  (rvb/set-default-frame-parameter parameter value)
+  (rvb/set-initial-frame-parameter parameter value))
 
 (defun rvb/ensure-theme-loaded ()
   "Load the default theme when no theme is currently enabled."
-  (unless custom-enabled-themes
+  (when (and rvb-default-theme
+             (not custom-enabled-themes))
     (load-theme rvb-default-theme t)))
+
+(defun rvb/save-default-theme (theme)
+  "Persist THEME as the default startup theme."
+  (customize-save-variable 'rvb-default-theme theme)
+  (message "Default theme saved: %s" (or theme "none"))
+  theme)
+
+(defun rvb/consult-theme-save-default ()
+  "Select a theme with `consult-theme' and save it as the startup default."
+  (interactive)
+  (call-interactively #'consult-theme)
+  (rvb/save-default-theme (car custom-enabled-themes)))
 
 (defun rvb/apply-frame-appearance (&optional frame)
   "Apply frame-specific appearance settings to FRAME."
-  (with-selected-frame (or frame (selected-frame))
-    (set-frame-parameter nil 'ns-transparent-titlebar t)
-    (set-frame-parameter nil 'ns-appearance current-theme)))
+  (let ((target-frame (or frame (selected-frame))))
+    (when (display-graphic-p target-frame)
+      (set-frame-parameter target-frame 'ns-transparent-titlebar t)
+      (set-frame-parameter target-frame 'ns-appearance current-theme))))
 
 
 (defun toggle-theme ()
@@ -94,13 +137,16 @@
 (require 'rvb-movement)
 
 ;;; Disable menu bar
-(menu-bar-mode -1)
+;; (menu-bar-mode -1)
 ;;; Disable the scroll bar
 (scroll-bar-mode -1)
 ;;; Disable tool bar
 (tool-bar-mode -1)
 
 (defvar mixed-pitch-fixed-pitch-faces)
+(defvar mixed-pitch-set-height)
+(defvar mixed-pitch-mode)
+(defvar markdown-hide-markup)
 
 (defconst rvb/markdown-fixed-pitch-faces
   '(markdown-code-face
@@ -125,8 +171,20 @@
                               mixed-pitch-fixed-pitch-faces))
                 rvb/markdown-fixed-pitch-faces)))
 
+(defun rvb/markdown-hide-markup ()
+  "Hide Markdown formatting markup in the current buffer."
+  (setq-local markdown-hide-markup t)
+  (add-to-invisibility-spec 'markdown-markup))
+
+(use-package markdown-mode
+  :ensure t
+  :hook ((markdown-mode . rvb/markdown-hide-markup)
+         (gfm-mode . rvb/markdown-hide-markup)))
+
 (use-package mixed-pitch
   :ensure t
+  :init
+  (setq mixed-pitch-set-height t)
   :hook ((markdown-mode . mixed-pitch-mode)
          (gfm-mode . mixed-pitch-mode))
   :config
@@ -144,10 +202,34 @@
                  (integer :tag "Custom font size"))
   :group 'appearance)
 
+(defcustom variable-fontfamily nil
+  "The font family to use for variable-pitch text.
+If nil, use the Emacs default variable-pitch font family."
+  :type '(choice (const :tag "Use default variable-pitch font" nil)
+                 (string :tag "Custom font family"))
+  :group 'appearance)
+
+(defcustom variable-fontsize nil
+  "The font size to use for variable-pitch text.
+If nil, use the Emacs default variable-pitch font size."
+  :type '(choice (const :tag "Use default variable-pitch font size" nil)
+                 (integer :tag "Custom font size"))
+  :group 'appearance)
+
 (defun rvb/default-font-spec ()
   "Build the configured default font string."
   (when (and fontfamily fontsize)
     (format "%s-%d" fontfamily fontsize)))
+
+(defun rvb/refresh-mixed-pitch-buffers ()
+  "Refresh active `mixed-pitch-mode' buffers after a font change."
+  (when (fboundp 'mixed-pitch-mode)
+    (dolist (buffer (buffer-list))
+      (with-current-buffer buffer
+        (when (and (boundp 'mixed-pitch-mode)
+                   mixed-pitch-mode)
+          (mixed-pitch-mode -1)
+          (mixed-pitch-mode 1))))))
 
 (defun update-default-font (&optional frame)
   "Update the default font for FRAME and future frames."
@@ -162,15 +244,28 @@
         (set-face-attribute
          'default
          frame
-         :font (face-attribute 'default :font frame 'default))))))
+         :font (face-attribute 'default :font frame 'default)))))
+  (rvb/refresh-mixed-pitch-buffers))
+
+(defun update-variable-pitch-font (&optional frame)
+  "Update the variable-pitch font for FRAME and future frames."
+  (when (display-graphic-p frame)
+    (set-face-attribute
+     'variable-pitch
+     frame
+     :family (or variable-fontfamily 'unspecified)
+     :height (if variable-fontsize (* 10 variable-fontsize) 'unspecified)))
+  (rvb/refresh-mixed-pitch-buffers))
 
 (defun rvb/initialize-ui (&optional frame)
-  "Apply the configured UI to FRAME and future client frames."
-  (rvb/set-default-frame-parameter 'ns-transparent-titlebar nil)
-  (rvb/set-default-frame-parameter 'ns-appearance current-theme)
+  "Apply the configured UI to FRAME, or all live frames."
+  (rvb/set-frame-parameter-defaults 'ns-transparent-titlebar t)
+  (rvb/set-frame-parameter-defaults 'ns-appearance current-theme)
   (rvb/ensure-theme-loaded)
-  (rvb/apply-frame-appearance frame)
-  (update-default-font frame))
+  (dolist (live-frame (if frame (list frame) (frame-list)))
+    (rvb/apply-frame-appearance live-frame)
+    (update-default-font live-frame)
+    (update-variable-pitch-font live-frame)))
 
 (defun increase-font-size ()
   "Increase the font size by 1 and update the font."
@@ -186,6 +281,24 @@
   (customize-save-variable 'fontsize fontsize)
   (update-default-font))
 
+(defun increase-variable-pitch-font-size ()
+  "Increase the variable-pitch font size by 1 and update the font."
+  (interactive)
+  (setq variable-fontsize (if variable-fontsize
+                              (1+ variable-fontsize)
+                            (or fontsize 14)))
+  (customize-save-variable 'variable-fontsize variable-fontsize)
+  (update-variable-pitch-font))
+
+(defun decrease-variable-pitch-font-size ()
+  "Decrease the variable-pitch font size by 1 and update the font."
+  (interactive)
+  (setq variable-fontsize (if variable-fontsize
+                              (max 1 (1- variable-fontsize))
+                            (max 1 (1- (or fontsize 14)))))
+  (customize-save-variable 'variable-fontsize variable-fontsize)
+  (update-variable-pitch-font))
+
 (defun list-available-fonts ()
   "Retrieve a list of available fonts on the current system."
   (delete-dups (sort (font-family-list) #'string-lessp)))
@@ -198,13 +311,22 @@
     (customize-save-variable 'fontfamily fontfamily)
     (update-default-font)))
 
-(keymap-global-set "<f7>" 'select-font-family)
-(keymap-global-set "<f8>" 'decrease-font-size)
-(keymap-global-set "<f9>" 'increase-font-size)
+(defun select-variable-pitch-font-family ()
+  "Prompt the user to select a variable-pitch font family via completion."
+  (interactive)
+  (let ((selected-font
+         (completing-read "Select variable-pitch font family: "
+                          (list-available-fonts)
+                          nil
+                          t)))
+    (setq variable-fontfamily selected-font)
+    (customize-save-variable 'variable-fontfamily variable-fontfamily)
+    (update-variable-pitch-font)))
 
 ;; Ensure the font is set initially
 (rvb/initialize-ui)
 (add-hook 'after-make-frame-functions #'rvb/initialize-ui)
+(add-hook 'window-setup-hook #'rvb/initialize-ui)
 
 ;; Ligatures
 (use-package ligature

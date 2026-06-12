@@ -70,16 +70,12 @@
 (keymap-global-set "C-c n" 'display-line-numbers-mode)
 
 ;;; Theme changing with consult
-(keymap-global-set "<f6>" 'consult-theme)
+(keymap-global-set "<f6>" 'rvb/consult-theme-save-default)
+
 
 ;;; Project dashboard
+(keymap-global-set "s-p" 'project-switch-project)
 (keymap-global-set "C-c p" 'rvb/project-dashboard)
-
-;;; GitHub Projects
-(keymap-global-set "C-c g S" 'rvb-gh-project-configure-sources)
-(keymap-global-set "C-c g o" 'rvb-gh-project-menu)
-(keymap-global-set "C-c g s" 'rvb-gh-project-sync-org)
-(keymap-global-set "C-c g f" 'rvb-gh-project-open-org-file)
 
 ;;; Make C-` shorthand for C-x ` (next-error), and C-~ for previous error
 (keymap-global-set "C-`" 'next-error)

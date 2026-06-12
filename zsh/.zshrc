@@ -51,20 +51,9 @@ setopt appendhistory
 setopt promptsubst
 
 ########## SECRETS ##########
-# Set environment variables for Claude on Bedrock:
-# $(pass show aws.com/bedrock/inference-profile 2>/dev/null)
-
 if command -v pass >/dev/null 2>&1; then
-    # ANTHROPIC_DEFAULT_SONNET_MODEL="$(pass show aws.com/bedrock/sonnet 2>/dev/null)"
-    # [[ -n "$ANTHROPIC_DEFAULT_SONNET_MODEL" ]] && export ANTHROPIC_DEFAULT_SONNET_MODEL
-
-    # OPENAI_API_KEY="$(pass show github.com/copilot/token 2>/dev/null)"
-    # [[ -n "$OPENAI_API_KEY" ]] && export OPENAI_API_KEY
-
     CODEIUM_API_KEY="$(pass show windsurf.com/api 2>/dev/null)"
     [[ -n "$CODEIUM_API_KEY" ]] && export CODEIUM_API_KEY
-
-    [[ -n "$OPENAI_API_KEY" ]] && export OPENAI_API_BASE="https://api.githubcopilot.com"
 fi
 
 ########## COMPLETIONS ##########
@@ -94,41 +83,6 @@ git_prompt() {
     local gitstatus="$(git status --short 2>/dev/null)"
     if [[ -n "$gitstatus" ]]; then
         echo "%{$fg[red]%}*%{$reset_color%} "
-    fi
-}
-
-auto_activate_uv() {
-    local uv_python venv_dir activate_script
-    local found_env=0
-
-    # Deactivate if outside the virtual environment directory
-    if [[ -n "$VIRTUAL_ENV" && $PWD != "$VIRTUAL_ENV"/* ]]; then
-        if typeset -f deactivate >/dev/null; then
-            deactivate
-        else
-            unset VIRTUAL_ENV
-            hash -r
-        fi
-    fi
-
-    if (( $+commands[uv] )); then
-        uv_python="$(uv python find 2>/dev/null)"
-
-        if [[ -n "$uv_python" ]]; then
-            venv_dir="$(dirname "$(dirname "$uv_python")")"
-            activate_script="$venv_dir/bin/activate"
-
-            if [[ -f "$activate_script" ]]; then
-                found_env=1
-
-                if [[ "$VIRTUAL_ENV" != "$venv_dir" ]]; then
-                    if [[ -n "$VIRTUAL_ENV" ]] && typeset -f deactivate >/dev/null; then
-                        deactivate
-                    fi
-                    VIRTUAL_ENV_DISABLE_PROMPT=1 source "$activate_script"
-                fi
-            fi
-        fi
     fi
 }
 
@@ -270,3 +224,8 @@ if [[ -d "$HOME/.sdkman" ]]; then
     export SDKMAN_DIR="$HOME/.sdkman"
     [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
 fi
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/rvanbron/.lmstudio/bin"
+# End of LM Studio CLI section
+

@@ -71,30 +71,29 @@
 
 (add-hook 'org-mode-hook 'mixed-pitch-mode)
 (add-hook 'org-mode-hook (lambda () (add-hook 'before-save-hook 'rvb/cleanup-old-done-items nil t)))
-(add-hook 'org-mode-hook 'toggle-truncate-lines)
-(add-hook 'org-mode-hook 'toggle-word-wrap)
 (add-hook 'org-mode-hook 'org-indent-mode)
+(add-hook 'org-mode-hook 'olivetti-mode)
 
 
-(use-package org-modern
-  :ensure t
-  :init
-  (setq
-   ;; Edit settings
-   org-auto-align-tags nil
-   org-tags-column 0
-   org-catch-invisible-edits 'show-and-error
-   org-special-ctrl-a/e t
-   org-insert-heading-respect-content t
+;; (use-package org-modern
+;;   :ensure t
+;;   :init
+;;   (setq
+;;    ;; Edit settings
+;;    org-auto-align-tags nil
+;;    org-tags-column 0
+;;    org-catch-invisible-edits 'show-and-error
+;;    org-special-ctrl-a/e t
+;;    org-insert-heading-respect-content t
 
-   ;; Org styling, hide markup etc.
-   org-hide-emphasis-markers t
-   org-pretty-entities t
-   org-agenda-tags-column 0
-   org-ellipsis "…")
+;;    ;; Org styling, hide markup etc.
+;;    org-hide-emphasis-markers t
+;;    org-pretty-entities t
+;;    org-agenda-tags-column 0
+;;    org-ellipsis "…")
 
-  :config
-  (global-org-modern-mode))
+;;   :config
+;;   (global-org-modern-mode))
 
 ;; Fix font face for org tables
 (set-face-attribute 'org-table nil
@@ -111,6 +110,11 @@
     (load-file template-config))
   (when (file-exists-p chapbook-config)
     (load-file chapbook-config)))
+
+(use-package org-tidy
+  :ensure t
+  :hook
+  (org-mode . org-tidy-mode))
 
 
 (provide 'rvb-org)
