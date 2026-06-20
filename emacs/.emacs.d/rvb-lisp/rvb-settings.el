@@ -45,6 +45,15 @@
 (setq make-backup-files nil)
 (setq vc-follow-symlinks t)
 
+;;; Select newly split windows
+(defun rvb/select-newly-split-window (window)
+  "Select WINDOW returned by a split command and return it."
+  (select-window window)
+  window)
+
+(advice-add 'split-window-right :filter-return #'rvb/select-newly-split-window)
+(advice-add 'split-window-below :filter-return #'rvb/select-newly-split-window)
+
 ;;; Search settings
 (setq isearch-lazy-count t)
 (setq lazy-count-prefix-format "(%s/%s) ")

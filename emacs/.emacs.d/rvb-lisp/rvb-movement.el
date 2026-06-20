@@ -1,5 +1,14 @@
 ;;; Window management
 
+(defun rvb/window-buffer-visible-elsewhere-p (window)
+  "Return non-nil when WINDOW's buffer is visible in another window."
+  (let ((buffer (window-buffer window)))
+    (catch 'visible
+      (dolist (other-window (window-list (window-frame window) 'no-minibuffer))
+        (when (and (not (eq window other-window))
+                   (eq buffer (window-buffer other-window)))
+          (throw 'visible t))))))
+
 (defun rvb/kill-buffer-and-close-window ()
   "Kill the current buffer and close the window."
   (interactive)
@@ -10,6 +19,21 @@
     (when (and (not (one-window-p))
                (not (window-live-p (get-buffer-window buffer))))
       (delete-window))))
+
+(defun rvb/kill-buffer-close-duplicate-window (original buffer-or-name)
+  "Close a duplicate replacement window after an interactive buffer kill."
+  (let* ((window (selected-window))
+         (buffer (or (get-buffer buffer-or-name) (current-buffer)))
+         (killing-selected-buffer (eq buffer (window-buffer window))))
+    (prog1 (funcall original buffer-or-name)
+      (when (and (called-interactively-p 'interactive)
+                 killing-selected-buffer
+                 (window-live-p window)
+                 (not (one-window-p t (window-frame window)))
+                 (rvb/window-buffer-visible-elsewhere-p window))
+        (delete-window window)))))
+
+(advice-add 'kill-buffer :around #'rvb/kill-buffer-close-duplicate-window)
 
 ;;; Window traversal
 (defun rvb/other-window-backward (&optional n)

@@ -1,5 +1,7 @@
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
 
+(require 'transient)
+
 ;; (add-hook 'prog-mode-hook 'hl-line-mode)
 
 (use-package annotate
@@ -62,13 +64,20 @@
 (setq custom-safe-themes t)
 
 ;; Theme toggling
-(defcustom current-theme 'light
-  "Variable to track the current theme ('light or 'dark).")
+(defcustom rvb-current-theme 'light
+  "The active RVB theme appearance."
+  :type '(choice (const :tag "Light" light)
+                 (const :tag "Dark" dark))
+  :group 'appearance)
 
-(defcustom rvb-default-theme 'modus-operandi
-  "Theme to load when Emacs starts without any enabled theme."
-  :type '(choice (const :tag "Do not load a default theme" nil)
-                 (symbol :tag "Theme"))
+(defcustom rvb-light-theme 'modus-operandi
+  "Theme loaded by `rvb/use-light-theme'."
+  :type 'symbol
+  :group 'appearance)
+
+(defcustom rvb-dark-theme 'modus-vivendi
+  "Theme loaded by `rvb/use-dark-theme'."
+  :type 'symbol
   :group 'appearance)
 
 (declare-function consult-theme "consult" (theme))
@@ -92,51 +101,51 @@
   (rvb/set-default-frame-parameter parameter value)
   (rvb/set-initial-frame-parameter parameter value))
 
-(defun rvb/ensure-theme-loaded ()
-  "Load the default theme when no theme is currently enabled."
-  (when (and rvb-default-theme
-             (not custom-enabled-themes))
-    (load-theme rvb-default-theme t)))
+(defun rvb/load-theme-preset (theme appearance)
+  "Load THEME and set frame APPEARANCE."
+  (mapc #'disable-theme (copy-sequence custom-enabled-themes))
+  (load-theme theme t)
+  (setq rvb-current-theme appearance)
+  (customize-save-variable 'rvb-current-theme appearance)
+  (rvb/set-frame-parameter-defaults 'ns-appearance appearance)
+  (dolist (frame (frame-list))
+    (rvb/apply-frame-appearance frame)))
 
-(defun rvb/save-default-theme (theme)
-  "Persist THEME as the default startup theme."
-  (customize-save-variable 'rvb-default-theme theme)
-  (message "Default theme saved: %s" (or theme "none"))
-  theme)
-
-(defun rvb/consult-theme-save-default ()
-  "Select a theme with `consult-theme' and save it as the startup default."
+(defun rvb/use-light-theme ()
+  "Load `rvb-light-theme'."
   (interactive)
-  (call-interactively #'consult-theme)
-  (rvb/save-default-theme (car custom-enabled-themes)))
+  (rvb/load-theme-preset rvb-light-theme 'light))
+
+(defun rvb/use-dark-theme ()
+  "Load `rvb-dark-theme'."
+  (interactive)
+  (rvb/load-theme-preset rvb-dark-theme 'dark))
+
+(defun rvb/toggle-theme ()
+  "Toggle between the configured light and dark themes."
+  (interactive)
+  (if (eq rvb-current-theme 'light)
+      (rvb/use-dark-theme)
+    (rvb/use-light-theme)))
+
+(defun rvb/ensure-theme-loaded ()
+  "Load the configured theme matching `rvb-current-theme' when needed."
+  (unless custom-enabled-themes
+    (if (eq rvb-current-theme 'dark)
+        (rvb/use-dark-theme)
+      (rvb/use-light-theme))))
 
 (defun rvb/apply-frame-appearance (&optional frame)
   "Apply frame-specific appearance settings to FRAME."
   (let ((target-frame (or frame (selected-frame))))
     (when (display-graphic-p target-frame)
       (set-frame-parameter target-frame 'ns-transparent-titlebar t)
-      (set-frame-parameter target-frame 'ns-appearance current-theme))))
-
-
-(defun toggle-theme ()
-  "Toggle between light and dark themes."
-  (interactive)
-  (cond
-   ((eq current-theme 'light)
-    (set-frame-parameter nil 'ns-appearance 'dark)
-    (disable-theme 'modus-operandi)
-    (load-theme 'sanityinc-tomorrow-bright t)
-    (setq current-theme 'dark))
-   ((eq current-theme 'dark)
-    (set-frame-parameter nil 'ns-appearance 'light)
-    (disable-theme 'sanityinc-tomorrow-bright)
-    (load-theme 'modus-operandi t)
-    (setq current-theme 'light))))
+      (set-frame-parameter target-frame 'ns-appearance rvb-current-theme))))
 
 (use-package ns-auto-titlebar
   :ensure t
   :config
-  (when (eq system-type 'darwin) (ns-auto-titlebar-mode))
+  (when (eq system-type 'darwin) (ns-auto-titlebar-mode)))
 
 
 (require 'rvb-movement)
@@ -265,7 +274,7 @@ If nil, use the Emacs default variable-pitch font size."
 (defun rvb/initialize-ui (&optional frame)
   "Apply the configured UI to FRAME, or all live frames."
   (rvb/set-frame-parameter-defaults 'ns-transparent-titlebar t)
-  (rvb/set-frame-parameter-defaults 'ns-appearance current-theme)
+  (rvb/set-frame-parameter-defaults 'ns-appearance rvb-current-theme)
   (rvb/ensure-theme-loaded)
   (dolist (live-frame (if frame (list frame) (frame-list)))
     (rvb/apply-frame-appearance live-frame)
@@ -327,6 +336,107 @@ If nil, use the Emacs default variable-pitch font size."
     (setq variable-fontfamily selected-font)
     (customize-save-variable 'variable-fontfamily variable-fontfamily)
     (update-variable-pitch-font)))
+
+(defclass rvb-theme-variable (transient-lisp-variable) ()
+  "A theme variable whose reader uses `consult-theme' for previews.")
+
+(defclass rvb-font-family-variable (transient-lisp-variable) ()
+  "A font family variable with completion over installed fonts.")
+
+(defclass rvb-font-size-variable (transient-lisp-variable) ()
+  "A font size variable read as a number.")
+
+(defun rvb/customize-set-variable (variable value)
+  "Set and persist VARIABLE to VALUE."
+  (set variable value)
+  (customize-save-variable variable value))
+
+(defun rvb/set-font-variable (variable value)
+  "Set, persist, and apply font VARIABLE to VALUE."
+  (rvb/customize-set-variable variable value)
+  (pcase variable
+    ((or 'fontfamily 'fontsize) (update-default-font))
+    ((or 'variable-fontfamily 'variable-fontsize) (update-variable-pitch-font))))
+
+(defun rvb/restore-enabled-themes (themes)
+  "Restore THEMES after temporarily previewing other themes."
+  (mapc #'disable-theme (copy-sequence custom-enabled-themes))
+  (dolist (theme (reverse themes))
+    (load-theme theme t)))
+
+(cl-defmethod transient-infix-read ((obj rvb-theme-variable))
+  "Preview themes with `consult-theme' and return the chosen theme.
+The active theme is restored before returning to the settings menu."
+  (let ((enabled-themes (copy-sequence custom-enabled-themes))
+        selected-theme)
+    (unwind-protect
+        (progn
+          (call-interactively #'consult-theme)
+          (setq selected-theme (car custom-enabled-themes)))
+      (rvb/restore-enabled-themes enabled-themes))
+    selected-theme))
+
+(cl-defmethod transient-infix-read ((obj rvb-font-family-variable))
+  "Read a font family for OBJ using completion."
+  (completing-read (format "Set %s: " (oref obj description))
+                   (list-available-fonts) nil t
+                   (symbol-value (oref obj variable))))
+
+(cl-defmethod transient-infix-read ((obj rvb-font-size-variable))
+  "Read a point size for OBJ."
+  (read-number (format "Set %s: " (oref obj description))
+               (or (symbol-value (oref obj variable)) 14)))
+
+(transient-define-infix rvb/ui-light-theme ()
+  :class 'rvb-theme-variable
+  :variable 'rvb-light-theme
+  :description "Light theme"
+  :set-value #'rvb/customize-set-variable)
+
+(transient-define-infix rvb/ui-dark-theme ()
+  :class 'rvb-theme-variable
+  :variable 'rvb-dark-theme
+  :description "Dark theme"
+  :set-value #'rvb/customize-set-variable)
+
+(transient-define-infix rvb/ui-fixed-font-family ()
+  :class 'rvb-font-family-variable
+  :variable 'fontfamily
+  :description "Fixed-pitch family"
+  :set-value #'rvb/set-font-variable)
+
+(transient-define-infix rvb/ui-fixed-font-size ()
+  :class 'rvb-font-size-variable
+  :variable 'fontsize
+  :description "Fixed-pitch size"
+  :set-value #'rvb/set-font-variable)
+
+(transient-define-infix rvb/ui-variable-font-family ()
+  :class 'rvb-font-family-variable
+  :variable 'variable-fontfamily
+  :description "Variable-pitch family"
+  :set-value #'rvb/set-font-variable)
+
+(transient-define-infix rvb/ui-variable-font-size ()
+  :class 'rvb-font-size-variable
+  :variable 'variable-fontsize
+  :description "Variable-pitch size"
+  :set-value #'rvb/set-font-variable)
+
+(transient-define-prefix rvb/ui-menu ()
+  "Open the UI settings menu."
+  ["Actions"
+   ("t" "Toggle light/dark theme" rvb/toggle-theme)]
+  ["Themes"
+   ("l" rvb/ui-light-theme)
+   ("d" rvb/ui-dark-theme)]
+  ["Fonts"
+   ("f" rvb/ui-fixed-font-family)
+   ("F" rvb/ui-fixed-font-size)
+   ("v" rvb/ui-variable-font-family)
+   ("V" rvb/ui-variable-font-size)]
+  ["Custom settings"
+   ("a" "Appearance settings" (lambda () (interactive) (customize-group 'appearance)))])
 
 ;; Ensure the font is set initially
 (rvb/initialize-ui)

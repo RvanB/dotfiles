@@ -32,6 +32,11 @@
 (which-key-mode)
 
 (windmove-default-keybindings)
+(keymap-global-set "<left>" #'windmove-left)
+(keymap-global-set "<down>" #'windmove-down)
+(keymap-global-set "<up>" #'windmove-up)
+(keymap-global-set "<right>" #'windmove-right)
+
 (defhydra window-nav (global-map "C-c w")
   "Navigate windows"
   ("f" windmove-right "right")
@@ -69,8 +74,8 @@
 
 (keymap-global-set "C-c n" 'display-line-numbers-mode)
 
-;;; Theme changing with consult
-(keymap-global-set "<f6>" 'rvb/consult-theme-save-default)
+;;; UI settings menu
+(keymap-global-set "<f6>" 'rvb/ui-menu)
 
 
 ;;; Project dashboard

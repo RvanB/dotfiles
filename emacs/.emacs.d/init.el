@@ -21,6 +21,5 @@
 (require 'rvb-ai)
 (require 'rvb-terminals)
 (require 'rvb-org)
-(require 'rvb-gh-projects)
 (require 'rvb-bindings)
 (require 'rvb-aws)
