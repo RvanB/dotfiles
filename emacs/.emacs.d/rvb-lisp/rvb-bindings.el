@@ -88,4 +88,7 @@
 
 (keymap-global-set "s-p" 'project-switch-project)
 
+(keymap-global-set "C-c s" 'rvb/notes-scratch)
+
+
 (provide 'rvb-bindings)

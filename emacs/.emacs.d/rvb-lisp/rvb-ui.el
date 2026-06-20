@@ -28,10 +28,21 @@
 ;; Hide eldoc mode
 (diminish 'eldoc-mode)
 
-;; (use-package vertico-posframe
-;;   :ensure t
-;;   :config
-;;   (vertico-posframe-mode 1))
+(use-package vertico-posframe
+  :ensure t
+  :config
+  (vertico-posframe-mode 1))
+
+(use-package transient-posframe
+  :ensure t
+  :config
+  (transient-posframe-mode))
+
+(use-package hydra-posframe
+  :ensure nil
+  :vc (:url "https://github.com/Ladicle/hydra-posframe"
+            :rev :newest)
+  :hook (after-init . hydra-posframe-mode))
 
 ;; (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
@@ -139,7 +150,7 @@
   "Apply frame-specific appearance settings to FRAME."
   (let ((target-frame (or frame (selected-frame))))
     (when (display-graphic-p target-frame)
-      (set-frame-parameter target-frame 'ns-transparent-titlebar t)
+      (set-frame-parameter target-frame 'ns-transparent-titlebar nil)
       (set-frame-parameter target-frame 'ns-appearance rvb-current-theme))))
 
 (use-package ns-auto-titlebar
@@ -423,10 +434,199 @@ The active theme is restored before returning to the settings menu."
   :description "Variable-pitch size"
   :set-value #'rvb/set-font-variable)
 
+(defvar rvb/ui-page-chrome--saved-header-lines nil)
+(defvar rvb/ui-page-chrome--saved-mode-line-parameters nil)
+
+(defconst rvb/ui-page-chrome--line-number-gutter-extra-columns 1
+  "Native line-number gutter columns not reported by `line-number-display-width'.")
+
+(defun rvb/ui-page-chrome--window-p (window)
+  "Return non-nil when WINDOW should display RVB page chrome."
+  (and (window-live-p window)
+       (not (window-minibuffer-p window))
+       (not (window-parameter window 'window-side))
+       (not (frame-parameter (window-frame window) 'parent-frame))))
+
+(defun rvb/ui-page-chrome--save-header-line (buffer)
+  "Remember BUFFER's header line before page chrome changes it."
+  (unless (assq buffer rvb/ui-page-chrome--saved-header-lines)
+    (push (list buffer
+                (local-variable-p 'header-line-format buffer)
+                (buffer-local-value 'header-line-format buffer))
+          rvb/ui-page-chrome--saved-header-lines)))
+
+(defun rvb/ui-page-chrome--save-mode-line-parameter (window)
+  "Remember WINDOW's mode-line parameter before page chrome changes it."
+  (unless (assq window rvb/ui-page-chrome--saved-mode-line-parameters)
+    (push (cons window (window-parameter window 'mode-line-format))
+          rvb/ui-page-chrome--saved-mode-line-parameters)))
+
+(defun rvb/ui-page-chrome--margins (window)
+  "Return WINDOW's effective text margins, treating nil as zero.
+
+This independently accounts for line-number and fringe columns so the
+header aligns with text, without depending on book-mode implementation."
+  (let ((margins (window-margins window)))
+    (cons (+ (or (car margins) 0)
+             (if (and (boundp 'display-line-numbers)
+                      (buffer-local-value 'display-line-numbers
+                                          (window-buffer window)))
+                 (let* ((frame (window-frame window))
+                        (fringe-pixels (car (window-fringes window))))
+                   (+ (with-selected-window window
+                        (line-number-display-width))
+                      (ceiling (/ (float fringe-pixels)
+                                  (frame-char-width frame)))
+                      rvb/ui-page-chrome--line-number-gutter-extra-columns))
+               0))
+          (or (cdr margins) 0))))
+
+(defface rvb/ui-page-chrome-header
+  '((t :inherit header-line
+       :background "white" :foreground "black"
+       ;; `:box' can't draw a top-only rule (it always adds left/right and
+       ;; bottom edges), so use overline/underline for top- and bottom-only
+       ;; rules spanning the band.
+       :overline "black"
+       ;; `:position t' drops the rule to the font's descent (lower than the
+       ;; default underline position), giving the text breathing room.
+       :underline (:color "black" :position t)))
+  "Face for the RVB page-chrome top header band.")
+
+(defun rvb/ui-page-chrome--pad (columns char-width char-height)
+  "Return a COLUMNS-wide body-colored pad sized in absolute pixels.
+
+Both the width (CHAR-WIDTH per column) and the height (CHAR-HEIGHT) are
+pinned via the `space' display spec, so the pad stays correct in
+`mixed-pitch-mode' buffers.  There the `default' face is remapped to a
+taller variable-pitch font; a stretch glyph would otherwise inherit that
+face's width and height, mis-aligning the band and inflating the header
+line.  The `default' face is kept only for its background color."
+  (propertize " " 'face 'default
+              'display `(space :width (,(* (max 0 columns) char-width))
+                               :height (,char-height))))
+
+(defun rvb/ui-page-chrome--band (window content face)
+  "Render CONTENT within WINDOW's margins using FACE for its central band.
+
+The band is forced to `fixed-pitch' so its column arithmetic
+\(`string-width', `truncate-string-to-width') matches what is actually
+drawn, and the side padding is sized in pixels.  Together this keeps the
+header aligned with the body text in `mixed-pitch-mode' buffers."
+  (pcase-let* ((frame (window-frame window))
+               (char-width (frame-char-width frame))
+               (char-height (frame-char-height frame))
+               ;; The frame's true default :height, ignoring any buffer-local
+               ;; remapping.  In `mixed-pitch-mode' the buffer's `default' face
+               ;; is remapped to a taller variable-pitch font, which would
+               ;; otherwise inflate the band (and so the whole header line).
+               (default-height (face-attribute 'default :height frame))
+               (band-face (if (integerp default-height)
+                              (list face 'fixed-pitch (list :height default-height))
+                            (list face 'fixed-pitch)))
+               (`(,left . ,right) (rvb/ui-page-chrome--margins window))
+               (width (max 0 (- (window-total-width window) left right)))
+               (content (truncate-string-to-width content width))
+               (band (concat content
+                             (make-string (max 0 (- width (string-width content)))
+                                          ?\s))))
+    (add-face-text-property 0 (length band) band-face nil band)
+    (concat (rvb/ui-page-chrome--pad left char-width char-height)
+            band
+            (rvb/ui-page-chrome--pad right char-width char-height))))
+
+(defun rvb/ui-page-chrome--header-content (window width)
+  "Return WINDOW's file/status header, fitted into WIDTH columns."
+  (with-current-buffer (window-buffer window)
+    (let* ((file buffer-file-name)
+           (path (if file (abbreviate-file-name file) (buffer-name)))
+           (status (format-mode-line
+                    '("%e" mode-line-front-space
+                      (:propertize
+                       ("" mode-line-mule-info mode-line-client
+                        mode-line-modified mode-line-remote
+                        mode-line-window-dedicated)
+                       display (min-width (6.0))))
+                    nil window))
+           (gap (max 2 (- width (string-width path) (string-width status) 2))))
+      (truncate-string-to-width
+       (concat " " path (make-string gap ?\s) status " ") width))))
+
+(defun rvb/ui-page-chrome--header-line-format (window)
+  "Return WINDOW's margin-limited top file header."
+  (let* ((margins (rvb/ui-page-chrome--margins window))
+         (width (max 0 (- (window-total-width window)
+                          (car margins) (cdr margins)))))
+    (rvb/ui-page-chrome--band
+     window (rvb/ui-page-chrome--header-content window width)
+     'rvb/ui-page-chrome-header)))
+
+(defun rvb/ui-page-chrome--apply-window (window)
+  "Apply page chrome to WINDOW."
+  (when (rvb/ui-page-chrome--window-p window)
+    (let ((buffer (window-buffer window)))
+      (rvb/ui-page-chrome--save-header-line buffer)
+      (rvb/ui-page-chrome--save-mode-line-parameter window)
+      (with-current-buffer buffer
+        (setq-local header-line-format
+                    '((:eval (rvb/ui-page-chrome--header-line-format
+                               (selected-window))))))
+      (set-window-parameter
+       window 'mode-line-format 'none))))
+
+(defun rvb/ui-page-chrome-refresh ()
+  "Apply RVB page chrome to every ordinary window."
+  (interactive)
+  (when rvb/ui-page-chrome-mode
+    (dolist (frame (frame-list))
+      (unless (frame-parameter frame 'parent-frame)
+        (walk-windows #'rvb/ui-page-chrome--apply-window 'no-minibuf frame)))))
+
+(defun rvb/ui-page-chrome--restore ()
+  "Restore header and mode lines changed by RVB page chrome."
+  (dolist (entry rvb/ui-page-chrome--saved-mode-line-parameters)
+    (when (window-live-p (car entry))
+      (set-window-parameter (car entry) 'mode-line-format (cdr entry))))
+  (setq rvb/ui-page-chrome--saved-mode-line-parameters nil)
+  (dolist (entry rvb/ui-page-chrome--saved-header-lines)
+    (pcase-let ((`(,buffer ,was-local ,header-line) entry))
+      (when (buffer-live-p buffer)
+        (with-current-buffer buffer
+          (if was-local
+              (setq-local header-line-format header-line)
+            (kill-local-variable 'header-line-format))))))
+  (setq rvb/ui-page-chrome--saved-header-lines nil))
+
+(defun rvb/ui-page-chrome--window-change (&rest _)
+  "Refresh page chrome after window or frame geometry changes."
+  (rvb/ui-page-chrome-refresh))
+
+(define-minor-mode rvb/ui-page-chrome-mode
+  "Show a margin-limited file/status header and hide the bottom mode line."
+  :global t
+  :lighter nil
+  (if rvb/ui-page-chrome-mode
+      (progn
+        (add-hook 'window-configuration-change-hook
+                  #'rvb/ui-page-chrome--window-change)
+        (add-hook 'window-size-change-functions
+                  #'rvb/ui-page-chrome--window-change)
+        (add-hook 'after-make-frame-functions
+                  #'rvb/ui-page-chrome--window-change)
+        (rvb/ui-page-chrome-refresh))
+    (remove-hook 'window-configuration-change-hook
+                 #'rvb/ui-page-chrome--window-change)
+    (remove-hook 'window-size-change-functions
+                 #'rvb/ui-page-chrome--window-change)
+    (remove-hook 'after-make-frame-functions
+                 #'rvb/ui-page-chrome--window-change)
+    (rvb/ui-page-chrome--restore)))
+
 (transient-define-prefix rvb/ui-menu ()
   "Open the UI settings menu."
   ["Actions"
-   ("t" "Toggle light/dark theme" rvb/toggle-theme)]
+   ("t" "Toggle light/dark theme" rvb/toggle-theme)
+   ("p" "Toggle page chrome" rvb/ui-page-chrome-mode)]
   ["Themes"
    ("l" rvb/ui-light-theme)
    ("d" rvb/ui-dark-theme)]
@@ -461,6 +661,14 @@ The active theme is restored before returning to the settings menu."
 				       "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++" "?:"
 				       "?=" "?." "??" "/*" "/=" "/>" "//" "~~" "(*" "*)"
 				       "\\\\" "://"))
+  ;; In org buffers, hand runs of letters to the font shaper and let the
+  ;; font's own ligature table decide what to form (fi, ffi, etc.).  This
+  ;; picks up whatever ligatures the active font provides, while leaving
+  ;; org markup characters (/ * _ = ~ +) untouched.
+  (ligature-set-ligatures
+   'org-mode
+   (mapcar (lambda (char) (list (char-to-string char) "[A-Za-z]+"))
+	   (append (number-sequence ?A ?Z) (number-sequence ?a ?z))))
   (global-ligature-mode t))
 
 (use-package nerd-icons

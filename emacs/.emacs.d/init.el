@@ -13,6 +13,7 @@
 (add-to-list 'load-path (expand-file-name "rvb-lisp" user-emacs-directory))
 (require 'rvb-settings)
 (require 'rvb-ui)
+(require 'rvb-book)
 (require 'rvb-completions)
 (require 'rvb-langs)
 (require 'rvb-editing)
@@ -23,3 +24,9 @@
 (require 'rvb-org)
 (require 'rvb-bindings)
 (require 'rvb-aws)
+
+(rvb/notes-scratch)
+(rvb/ui-page-chrome-mode)
+(book-mode)
+
+

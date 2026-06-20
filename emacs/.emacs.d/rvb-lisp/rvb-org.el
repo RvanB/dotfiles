@@ -69,10 +69,33 @@
                (org-cut-subtree)))))
        nil 'file))))
 
+;;; Use curly typographic quotes when typing ' and " in org buffers
+(setq electric-quote-context-sensitive t ; ' -> ‘ or ’ depending on context
+      electric-quote-replace-double t)   ; " -> “ or ”
+(add-hook 'org-mode-hook #'electric-quote-local-mode)
+
+(defun rvb/org-electric-quote-open-after-markup (orig &rest args)
+  "Treat Org emphasis markers as opening context for electric quotes.
+`electric-quote' only opens a quote after whitespace or open-paren
+syntax, so a quote typed right after a marker like / or * would close.
+Give those markers open-paren syntax for the duration of the call so
+typing e.g. /\" yields an opening quote."
+  (if (derived-mode-p 'org-mode)
+      (let ((table (make-syntax-table (syntax-table))))
+        (dolist (ch '(?/ ?* ?_ ?= ?~ ?+))
+          (modify-syntax-entry ch "(" table))
+        (with-syntax-table table
+          (apply orig args)))
+    (apply orig args)))
+
+(advice-add 'electric-quote-post-self-insert-function :around
+            #'rvb/org-electric-quote-open-after-markup)
+
 (add-hook 'org-mode-hook 'mixed-pitch-mode)
 (add-hook 'org-mode-hook (lambda () (add-hook 'before-save-hook 'rvb/cleanup-old-done-items nil t)))
 (add-hook 'org-mode-hook 'org-indent-mode)
-(add-hook 'org-mode-hook 'olivetti-mode)
+
+(add-hook 'org-mode-hook 'visual-line-mode)
 
 
 ;; (use-package org-modern
@@ -115,6 +138,12 @@
   :ensure t
   :hook
   (org-mode . org-tidy-mode))
+
+(use-package org-autolist
+  :ensure t
+  :hook (org-mode . org-autolist-mode))
+
+(setq org-hide-emphasis-markers t)
 
 
 (provide 'rvb-org)

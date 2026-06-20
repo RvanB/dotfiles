@@ -16,6 +16,9 @@
 ;;; Disable bell
 (setq ring-bell-function 'ignore)
 
+;; Calculate line number width
+(setq display-line-numbers-width-start t)
+
 ;;; Don't show splash screen
 (setq inhibit-startup-message t)
 

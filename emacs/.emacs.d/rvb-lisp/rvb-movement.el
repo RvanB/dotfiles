@@ -20,21 +20,6 @@
                (not (window-live-p (get-buffer-window buffer))))
       (delete-window))))
 
-(defun rvb/kill-buffer-close-duplicate-window (original buffer-or-name)
-  "Close a duplicate replacement window after an interactive buffer kill."
-  (let* ((window (selected-window))
-         (buffer (or (get-buffer buffer-or-name) (current-buffer)))
-         (killing-selected-buffer (eq buffer (window-buffer window))))
-    (prog1 (funcall original buffer-or-name)
-      (when (and (called-interactively-p 'interactive)
-                 killing-selected-buffer
-                 (window-live-p window)
-                 (not (one-window-p t (window-frame window)))
-                 (rvb/window-buffer-visible-elsewhere-p window))
-        (delete-window window)))))
-
-(advice-add 'kill-buffer :around #'rvb/kill-buffer-close-duplicate-window)
-
 ;;; Window traversal
 (defun rvb/other-window-backward (&optional n)
   "Select Nth previous window."
