@@ -120,7 +120,12 @@
   (customize-save-variable 'rvb-current-theme appearance)
   (rvb/set-frame-parameter-defaults 'ns-appearance appearance)
   (dolist (frame (frame-list))
-    (rvb/apply-frame-appearance frame)))
+    (rvb/apply-frame-appearance frame))
+  ;; Loading a theme re-sets `line-number' and other faces, so re-assert the
+  ;; page chrome styling on top of the freshly loaded theme.
+  (when (and (bound-and-true-p rvb/ui-page-chrome-mode)
+             (fboundp 'rvb/ui-page-chrome-refresh))
+    (rvb/ui-page-chrome-refresh)))
 
 (defun rvb/use-light-theme ()
   "Load `rvb-light-theme'."
@@ -362,6 +367,17 @@ If nil, use the Emacs default variable-pitch font size."
   (set variable value)
   (customize-save-variable variable value))
 
+(defun rvb/set-theme-variable (variable value)
+  "Set and persist theme VARIABLE to VALUE, reloading it when it is active.
+
+Changing the light theme reloads immediately when the light appearance is
+current, and likewise for the dark theme, so the new choice takes effect
+without toggling appearance."
+  (rvb/customize-set-variable variable value)
+  (when (or (and (eq variable 'rvb-light-theme) (eq rvb-current-theme 'light))
+            (and (eq variable 'rvb-dark-theme) (eq rvb-current-theme 'dark)))
+    (rvb/load-theme-preset value rvb-current-theme)))
+
 (defun rvb/set-font-variable (variable value)
   "Set, persist, and apply font VARIABLE to VALUE."
   (rvb/customize-set-variable variable value)
@@ -402,13 +418,13 @@ The active theme is restored before returning to the settings menu."
   :class 'rvb-theme-variable
   :variable 'rvb-light-theme
   :description "Light theme"
-  :set-value #'rvb/customize-set-variable)
+  :set-value #'rvb/set-theme-variable)
 
 (transient-define-infix rvb/ui-dark-theme ()
   :class 'rvb-theme-variable
   :variable 'rvb-dark-theme
   :description "Dark theme"
-  :set-value #'rvb/customize-set-variable)
+  :set-value #'rvb/set-theme-variable)
 
 (transient-define-infix rvb/ui-fixed-font-family ()
   :class 'rvb-font-family-variable
@@ -436,9 +452,15 @@ The active theme is restored before returning to the settings menu."
 
 (defvar rvb/ui-page-chrome--saved-header-lines nil)
 (defvar rvb/ui-page-chrome--saved-mode-line-parameters nil)
+(defvar rvb/ui-page-chrome--saved-line-number-faces nil
+  "Alist mapping (FRAME . FACE) to the line-number background to restore.")
 
-(defconst rvb/ui-page-chrome--line-number-gutter-extra-columns 1
-  "Native line-number gutter columns not reported by `line-number-display-width'.")
+(defconst rvb/ui-page-chrome--line-number-gutter-extra-columns 2
+  "Native line-number gutter columns not reported by `line-number-display-width'.
+
+Emacs draws a separating space on each side of the line numbers that
+`line-number-display-width' omits.  Counting both keeps the header band
+aligned with the buffer text rather than with the gap before it.")
 
 (defun rvb/ui-page-chrome--window-p (window)
   "Return non-nil when WINDOW should display RVB page chrome."
@@ -466,19 +488,22 @@ The active theme is restored before returning to the settings menu."
 
 This independently accounts for line-number and fringe columns so the
 header aligns with text, without depending on book-mode implementation."
-  (let ((margins (window-margins window)))
-    (cons (+ (or (car margins) 0)
-             (if (and (boundp 'display-line-numbers)
-                      (buffer-local-value 'display-line-numbers
-                                          (window-buffer window)))
-                 (let* ((frame (window-frame window))
-                        (fringe-pixels (car (window-fringes window))))
-                   (+ (with-selected-window window
-                        (line-number-display-width))
-                      (ceiling (/ (float fringe-pixels)
-                                  (frame-char-width frame)))
-                      rvb/ui-page-chrome--line-number-gutter-extra-columns))
-               0))
+  (let* ((margins (window-margins window))
+         (frame (window-frame window))
+         (fringe-pixels (car (window-fringes window)))
+         ;; The left fringe always precedes the text, so count it whether or
+         ;; not line numbers are shown.
+         (fringe-columns (ceiling (/ (float fringe-pixels)
+                                     (frame-char-width frame))))
+         (line-number-columns
+          (if (and (boundp 'display-line-numbers)
+                   (buffer-local-value 'display-line-numbers
+                                       (window-buffer window)))
+              (+ (with-selected-window window
+                   (line-number-display-width))
+                 rvb/ui-page-chrome--line-number-gutter-extra-columns)
+            0)))
+    (cons (+ (or (car margins) 0) fringe-columns line-number-columns)
           (or (cdr margins) 0))))
 
 (defface rvb/ui-page-chrome-header
@@ -574,12 +599,37 @@ header aligned with the body text in `mixed-pitch-mode' buffers."
       (set-window-parameter
        window 'mode-line-format 'none))))
 
+(defun rvb/ui-page-chrome--apply-line-number-faces (frame)
+  "Drop the line-number backgrounds in FRAME so numbers blend into the body.
+
+A theme's real background is remembered as the restore baseline.  The
+`unspecified' value page chrome sets itself is never captured, and a
+later theme load (which re-sets a real background) refreshes the
+baseline, so restoring always reverts to the active theme."
+  (dolist (face '(line-number line-number-current-line))
+    (let ((current (face-attribute face :background frame)))
+      (unless (eq current 'unspecified)
+        (setf (alist-get (cons frame face)
+                         rvb/ui-page-chrome--saved-line-number-faces
+                         nil nil #'equal)
+              current))
+      (set-face-attribute face frame :background 'unspecified))))
+
+(defun rvb/ui-page-chrome--restore-line-number-faces ()
+  "Restore line-number face backgrounds changed by page chrome."
+  (pcase-dolist (`((,frame . ,face) . ,background)
+                 rvb/ui-page-chrome--saved-line-number-faces)
+    (when (frame-live-p frame)
+      (set-face-attribute face frame :background background)))
+  (setq rvb/ui-page-chrome--saved-line-number-faces nil))
+
 (defun rvb/ui-page-chrome-refresh ()
   "Apply RVB page chrome to every ordinary window."
   (interactive)
   (when rvb/ui-page-chrome-mode
     (dolist (frame (frame-list))
       (unless (frame-parameter frame 'parent-frame)
+        (rvb/ui-page-chrome--apply-line-number-faces frame)
         (walk-windows #'rvb/ui-page-chrome--apply-window 'no-minibuf frame)))))
 
 (defun rvb/ui-page-chrome--restore ()
@@ -595,7 +645,8 @@ header aligned with the body text in `mixed-pitch-mode' buffers."
           (if was-local
               (setq-local header-line-format header-line)
             (kill-local-variable 'header-line-format))))))
-  (setq rvb/ui-page-chrome--saved-header-lines nil))
+  (setq rvb/ui-page-chrome--saved-header-lines nil)
+  (rvb/ui-page-chrome--restore-line-number-faces))
 
 (defun rvb/ui-page-chrome--window-change (&rest _)
   "Refresh page chrome after window or frame geometry changes."

@@ -17,8 +17,12 @@
 (defvar book-mode--saved-side-window-margins nil)
 (defvar book-mode--saved-fringe-faces nil)
 
-(defconst book-mode--line-number-gutter-extra-columns 1
-  "Native line-number gutter columns not reported by `line-number-display-width'.")
+(defconst book-mode--line-number-gutter-extra-columns 2
+  "Native line-number gutter columns not reported by `line-number-display-width'.
+
+Emacs draws a separating space on each side of the line numbers that
+`line-number-display-width' omits.  Reserving both keeps buffer text at
+the intended inside margin instead of one column past it.")
 
 (defun book-mode--custom-set-and-refresh (symbol value)
   "Set SYMBOL to VALUE and refresh `book-mode' when it is active."
@@ -26,27 +30,41 @@
   (when book-mode
     (book-mode-refresh)))
 
-(defcustom book-mode-horizontal-margin-ratio (/ 2.0 9.0)
-  "Outside margin ratio for the left and right sides of each frame.
+(defcustom book-mode-inside-margin-ratio 0.08
+  "Inside margin (i), the base unit for every book-mode margin.
 
-The value is a fraction of the frame width.  The default 2/9 gives each
-side a book-like outside margin."
+The value is a fraction of the frame width.  This is the content
+window's horizontal margin, and the top, bottom, and outside margins are
+multiples of it (see `book-mode-top-margin-multiple',
+`book-mode-bottom-margin-multiple', and
+`book-mode-outside-margin-multiple')."
   :type 'number
   :group 'book-mode
   :set #'book-mode--custom-set-and-refresh)
 
-(defcustom book-mode-top-margin-ratio (/ 1.0 9.0)
-  "Outside margin ratio for the top of each frame.
+(defcustom book-mode-outside-margin-multiple 2.0
+  "Outside horizontal margin as a multiple of the inside margin (i).
 
-The value is a fraction of the frame height.  The default is 1/9."
+The outside margin is the full distance from a frame's outer edge to the
+content text.  The default 2.0 makes it twice the inside margin."
   :type 'number
   :group 'book-mode
   :set #'book-mode--custom-set-and-refresh)
 
-(defcustom book-mode-bottom-margin-ratio (/ 2.0 9.0)
-  "Outside margin ratio for the bottom of each frame.
+(defcustom book-mode-top-margin-multiple 1.5
+  "Top margin as a multiple of the inside margin (i).
 
-The value is a fraction of the frame height.  The default is 2/9."
+The default 1.5 makes the top margin one and a half times the inside
+margin."
+  :type 'number
+  :group 'book-mode
+  :set #'book-mode--custom-set-and-refresh)
+
+(defcustom book-mode-bottom-margin-multiple 2.5
+  "Bottom margin as a multiple of the inside margin (i).
+
+The default 2.5 makes the bottom margin two and a half times the inside
+margin."
   :type 'number
   :group 'book-mode
   :set #'book-mode--custom-set-and-refresh)
@@ -61,40 +79,46 @@ between content windows and book-mode margin strips."
   :set #'book-mode--custom-set-and-refresh)
 
 (defcustom book-mode-inside-horizontal-margins t
-  "When non-nil, add half-width horizontal margins to content windows.
+  "When non-nil, add inside horizontal margins to content windows.
 
-Every content window receives half the configured outside horizontal
-margin on both sides.  The frame border contributes the other half on
-the outer frame edges, and adjacent windows contribute one half each
-between them."
+Every content window receives the inside margin (i) on both sides.  The
+frame border supplies the remaining outside margin on the outer frame
+edges, and adjacent windows contribute one inside margin each between
+them."
   :type 'boolean
   :group 'book-mode
   :set #'book-mode--custom-set-and-refresh)
 
 (defun book-mode--set-ratio (variable prompt)
-  "Read a ratio for VARIABLE with PROMPT, persist it, and refresh."
+  "Read a number for VARIABLE with PROMPT, persist it, and refresh."
   (let ((value (read-number prompt (symbol-value variable))))
     (customize-save-variable variable value)
     (when book-mode
       (book-mode-refresh))))
 
-(defun book-mode-set-horizontal-ratio ()
-  "Set `book-mode-horizontal-margin-ratio'."
+(defun book-mode-set-inside-ratio ()
+  "Set `book-mode-inside-margin-ratio' (the inside margin i)."
   (interactive)
-  (book-mode--set-ratio 'book-mode-horizontal-margin-ratio
-                        "Horizontal ratio: "))
+  (book-mode--set-ratio 'book-mode-inside-margin-ratio
+                        "Inside margin ratio (i, fraction of width): "))
 
-(defun book-mode-set-top-ratio ()
-  "Set `book-mode-top-margin-ratio'."
+(defun book-mode-set-outside-multiple ()
+  "Set `book-mode-outside-margin-multiple'."
   (interactive)
-  (book-mode--set-ratio 'book-mode-top-margin-ratio
-                        "Top ratio: "))
+  (book-mode--set-ratio 'book-mode-outside-margin-multiple
+                        "Outside margin (x i): "))
 
-(defun book-mode-set-bottom-ratio ()
-  "Set `book-mode-bottom-margin-ratio'."
+(defun book-mode-set-top-multiple ()
+  "Set `book-mode-top-margin-multiple'."
   (interactive)
-  (book-mode--set-ratio 'book-mode-bottom-margin-ratio
-                        "Bottom ratio: "))
+  (book-mode--set-ratio 'book-mode-top-margin-multiple
+                        "Top margin (x i): "))
+
+(defun book-mode-set-bottom-multiple ()
+  "Set `book-mode-bottom-margin-multiple'."
+  (interactive)
+  (book-mode--set-ratio 'book-mode-bottom-margin-multiple
+                        "Bottom margin (x i): "))
 
 (defun book-mode--toggle-custom (variable)
   "Toggle boolean custom VARIABLE and refresh book-mode."
@@ -123,9 +147,10 @@ between them."
 (defun book-mode-reset-ratios ()
   "Reset book-mode margin ratios to book defaults."
   (interactive)
-  (customize-save-variable 'book-mode-horizontal-margin-ratio (/ 2.0 9.0))
-  (customize-save-variable 'book-mode-top-margin-ratio (/ 1.0 9.0))
-  (customize-save-variable 'book-mode-bottom-margin-ratio (/ 2.0 9.0))
+  (customize-save-variable 'book-mode-inside-margin-ratio 0.08)
+  (customize-save-variable 'book-mode-outside-margin-multiple 2.0)
+  (customize-save-variable 'book-mode-top-margin-multiple 1.5)
+  (customize-save-variable 'book-mode-bottom-margin-multiple 2.5)
   (when book-mode
     (book-mode-refresh)))
 
@@ -142,20 +167,24 @@ between them."
   [["Mode"
     ("m" "Toggle book-mode" book-mode)
     ("r" "Refresh" book-mode-refresh)]
-   ["Ratios"
-    ("h" (lambda ()
+   ["Margins"
+    ("i" (lambda ()
            (book-mode--ratio-description
-            'book-mode-horizontal-margin-ratio "Horizontal"))
-     book-mode-set-horizontal-ratio)
+            'book-mode-inside-margin-ratio "Inside i"))
+     book-mode-set-inside-ratio)
+    ("o" (lambda ()
+           (book-mode--ratio-description
+            'book-mode-outside-margin-multiple "Outside xi"))
+     book-mode-set-outside-multiple)
     ("t" (lambda ()
            (book-mode--ratio-description
-            'book-mode-top-margin-ratio "Top"))
-     book-mode-set-top-ratio)
+            'book-mode-top-margin-multiple "Top xi"))
+     book-mode-set-top-multiple)
     ("b" (lambda ()
            (book-mode--ratio-description
-            'book-mode-bottom-margin-ratio "Bottom"))
-     book-mode-set-bottom-ratio)
-    ("0" "Reset ratios" book-mode-reset-ratios)]
+            'book-mode-bottom-margin-multiple "Bottom xi"))
+     book-mode-set-bottom-multiple)
+    ("0" "Reset margins" book-mode-reset-ratios)]
    ["Options"
     ("F" (lambda ()
            (book-mode--toggle-description
@@ -174,43 +203,67 @@ between them."
   "Clamp VALUE to a usable margin ratio."
   (min 0.45 (max 0 (or value 0))))
 
-(defun book-mode--horizontal-pixels (frame)
-  "Return the horizontal outside margin for FRAME in pixels."
+(defun book-mode--multiple (value)
+  "Clamp VALUE to a non-negative margin multiple."
+  (max 0 (or value 0)))
+
+(defun book-mode--inside-columns (frame)
+  "Return the inside margin (i) for FRAME in columns.
+
+This is the base unit for every book-mode margin: a fraction of the frame
+width given by `book-mode-inside-margin-ratio'."
+  (floor (* (frame-width frame)
+            (book-mode--ratio book-mode-inside-margin-ratio))))
+
+(defun book-mode--inside-pixels (frame)
+  "Return the inside margin (i) for FRAME in pixels."
   (* (frame-char-width frame)
-     (floor (* (frame-width frame)
-               (book-mode--ratio book-mode-horizontal-margin-ratio)))))
+     (book-mode--inside-columns frame)))
 
-(defun book-mode--horizontal-columns (frame)
-  "Return the horizontal outside margin for FRAME in columns."
-  (let ((columns (floor (* (frame-width frame)
-                           (book-mode--ratio
-                            book-mode-horizontal-margin-ratio)))))
-    (- columns (% columns 2))))
+(defun book-mode--outside-columns (frame)
+  "Return the outside horizontal margin for FRAME in columns.
 
-(defun book-mode--half-horizontal-columns (frame)
-  "Return half the horizontal outside margin for FRAME in columns."
-  (/ (book-mode--horizontal-columns frame) 2))
+The outside margin is `book-mode-outside-margin-multiple' times the
+inside margin (i)."
+  (round (* (book-mode--inside-columns frame)
+            (book-mode--multiple book-mode-outside-margin-multiple))))
 
-(defun book-mode--half-horizontal-pixels (frame)
-  "Return half the horizontal outside margin for FRAME in pixels."
+(defun book-mode--outside-pixels (frame)
+  "Return the outside horizontal margin for FRAME in pixels."
   (* (frame-char-width frame)
-     (book-mode--half-horizontal-columns frame)))
+     (book-mode--outside-columns frame)))
 
 (defun book-mode--top-pixels (frame)
-  "Return the top outside margin for FRAME in pixels."
-  (* (frame-char-height frame)
-     (floor (* (frame-height frame)
-               (book-mode--ratio book-mode-top-margin-ratio)))))
+  "Return the top margin for FRAME in pixels.
+
+The top margin is `book-mode-top-margin-multiple' times the inside margin
+\(i)."
+  (round (* (book-mode--inside-pixels frame)
+            (book-mode--multiple book-mode-top-margin-multiple))))
 
 (defun book-mode--bottom-pixels (frame)
-  "Return the bottom outside margin for FRAME in pixels."
-  (* (frame-char-height frame)
-     (floor (* (frame-height frame)
-               (book-mode--ratio book-mode-bottom-margin-ratio)))))
+  "Return the bottom margin for FRAME in pixels.
+
+The bottom margin is `book-mode-bottom-margin-multiple' times the inside
+margin (i)."
+  (round (* (book-mode--inside-pixels frame)
+            (book-mode--multiple book-mode-bottom-margin-multiple))))
+
+(defun book-mode--horizontal-extra-pixels (frame)
+  "Return the per-edge outer horizontal margin beyond the inside margin.
+
+The inside margin (i) is supplied by content window margins; the frame
+border supplies the rest so the outer edge reaches the outside margin."
+  (max 0 (- (book-mode--outside-pixels frame)
+            (book-mode--inside-pixels frame))))
 
 (defun book-mode--border-pixels (frame)
-  "Return the shared frame border width for FRAME in pixels."
-  (min (book-mode--half-horizontal-pixels frame)
+  "Return the shared frame border width for FRAME in pixels.
+
+The border is the largest width every side can share without overshooting
+its target: the horizontal edges need the outside margin minus the inside
+margin, and the top and bottom need their full margins."
+  (min (book-mode--horizontal-extra-pixels frame)
        (book-mode--top-pixels frame)
        (book-mode--bottom-pixels frame)))
 
@@ -218,7 +271,7 @@ between them."
   "Return SIDE's extra margin size for FRAME in columns or lines."
   (let* ((border (book-mode--border-pixels frame))
          (pixels (pcase side
-                   ((or 'left 'right) (book-mode--half-horizontal-pixels frame))
+                   ((or 'left 'right) (book-mode--inside-pixels frame))
                    ('top (book-mode--top-pixels frame))
                    ('bottom (book-mode--bottom-pixels frame))))
          (unit (if (memq side '(left right))
@@ -335,15 +388,15 @@ Every content window receives the same visual padding on both sides.  Line
 numbers and the left fringe use part of that left-side budget, keeping text
 in the same column without widening the overall gutter."
   (book-mode--save-content-window-margins window)
-  (let* ((half-margin (book-mode--half-horizontal-columns
-                       (window-frame window)))
+  (let* ((inside-margin (book-mode--inside-columns
+                         (window-frame window)))
          ;; Line numbers render between the left window margin and buffer
          ;; text.  Reserve their width from the blank part of the book
          ;; gutter so the text still begins at the same visual column.
-         (left-margin (max 0 (- half-margin
+         (left-margin (max 0 (- inside-margin
                                 (book-mode--line-number-gutter-columns
                                  window)))))
-    (set-window-margins window left-margin half-margin)))
+    (set-window-margins window left-margin inside-margin)))
 
 (defun book-mode--apply-content-windows-margins (frame)
   "Apply inside horizontal margins to content windows in FRAME."
@@ -414,8 +467,8 @@ in the same column without widening the overall gutter."
   (let ((window (minibuffer-window frame)))
     (when (window-live-p window)
       (book-mode--save-minibuffer-margins window)
-      (let ((half-margin (book-mode--half-horizontal-columns frame)))
-        (set-window-margins window half-margin half-margin)))))
+      (let ((inside-margin (book-mode--inside-columns frame)))
+        (set-window-margins window inside-margin inside-margin)))))
 
 (defun book-mode--restore-minibuffer-margins ()
   "Restore minibuffer margins saved before book-mode changed them."
@@ -587,11 +640,12 @@ full rebuild when frame geometry changes or when explicitly requested."
   "Toggle C64-style outer margins around each Emacs frame.
 
 This uses the frame's `internal-border-width' as the shared margin base,
-then adds side-specific extra strips to reach the configured left/right,
-top, and bottom ratios.  Extra strips are dropped before they can replace
-regular editing windows.  Side-by-side content windows receive inside
-horizontal margins equal to half the outside horizontal margin on each
-side.  The minibuffer receives the same left/right
+then adds side-specific extra strips to reach the configured outside,
+top, and bottom margins.  All margins derive from the inside margin (i),
+a fraction of the frame width, scaled by per-side multiples.  Extra
+strips are dropped before they can replace regular editing windows.
+Side-by-side content windows receive the inside margin on each side.  The
+minibuffer receives the same left/right
 window margins so its prompt follows the same horizontal spread, and
 non-book side windows such as transient popups receive the same horizontal
 margins.  When
