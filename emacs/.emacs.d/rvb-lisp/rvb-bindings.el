@@ -81,4 +81,6 @@
 (keymap-global-set "C-`" 'next-error)
 (keymap-global-set "C-~" 'previous-error)
 
+(keymap-global-set "s-p" 'project-switch-project)
+
 (provide 'rvb-bindings)

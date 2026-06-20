@@ -31,7 +31,7 @@
 ;;   :config
 ;;   (vertico-posframe-mode 1))
 
-(add-hook 'prog-mode-hook 'display-line-numbers-mode)
+;; (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
 ;; ef themes
 (use-package ef-themes
@@ -132,6 +132,11 @@
     (disable-theme 'sanityinc-tomorrow-bright)
     (load-theme 'modus-operandi t)
     (setq current-theme 'light))))
+
+(use-package ns-auto-titlebar
+  :ensure t
+  :config
+  (when (eq system-type 'darwin) (ns-auto-titlebar-mode))
 
 
 (require 'rvb-movement)
