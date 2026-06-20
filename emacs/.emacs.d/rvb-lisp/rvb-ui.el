@@ -382,11 +382,11 @@ If nil, use the Emacs default variable-pitch font size."
 ;; Clearer separation between buffers
 ;; (window-divider-mode)
 
-;;; Magit todos
-(use-package magit-todos
-  :ensure t
-  :after magit
-  :config (magit-todos-mode 1))
+;; ;;; Magit todos
+;; (use-package magit-todos
+;;   :ensure t
+;;   :after magit
+;;   :config (magit-todos-mode 1))
 
 ;;; Window splitting preferences - prefer horizontal (side-by-side) splits
 ;; (setq split-height-threshold nil)  ; Never split vertically (top-bottom)
