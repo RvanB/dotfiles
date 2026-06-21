@@ -41,6 +41,26 @@
 (use-package agent-shell
   :ensure t)
 
+(defun rvb/run-apple-intelligence-shortcut (shortcut-name)
+  "Run macOS Shortcut SHORTCUT-NAME.
+
+Assumes the Shortcut reads from the clipboard and copies its result
+back to the clipboard."
+  (unless (executable-find "shortcuts")
+    (user-error "Could not find the macOS shortcuts command"))
+
+  (let ((buf (get-buffer-create "*apple-intelligence-shortcut*")))
+    (with-current-buffer buf
+      (erase-buffer))
+
+    (let ((status
+           (call-process "shortcuts" nil buf nil
+                         "run" shortcut-name)))
+      (unless (zerop status)
+        (user-error "Shortcut failed: %s"
+                    (with-current-buffer buf
+                      (string-trim (buffer-string))))))))
+
 (defun rvb/apple-intelligence-region (shortcut-name)
   "Run Apple Intelligence Shortcut SHORTCUT-NAME on the active region.
 
