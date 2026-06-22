@@ -42,6 +42,10 @@ fi
 [[ -d /opt/local/lib/opencv4/pkgconfig ]] && \
   export PKG_CONFIG_PATH="/opt/local/lib/opencv4/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
 
+# Shells started only to run a command, like `zsh -i -c ...`, do not need
+# prompts, completions, keybindings, secrets, nvm, fzf, or SDKMAN.
+[[ -n "$ZSH_EXECUTION_STRING" ]] && return
+
 ########## zsh settings ##########
 
 export HISTFILE="$HOME/.zsh_history"
@@ -49,12 +53,6 @@ HISTSIZE=100000
 SAVEHIST=$HISTSIZE
 setopt appendhistory
 setopt promptsubst
-
-########## SECRETS ##########
-if command -v pass >/dev/null 2>&1; then
-    CODEIUM_API_KEY="$(pass show windsurf.com/api 2>/dev/null)"
-    [[ -n "$CODEIUM_API_KEY" ]] && export CODEIUM_API_KEY
-fi
 
 ########## COMPLETIONS ##########
 
@@ -187,11 +185,13 @@ dir-context() {
 
 # add-zsh-hook chpwd dir-context
 
-up-directory-widget() {
-  builtin cd .. || return
-  zle reset-prompt
-}
-zle -N up-directory-widget
+if [[ -o zle ]]; then
+  up-directory-widget() {
+    builtin cd .. || return
+    zle reset-prompt
+  }
+  zle -N up-directory-widget
+fi
 
 down-directory-widget() {
   local -a dirs
@@ -228,4 +228,3 @@ fi
 # Added by LM Studio CLI (lms)
 export PATH="$PATH:/Users/rvanbron/.lmstudio/bin"
 # End of LM Studio CLI section
-
