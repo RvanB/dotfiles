@@ -26,7 +26,7 @@
 (require 'rvb-aws)
 
 (rvb/notes-scratch)
-(rvb/ui-page-chrome-mode)
-(book-mode)
+;; (rvb/ui-page-chrome-mode)
+;; (book-mode)
 
 

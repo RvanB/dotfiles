@@ -9,17 +9,8 @@
   :config
   (add-hook 'prog-mode-hook 'annotate-mode))
 
-(defun rvb/configure-olivetti-wrapping ()
-  "Use word wrapping without visual wrap indicators in Olivetti buffers."
-  (setq-local truncate-lines nil)
-  (setq-local word-wrap t)
-  (setq-local visual-line-fringe-indicators '(nil nil))
-  (visual-line-mode 1))
-
 (use-package olivetti
-  :ensure t
-  :config
-  (add-hook 'olivetti-mode-on-hook #'rvb/configure-olivetti-wrapping t))
+  :ensure t)
 
 ;; Diminish minor modes
 (use-package diminish
