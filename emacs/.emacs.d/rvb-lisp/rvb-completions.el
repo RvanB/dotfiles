@@ -125,13 +125,16 @@
   :config
   (marginalia-mode))
 
-(use-package company
+(use-package corfu
   :ensure t
   :custom
-  (company-backends '(company-capf))
-  (company-tooltip-align-annotations t)
-  :config
-  (add-hook 'after-init-hook 'global-company-mode))
+  (corfu-cycle t)
+  (corfu-auto t)
+  (corfu-auto-prefix 1)
+  (corfu-auto-delay 0.2)
+  (corfu-quit-no-match 'separator)
+  :init
+  (global-corfu-mode))
 
 (use-package orderless
   :ensure t

@@ -1,6 +1,6 @@
-theme = Modus Operandi
+theme = Tomorrow Night
 font-family = "Berkeley Mono Variable Z8XX46Z7"
-font-size = 16
+font-size = 12
 font-thicken = true
 font-thicken-strength = 50
 shell-integration-features = no-cursor
@@ -8,3 +8,4 @@ cursor-style = "block"
 keybind = shift+enter=text:\x1b\r
 window-inherit-working-directory = false
 tab-inherit-working-directory = false
+

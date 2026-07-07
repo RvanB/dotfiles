@@ -1,3 +1,10 @@
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
 # Raiden van Bronkhorst
 # zsh configuration
 
@@ -56,19 +63,30 @@ setopt promptsubst
 
 ########## COMPLETIONS ##########
 
+zmodload zsh/complist
+
+autoload -Uz compinit
+compinit
+
 # fpath=(~/.zsh/completion $fpath)
 
 # Partial completion
-zstyle ':completion:*' completer _complete
+#zstyle ':completion:*' completer _complete
+zstyle ':completion:*' menu select
 
 # Case insensitivity
 zstyle ':completion:*' matcher-list '' 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' '+l:|=* r:|=*'
+
+bindkey '^I' menu-select
+bindkey $'\e[Z' reverse-menu-complete
+
+source "$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
+
 
 ########## THEMING ##########
 
 autoload -U colors && colors
 autoload -U add-zsh-hook
-autoload -Uz compinit
 
 exit_code_prompt() {
     local exit_code=$?
@@ -83,6 +101,8 @@ git_prompt() {
         echo "%{$fg[red]%}*%{$reset_color%} "
     fi
 }
+
+source "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
 # add-zsh-hook chpwd auto_activate_uv
 # auto_activate_uv
@@ -104,6 +124,12 @@ elif command -v nvim >/dev/null 2>&1; then
 elif command -v vi >/dev/null 2>&1; then
     export EDITOR="vi"
 fi
+
+gcleanmerged() {
+  git branch --merged \
+    | grep -Ev '(^\*|^\+|master|main|dev)' \
+    | xargs git branch -d
+}
 
 command -v tmux >/dev/null 2>&1 && alias tmux="TERM=xterm-256color tmux"
 
@@ -136,8 +162,6 @@ session() {
         return 1
     fi
 }
-
-compinit
 
 _session() {
     local -a words cache_files
@@ -228,3 +252,9 @@ fi
 # Added by LM Studio CLI (lms)
 export PATH="$PATH:/Users/rvanbron/.lmstudio/bin"
 # End of LM Studio CLI section
+
+eval "$(direnv hook zsh)"
+source ~/powerlevel10k/powerlevel10k.zsh-theme
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh

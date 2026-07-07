@@ -1,5 +1,7 @@
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
 
+(require 'cl-lib)
+(require 'subr-x)
 (require 'transient)
 
 ;; (add-hook 'prog-mode-hook 'hl-line-mode)
@@ -146,7 +148,7 @@
   "Apply frame-specific appearance settings to FRAME."
   (let ((target-frame (or frame (selected-frame))))
     (when (display-graphic-p target-frame)
-      (set-frame-parameter target-frame 'ns-transparent-titlebar nil)
+      (set-frame-parameter target-frame 'ns-transparent-titlebar t)
       (set-frame-parameter target-frame 'ns-appearance rvb-current-theme))))
 
 (use-package ns-auto-titlebar
@@ -446,12 +448,10 @@ The active theme is restored before returning to the settings menu."
 (defvar rvb/ui-page-chrome--saved-line-number-faces nil
   "Alist mapping (FRAME . FACE) to the line-number background to restore.")
 
-(defconst rvb/ui-page-chrome--line-number-gutter-extra-columns 2
-  "Native line-number gutter columns not reported by `line-number-display-width'.
-
-Emacs draws a separating space on each side of the line numbers that
-`line-number-display-width' omits.  Counting both keeps the header band
-aligned with the buffer text rather than with the gap before it.")
+(defcustom rvb/ui-page-chrome-vertical-padding 6
+  "Vertical padding, in pixels, around page chrome header text."
+  :type 'integer
+  :group 'appearance)
 
 (defun rvb/ui-page-chrome--window-p (window)
   "Return non-nil when WINDOW should display RVB page chrome."
@@ -474,88 +474,136 @@ aligned with the buffer text rather than with the gap before it.")
     (push (cons window (window-parameter window 'mode-line-format))
           rvb/ui-page-chrome--saved-mode-line-parameters)))
 
-(defun rvb/ui-page-chrome--margins (window)
-  "Return WINDOW's effective text margins, treating nil as zero.
-
-This independently accounts for line-number and fringe columns so the
-header aligns with text, without depending on book-mode implementation."
-  (let* ((margins (window-margins window))
-         (frame (window-frame window))
-         (fringe-pixels (car (window-fringes window)))
-         ;; The left fringe always precedes the text, so count it whether or
-         ;; not line numbers are shown.
-         (fringe-columns (ceiling (/ (float fringe-pixels)
-                                     (frame-char-width frame))))
-         (line-number-columns
-          (if (and (boundp 'display-line-numbers)
-                   (buffer-local-value 'display-line-numbers
-                                       (window-buffer window)))
-              (+ (with-selected-window window
-                   (line-number-display-width))
-                 rvb/ui-page-chrome--line-number-gutter-extra-columns)
-            0)))
-    (cons (+ (or (car margins) 0) fringe-columns line-number-columns)
-          (or (cdr margins) 0))))
-
 (defface rvb/ui-page-chrome-header
-  '((t :inherit header-line
-       :background "white" :foreground "black"
-       ;; `:box' can't draw a top-only rule (it always adds left/right and
-       ;; bottom edges), so use overline/underline for top- and bottom-only
-       ;; rules spanning the band.
-       :overline "black"
-       ;; `:position t' drops the rule to the font's descent (lower than the
-       ;; default underline position), giving the text breathing room.
-       :underline (:color "black" :position t)))
+  '((t :inherit header-line))
   "Face for the RVB page-chrome top header band.")
 
-(defun rvb/ui-page-chrome--pad (columns char-width char-height)
-  "Return a COLUMNS-wide body-colored pad sized in absolute pixels.
+(defvar rvb/ui-page-chrome-breadcrumb-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [header-line down-mouse-1]
+                #'rvb/ui-page-chrome-open-breadcrumb)
+    (define-key map [header-line mouse-1]
+                #'rvb/ui-page-chrome-open-breadcrumb)
+    (define-key map [down-mouse-1]
+                #'rvb/ui-page-chrome-open-breadcrumb)
+    (define-key map [mouse-1]
+                #'rvb/ui-page-chrome-open-breadcrumb)
+    map)
+  "Keymap for clickable page chrome path breadcrumbs.")
 
-Both the width (CHAR-WIDTH per column) and the height (CHAR-HEIGHT) are
-pinned via the `space' display spec, so the pad stays correct in
-`mixed-pitch-mode' buffers.  There the `default' face is remapped to a
-taller variable-pitch font; a stretch glyph would otherwise inherit that
-face's width and height, mis-aligning the band and inflating the header
-line.  The `default' face is kept only for its background color."
-  (propertize " " 'face 'default
-              'display `(space :width (,(* (max 0 columns) char-width))
-                               :height (,char-height))))
+(defun rvb/ui-page-chrome--event-directory (event)
+  "Return the breadcrumb directory clicked in EVENT."
+  (when-let* ((position (event-start event))
+              (string-position (posn-string position)))
+    (get-text-property (cdr string-position)
+                       'rvb/ui-page-chrome-directory
+                       (car string-position))))
+
+(defun rvb/ui-page-chrome-open-breadcrumb (event)
+  "Open the Dired buffer for the breadcrumb clicked in EVENT."
+  (interactive "e")
+  (when-let ((directory (rvb/ui-page-chrome--event-directory event)))
+    (dired directory)))
+
+(defun rvb/ui-page-chrome--breadcrumb-part (label directory)
+  "Return clickable breadcrumb LABEL opening DIRECTORY in Dired."
+  (propertize label
+              'local-map rvb/ui-page-chrome-breadcrumb-map
+              'mouse-face 'highlight
+              'help-echo (format "Open %s in Dired" directory)
+              'follow-link t
+              'rvb/ui-page-chrome-directory directory))
+
+(defun rvb/ui-page-chrome--path-breadcrumb (path &optional file-p)
+  "Return a clickable breadcrumb for PATH.
+When FILE-P is non-nil, the final path element is rendered as plain text."
+  (let* ((full-path (expand-file-name path))
+         (home (file-name-as-directory (expand-file-name "~")))
+         (under-home (string-prefix-p home full-path))
+         (root-label (if under-home "~" "/"))
+         (root-dir (if under-home home "/"))
+         (relative (if under-home
+                       (file-relative-name full-path home)
+                     (string-remove-prefix "/" full-path)))
+         (parts (split-string relative "/" t))
+         (current root-dir)
+         (last-index (1- (length parts)))
+         (crumbs (list (rvb/ui-page-chrome--breadcrumb-part
+                        root-label root-dir))))
+    (cl-loop for part in parts
+             for index from 0
+             do (let ((last-p (= index last-index)))
+                  (push "/" crumbs)
+                  (if (and file-p last-p)
+                      (push part crumbs)
+                    (setq current
+                          (file-name-as-directory
+                           (expand-file-name part current)))
+                    (push (rvb/ui-page-chrome--breadcrumb-part part current)
+                          crumbs))))
+    (apply #'concat (nreverse crumbs))))
 
 (defun rvb/ui-page-chrome--band (window content face)
-  "Render CONTENT within WINDOW's margins using FACE for its central band.
+  "Render CONTENT across WINDOW using FACE.
 
-The band is forced to `fixed-pitch' so its column arithmetic
-\(`string-width', `truncate-string-to-width') matches what is actually
-drawn, and the side padding is sized in pixels.  Together this keeps the
-header aligned with the body text in `mixed-pitch-mode' buffers."
+The band uses the frame's `default' font attributes so its fixed-width
+font matches ordinary buffer text instead of the generic `fixed-pitch' face."
   (pcase-let* ((frame (window-frame window))
-               (char-width (frame-char-width frame))
-               (char-height (frame-char-height frame))
-               ;; The frame's true default :height, ignoring any buffer-local
-               ;; remapping.  In `mixed-pitch-mode' the buffer's `default' face
-               ;; is remapped to a taller variable-pitch font, which would
-               ;; otherwise inflate the band (and so the whole header line).
+               (header-background (face-background face frame t))
+               (header-foreground (face-foreground face frame t))
+               (default-family (face-attribute 'default :family frame))
                (default-height (face-attribute 'default :height frame))
-               (band-face (if (integerp default-height)
-                              (list face 'fixed-pitch (list :height default-height))
-                            (list face 'fixed-pitch)))
-               (`(,left . ,right) (rvb/ui-page-chrome--margins window))
-               (width (max 0 (- (window-total-width window) left right)))
+               (default-weight (face-attribute 'default :weight frame))
+               (font-attrs nil)
+               (_ (unless (eq default-family 'unspecified)
+                    (setq font-attrs
+                          (append font-attrs (list :family default-family)))))
+               (_ (when (integerp default-height)
+                    (setq font-attrs
+                          (append font-attrs (list :height default-height)))))
+               (_ (unless (eq default-weight 'unspecified)
+                    (setq font-attrs
+                          (append font-attrs (list :weight default-weight)))))
+               (_ (when (and (integerp rvb/ui-page-chrome-vertical-padding)
+                             (> rvb/ui-page-chrome-vertical-padding 0)
+                             (stringp header-background))
+                    (setq font-attrs
+                          (append font-attrs
+                                  (list :box
+                                        `(:line-width
+                                          (0 . ,rvb/ui-page-chrome-vertical-padding)
+                                          :color ,header-background))))))
+               ;; `:box' can't draw a top-only rule, so use overline and
+               ;; underline for top- and bottom-only rules with theme colors.
+               (_ (when (stringp header-foreground)
+                    (setq font-attrs
+                          (append font-attrs
+                                  (list :overline header-foreground
+                                        :underline
+                                        `(:color ,header-foreground
+                                          :position t))))))
+               (band-face (if font-attrs
+                              (list face font-attrs)
+                            face))
+               (width (window-total-width window))
                (content (truncate-string-to-width content width))
                (band (concat content
                              (make-string (max 0 (- width (string-width content)))
                                           ?\s))))
     (add-face-text-property 0 (length band) band-face nil band)
-    (concat (rvb/ui-page-chrome--pad left char-width char-height)
-            band
-            (rvb/ui-page-chrome--pad right char-width char-height))))
+    band))
 
 (defun rvb/ui-page-chrome--header-content (window width)
   "Return WINDOW's file/status header, fitted into WIDTH columns."
   (with-current-buffer (window-buffer window)
     (let* ((file buffer-file-name)
-           (path (if file (abbreviate-file-name file) (buffer-name)))
+           (path (cond
+                  (file
+                   (rvb/ui-page-chrome--path-breadcrumb file t))
+                  (default-directory
+                   (rvb/ui-page-chrome--path-breadcrumb default-directory))
+                  (t
+                   (buffer-name))))
            (status (format-mode-line
                     '("%e" mode-line-front-space
                       (:propertize
@@ -569,10 +617,8 @@ header aligned with the body text in `mixed-pitch-mode' buffers."
        (concat " " path (make-string gap ?\s) status " ") width))))
 
 (defun rvb/ui-page-chrome--header-line-format (window)
-  "Return WINDOW's margin-limited top file header."
-  (let* ((margins (rvb/ui-page-chrome--margins window))
-         (width (max 0 (- (window-total-width window)
-                          (car margins) (cdr margins)))))
+  "Return WINDOW's top file header."
+  (let ((width (window-total-width window)))
     (rvb/ui-page-chrome--band
      window (rvb/ui-page-chrome--header-content window width)
      'rvb/ui-page-chrome-header)))
