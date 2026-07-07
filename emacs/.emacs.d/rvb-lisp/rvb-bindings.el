@@ -78,9 +78,8 @@
 (keymap-global-set "<f6>" 'rvb/ui-menu)
 
 
-;;; Project dashboard
+;;; Projects
 (keymap-global-set "s-p" 'project-switch-project)
-(keymap-global-set "C-c p" 'rvb/project-dashboard)
 
 ;;; Make C-` shorthand for C-x ` (next-error), and C-~ for previous error
 (keymap-global-set "C-`" 'next-error)

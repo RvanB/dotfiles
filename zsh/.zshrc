@@ -60,6 +60,8 @@ HISTSIZE=100000
 SAVEHIST=$HISTSIZE
 setopt appendhistory
 setopt promptsubst
+setopt INC_APPEND_HISTORY
+setopt SHARE_HISTORY
 
 ########## COMPLETIONS ##########
 
@@ -124,12 +126,6 @@ elif command -v nvim >/dev/null 2>&1; then
 elif command -v vi >/dev/null 2>&1; then
     export EDITOR="vi"
 fi
-
-gcleanmerged() {
-  git branch --merged \
-    | grep -Ev '(^\*|^\+|master|main|dev)' \
-    | xargs git branch -d
-}
 
 command -v tmux >/dev/null 2>&1 && alias tmux="TERM=xterm-256color tmux"
 

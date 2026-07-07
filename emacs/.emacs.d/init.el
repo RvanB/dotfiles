@@ -26,5 +26,3 @@
 
 (rvb/notes-scratch)
 (rvb/ui-page-chrome-mode)
-
-
