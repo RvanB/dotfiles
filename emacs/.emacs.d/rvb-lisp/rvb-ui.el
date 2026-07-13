@@ -239,10 +239,15 @@ If nil, use the Emacs default variable-pitch font size."
                  (integer :tag "Custom font size"))
   :group 'appearance)
 
+(defvar rvb/zoom-level 0
+  "Steps applied on top of the base font sizes by `rvb/zoom-in' and
+`rvb/zoom-out'.  Not persisted across sessions; `rvb/zoom-reset' sets it
+back to 0.")
+
 (defun rvb/default-font-spec ()
   "Build the configured default font string."
   (when (and fontfamily fontsize)
-    (format "%s-%d" fontfamily fontsize)))
+    (format "%s-%d" fontfamily (max 1 (+ fontsize rvb/zoom-level)))))
 
 (defun rvb/refresh-mixed-pitch-buffers ()
   "Refresh active `mixed-pitch-mode' buffers after a font change."
@@ -270,14 +275,22 @@ If nil, use the Emacs default variable-pitch font size."
          :font (face-attribute 'default :font frame 'default)))))
   (rvb/refresh-mixed-pitch-buffers))
 
+(defun rvb/variable-pitch-height ()
+  "Compute the effective point size for the `variable-pitch' face.
+Falls back to the fixed-pitch `fontsize' as a base when
+`variable-fontsize' is unset, so zoom always has a base to work from."
+  (let ((base (or variable-fontsize fontsize)))
+    (when base (max 1 (+ base rvb/zoom-level)))))
+
 (defun update-variable-pitch-font (&optional frame)
   "Update the variable-pitch font for FRAME and future frames."
   (when (display-graphic-p frame)
-    (set-face-attribute
-     'variable-pitch
-     frame
-     :family (or variable-fontfamily 'unspecified)
-     :height (if variable-fontsize (* 10 variable-fontsize) 'unspecified)))
+    (let ((height (rvb/variable-pitch-height)))
+      (set-face-attribute
+       'variable-pitch
+       frame
+       :family (or variable-fontfamily 'unspecified)
+       :height (if height (* 10 height) 'unspecified))))
   (rvb/refresh-mixed-pitch-buffers))
 
 (defun rvb/initialize-ui (&optional frame)
@@ -321,6 +334,38 @@ If nil, use the Emacs default variable-pitch font size."
                             (max 1 (1- (or fontsize 14)))))
   (customize-save-variable 'variable-fontsize variable-fontsize)
   (update-variable-pitch-font))
+
+(defun rvb/zoom-in ()
+  "Zoom in: bump both fixed- and variable-pitch fonts by one step.
+
+Unlike `text-scale-adjust' (the default `s-=' binding), this resizes the
+actual frame fonts rather than remapping the buffer-local `default' face,
+so faces `mixed-pitch-mode' keeps fixed-pitch (e.g. code blocks) scale
+along with the rest instead of being left behind."
+  (interactive)
+  (setq rvb/zoom-level (1+ rvb/zoom-level))
+  (update-default-font)
+  (update-variable-pitch-font))
+
+(defun rvb/zoom-out ()
+  "Zoom out: shrink both fixed- and variable-pitch fonts by one step.
+See `rvb/zoom-in'."
+  (interactive)
+  (setq rvb/zoom-level (1- rvb/zoom-level))
+  (update-default-font)
+  (update-variable-pitch-font))
+
+(defun rvb/zoom-reset ()
+  "Reset zoom, restoring the configured base font sizes."
+  (interactive)
+  (setq rvb/zoom-level 0)
+  (update-default-font)
+  (update-variable-pitch-font))
+
+(keymap-global-set "s-=" #'rvb/zoom-in)
+(keymap-global-set "s-+" #'rvb/zoom-in)
+(keymap-global-set "s--" #'rvb/zoom-out)
+(keymap-global-set "s-0" #'rvb/zoom-reset)
 
 (defun list-available-fonts ()
   "Retrieve a list of available fonts on the current system."
