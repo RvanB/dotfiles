@@ -66,13 +66,11 @@ compinit
 # fpath=(~/.zsh/completion $fpath)
 
 # Partial completion
-#zstyle ':completion:*' completer _complete
-zstyle ':completion:*' menu select
+zstyle ':completion:*' completer _complete
 
 # Case insensitivity
 zstyle ':completion:*' matcher-list '' 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' '+l:|=* r:|=*'
 
-bindkey '^I' menu-select
 bindkey $'\e[Z' reverse-menu-complete
 
 source "$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh"

@@ -5,6 +5,12 @@
 
 (setq-default indent-tabs-mode nil)
 
+;; Garbage collection
+(setq gc-cons-threshold 100000000)
+
+;; Read more from a process at once
+(setq read-process-output-max (* 1024 1024))
+
 
 ;;; Indentation
 ;; use spaces instead of tabs
@@ -84,5 +90,8 @@
   (load-file user-init-file))
 
 (global-set-key (kbd "C-c r") 'reload-init-file)
+
+;; Modes
+(add-to-list 'auto-mode-alist '("\\.yaml.j2\\'" . yaml-mode))
 
 (provide 'rvb-settings)
