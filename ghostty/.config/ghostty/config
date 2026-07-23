@@ -1,4 +1,4 @@
-theme = Tomorrow Night
+theme = term-custom
 font-family = "Berkeley Mono Variable Z8XX46Z7"
 font-size = 12
 font-thicken = true
@@ -8,4 +8,3 @@ cursor-style = "block"
 keybind = shift+enter=text:\x1b\r
 window-inherit-working-directory = false
 tab-inherit-working-directory = false
-
