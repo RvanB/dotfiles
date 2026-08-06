@@ -9,14 +9,14 @@
 (keymap-global-unset "C-M-_")
 (keymap-global-unset "C-_")
 
+(keymap-global-set "M-[" 'backward-paragraph)
+(keymap-global-set "M-]" 'forward-paragraph)
+
 (keymap-global-set "C-/" 'undo-fu-only-undo)
 (keymap-global-set "C-?" 'undo-fu-only-redo)
 
 (use-package hydra
   :ensure t)
-
-;;; Window navigation
-(keymap-global-set "C-x O" 'rvb/other-window-backward)
 
 (require 'magit)
 (keymap-unset magit-status-mode-map "C-c C-w" t)
@@ -32,21 +32,6 @@
 (which-key-mode)
 
 (windmove-default-keybindings)
-(keymap-global-set "<left>" #'windmove-left)
-(keymap-global-set "<down>" #'windmove-down)
-(keymap-global-set "<up>" #'windmove-up)
-(keymap-global-set "<right>" #'windmove-right)
-
-(defhydra window-nav (global-map "C-c w")
-  "Navigate windows"
-  ("f" windmove-right "right")
-  ("b" windmove-left "left")
-  ("p" windmove-up "up")
-  ("n" windmove-down "down")
-  ("h" windmove-left "left")
-  ("j" windmove-down "down")
-  ("k" windmove-up "up")
-  ("l" windmove-right "right"))
 
 (keymap-global-set "s-k" 'rvb/kill-buffer-and-close-window)
 
@@ -59,10 +44,6 @@
 (keymap-set isearch-mode-map "C-r" 'rvb/isearch-repeat-backward+)
 
 (keymap-global-set "C-c j" 'rvb/isearch-visible-region)
-
-(keymap-global-set "C-c t" nil)
-(keymap-global-set "C-c t e" 'eat)
-(keymap-global-set "C-c t p" 'eat-project)
 
 (keymap-global-set "C-<tab>" 'next-buffer)
 (keymap-global-set "C-<iso-lefttab>" 'previous-buffer)
@@ -77,7 +58,6 @@
 ;;; UI settings menu
 (keymap-global-set "<f6>" 'rvb/ui-menu)
 
-
 ;;; Projects
 (keymap-global-set "s-p" 'project-switch-project)
 
@@ -85,9 +65,6 @@
 (keymap-global-set "C-`" 'next-error)
 (keymap-global-set "C-~" 'previous-error)
 
-(keymap-global-set "s-p" 'project-switch-project)
-
-(keymap-global-set "C-c s" 'rvb/notes-scratch)
-
+(keymap-set prog-mode-map "s-u" 'revert-buffer)
 
 (provide 'rvb-bindings)

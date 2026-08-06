@@ -73,7 +73,7 @@ zstyle ':completion:*' matcher-list '' 'm:{[:lower:][:upper:]}={[:upper:][:lower
 
 bindkey $'\e[Z' reverse-menu-complete
 
-source "$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
+source "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh"
 
 
 ########## THEMING ##########
@@ -95,7 +95,7 @@ git_prompt() {
     fi
 }
 
-source "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+source "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
 # add-zsh-hook chpwd auto_activate_uv
 # auto_activate_uv

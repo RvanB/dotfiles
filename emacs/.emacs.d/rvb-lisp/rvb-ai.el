@@ -1,9 +1,3 @@
-
-(defcustom ollama-ip "localhost:11434"
-  "IP to connect to ollama"
-  :type 'string)
-
-;;; gptel
 ;; (use-package gptel
 ;;   :ensure t
 ;;   :config
@@ -18,11 +12,6 @@
 ;;   (add-hook 'gptel-post-response-functions 'gptel-end-of-response)
 ;;   :bind
 ;;   (("C-c g m" . gptel-menu)))
-
-;; (use-package gptel-magit
-;;   :ensure t
-;;   :after gptel
-;;   :hook (magit-mode . gptel-magit-install))
 
 (require 'project)
 
@@ -95,12 +84,5 @@ the clipboard."
   "Summarize the active region using Apple Intelligence."
   (interactive)
   (rvb/apple-intelligence-region "tolist"))
-
-;; ;;; Claude Code IDE
-;; (use-package claude-code-ide
-;;   :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
-;;   :bind ("C-c C-'" . claude-code-ide-menu) ; Set your favorite keybinding
-;;   :config
-;;   (claude-code-ide-emacs-tools-setup)) ; Optionally enable Emacs MCP tools
 
 (provide 'rvb-ai)

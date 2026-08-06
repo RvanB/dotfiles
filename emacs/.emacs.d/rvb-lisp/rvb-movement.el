@@ -1,14 +1,5 @@
 ;;; Window management
 
-(defun rvb/window-buffer-visible-elsewhere-p (window)
-  "Return non-nil when WINDOW's buffer is visible in another window."
-  (let ((buffer (window-buffer window)))
-    (catch 'visible
-      (dolist (other-window (window-list (window-frame window) 'no-minibuffer))
-        (when (and (not (eq window other-window))
-                   (eq buffer (window-buffer other-window)))
-          (throw 'visible t))))))
-
 (defun rvb/kill-buffer-and-close-window ()
   "Kill the current buffer and close the window."
   (interactive)
@@ -86,7 +77,7 @@ ARG and REDISPLAY are identical to the original function."
       (pixel-scroll-precision-interpolate pixels nil 1)
       (rvb/move-point-to-window-center)))))
 
-(defcustom smooth-scroll t
+(defcustom smooth-scroll nil
   "Variable to enable/disable smooth scrolling"
   :type 'boolean)
 
@@ -239,12 +230,5 @@ go to the real end-of-line.  Useful as an alternative to `end-of-line`."
 This is the opposite of `forward-symbol`."
   (interactive "p")
   (forward-symbol (- (or n 1))))
-
-(use-package avy
-  :ensure t
-  :config
-  (global-set-key (kbd "C-c j") 'avy-goto-word-or-subword-1)
-  (global-set-key (kbd "s-.") 'avy-goto-word-or-subword-1)
-  )
 
 (provide 'rvb-movement)

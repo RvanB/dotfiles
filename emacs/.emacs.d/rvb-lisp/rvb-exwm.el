@@ -1,9 +1,6 @@
 (require 'exwm)
 (require 'exwm-systemtray)
-
 (require 'exwm-randr)
-
-
 
 ;; Set the initial workspace number
 (setq exwm-workspace-number 4)

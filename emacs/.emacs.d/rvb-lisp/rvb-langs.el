@@ -34,14 +34,6 @@
           (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src"))
           (vue        . ("https://github.com/tree-sitter-grammars/tree-sitter-vue")))))
 
-;; (use-package treesit-auto
-;;   :ensure t
-;;   ;; :custom
-;;   ;; (treesit-auto-install 'prompt)
-;;   :config
-;;   ;; (treesit-auto-add-to-auto-mode-alist 'all)
-;;   (global-treesit-auto-mode))
-
 (use-package eglot-booster
   :vc (:url "https://github.com/jdtsmith/eglot-booster"
 	    :rev :newest
@@ -51,9 +43,10 @@
   (if (executable-find "emacs-lsp-booster")
       'eglot-booster-mode))
 
+;; Jump to eglot symbols with consult
 (use-package consult-eglot
   :ensure t)
-
+;; Added embark support
 (use-package consult-eglot-embark
   :ensure t)
 
@@ -172,11 +165,6 @@
 
 ;;; Perl
 (add-to-list 'eglot-server-programs '(perl-mode . ("pls")))
-
-;;; JavaScript/JSX
-(use-package rjsx-mode
-  :ensure t
-  :mode ("\\.js\\'" . rjsx-mode))
 
 ;;; Ruff formatting for Python
 (use-package ruff-format

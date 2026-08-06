@@ -22,7 +22,3 @@
 (require 'rvb-terminals)
 (require 'rvb-org)
 (require 'rvb-bindings)
-(require 'rvb-aws)
-
-(rvb/notes-scratch)
-(rvb/ui-page-chrome-mode)
