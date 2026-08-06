@@ -375,15 +375,6 @@ See `rvb/zoom-in'."
     (customize-save-variable 'variable-fontfamily variable-fontfamily)
     (update-variable-pitch-font)))
 
-(defclass rvb-theme-variable (transient-lisp-variable) ()
-  "A theme variable whose reader uses `consult-theme' for previews.")
-
-(defclass rvb-font-family-variable (transient-lisp-variable) ()
-  "A font family variable with completion over installed fonts.")
-
-(defclass rvb-font-size-variable (transient-lisp-variable) ()
-  "A font size variable read as a number.")
-
 (defun rvb/customize-set-variable (variable value)
   "Set and persist VARIABLE to VALUE."
   (set variable value)
@@ -413,7 +404,7 @@ without toggling appearance."
   (dolist (theme (reverse themes))
     (load-theme theme t)))
 
-(cl-defmethod transient-infix-read ((obj rvb-theme-variable))
+(defun rvb/read-theme (_prompt _initial-input _history)
   "Preview themes with `consult-theme' and return the chosen theme.
 The active theme is restored before returning to the settings menu."
   (let ((enabled-themes (copy-sequence custom-enabled-themes))
@@ -425,51 +416,55 @@ The active theme is restored before returning to the settings menu."
       (rvb/restore-enabled-themes enabled-themes))
     selected-theme))
 
-(cl-defmethod transient-infix-read ((obj rvb-font-family-variable))
-  "Read a font family for OBJ using completion."
-  (completing-read (format "Set %s: " (oref obj description))
-                   (list-available-fonts) nil t
-                   (symbol-value (oref obj variable))))
+(defun rvb/read-font-family (prompt initial-input history)
+  "Read a font family using PROMPT, INITIAL-INPUT, and HISTORY."
+  (completing-read prompt (list-available-fonts) nil t
+                   initial-input history))
 
-(cl-defmethod transient-infix-read ((obj rvb-font-size-variable))
-  "Read a point size for OBJ."
-  (read-number (format "Set %s: " (oref obj description))
-               (or (symbol-value (oref obj variable)) 14)))
+(defun rvb/read-font-size (prompt initial-input _history)
+  "Read a point size using PROMPT and INITIAL-INPUT."
+  (read-number prompt (or initial-input 14)))
 
 (transient-define-infix rvb/ui-light-theme ()
-  :class 'rvb-theme-variable
+  :class 'transient-lisp-variable
   :variable 'rvb-light-theme
   :description "Light theme"
+  :reader #'rvb/read-theme
   :set-value #'rvb/set-theme-variable)
 
 (transient-define-infix rvb/ui-dark-theme ()
-  :class 'rvb-theme-variable
+  :class 'transient-lisp-variable
   :variable 'rvb-dark-theme
   :description "Dark theme"
+  :reader #'rvb/read-theme
   :set-value #'rvb/set-theme-variable)
 
 (transient-define-infix rvb/ui-fixed-font-family ()
-  :class 'rvb-font-family-variable
+  :class 'transient-lisp-variable
   :variable 'fontfamily
   :description "Fixed-pitch family"
+  :reader #'rvb/read-font-family
   :set-value #'rvb/set-font-variable)
 
 (transient-define-infix rvb/ui-fixed-font-size ()
-  :class 'rvb-font-size-variable
+  :class 'transient-lisp-variable
   :variable 'fontsize
   :description "Fixed-pitch size"
+  :reader #'rvb/read-font-size
   :set-value #'rvb/set-font-variable)
 
 (transient-define-infix rvb/ui-variable-font-family ()
-  :class 'rvb-font-family-variable
+  :class 'transient-lisp-variable
   :variable 'variable-fontfamily
   :description "Variable-pitch family"
+  :reader #'rvb/read-font-family
   :set-value #'rvb/set-font-variable)
 
 (transient-define-infix rvb/ui-variable-font-size ()
-  :class 'rvb-font-size-variable
+  :class 'transient-lisp-variable
   :variable 'variable-fontsize
   :description "Variable-pitch size"
+  :reader #'rvb/read-font-size
   :set-value #'rvb/set-font-variable)
 
 (defvar rvb/ui-page-chrome--saved-header-lines nil)
