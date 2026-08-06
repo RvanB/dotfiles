@@ -14,6 +14,9 @@
 (use-package olivetti
   :ensure t)
 
+(use-package spacious-padding
+  :ensure t)
+
 ;; Diminish minor modes
 (use-package diminish
   :ensure t)
@@ -197,183 +200,28 @@
   :config
   (rvb/configure-markdown-mixed-pitch-faces))
 
-(defcustom fontfamily nil
-  "The font family to use as the default. If nil, uses the Emacs default."
-  :type '(choice (const :tag "Use default font" nil)
-                 (string :tag "Custom font family"))
-  :group 'appearance)
-
-(defcustom fontsize 14
-  "The font size to use as the default. If nil, uses the Emacs default."
-  :type '(choice (const :tag "Use default font size" nil)
-                 (integer :tag "Custom font size"))
-  :group 'appearance)
-
-(defcustom variable-fontfamily nil
-  "The font family to use for variable-pitch text.
-If nil, use the Emacs default variable-pitch font family."
-  :type '(choice (const :tag "Use default variable-pitch font" nil)
-                 (string :tag "Custom font family"))
-  :group 'appearance)
-
-(defcustom variable-fontsize nil
-  "The font size to use for variable-pitch text.
-If nil, use the Emacs default variable-pitch font size."
-  :type '(choice (const :tag "Use default variable-pitch font size" nil)
-                 (integer :tag "Custom font size"))
-  :group 'appearance)
-
-(defvar rvb/zoom-level 0
-  "Steps applied on top of the base font sizes by `rvb/zoom-in' and
-`rvb/zoom-out'.  Not persisted across sessions; `rvb/zoom-reset' sets it
-back to 0.")
-
-(defun rvb/default-font-spec ()
-  "Build the configured default font string."
-  (when (and fontfamily fontsize)
-    (format "%s-%d" fontfamily (max 1 (+ fontsize rvb/zoom-level)))))
-
-(defun rvb/refresh-mixed-pitch-buffers ()
-  "Refresh active `mixed-pitch-mode' buffers after a font change."
-  (when (fboundp 'mixed-pitch-mode)
-    (dolist (buffer (buffer-list))
-      (with-current-buffer buffer
-        (when (and (boundp 'mixed-pitch-mode)
-                   mixed-pitch-mode)
-          (mixed-pitch-mode -1)
-          (mixed-pitch-mode 1))))))
-
-(defun update-default-font (&optional frame)
-  "Update the default font for FRAME and future frames."
-  (let ((font-spec (rvb/default-font-spec)))
-    (if font-spec
-        (progn
-          (rvb/set-default-frame-parameter 'font font-spec)
-          (when (display-graphic-p frame)
-            (set-face-attribute 'default frame :font font-spec)))
-      (setq default-frame-alist (assq-delete-all 'font default-frame-alist))
-      (when (display-graphic-p frame)
-        (set-face-attribute
-         'default
-         frame
-         :font (face-attribute 'default :font frame 'default)))))
-  (rvb/refresh-mixed-pitch-buffers))
-
-(defun rvb/variable-pitch-height ()
-  "Compute the effective point size for the `variable-pitch' face.
-Falls back to the fixed-pitch `fontsize' as a base when
-`variable-fontsize' is unset, so zoom always has a base to work from."
-  (let ((base (or variable-fontsize fontsize)))
-    (when base (max 1 (+ base rvb/zoom-level)))))
-
-(defun update-variable-pitch-font (&optional frame)
-  "Update the variable-pitch font for FRAME and future frames."
-  (when (display-graphic-p frame)
-    (let ((height (rvb/variable-pitch-height)))
-      (set-face-attribute
-       'variable-pitch
-       frame
-       :family (or variable-fontfamily 'unspecified)
-       :height (if height (* 10 height) 'unspecified))))
-  (rvb/refresh-mixed-pitch-buffers))
-
-(defun rvb/initialize-ui (&optional frame)
-  "Apply the configured UI to FRAME, or all live frames."
-  (rvb/set-frame-parameter-defaults 'ns-transparent-titlebar t)
-  (rvb/set-frame-parameter-defaults 'ns-appearance rvb-current-theme)
-  (rvb/ensure-theme-loaded)
-  (dolist (live-frame (if frame (list frame) (frame-list)))
-    (rvb/apply-frame-appearance live-frame)
-    (update-default-font live-frame)
-    (update-variable-pitch-font live-frame)))
-
-(defun increase-font-size ()
-  "Increase the font size by 1 and update the font."
-  (interactive)
-  (setq fontsize (if fontsize (1+ fontsize) 14)) ;; Start from 14 if nil
-  (customize-save-variable 'fontsize fontsize)
-  (update-default-font))
-
-(defun decrease-font-size ()
-  "Decrease the font size by 1 and update the font."
-  (interactive)
-  (setq fontsize (if fontsize (max 1 (1- fontsize)) 13)) ;; Start from 13 if nil
-  (customize-save-variable 'fontsize fontsize)
-  (update-default-font))
-
-(defun increase-variable-pitch-font-size ()
-  "Increase the variable-pitch font size by 1 and update the font."
-  (interactive)
-  (setq variable-fontsize (if variable-fontsize
-                              (1+ variable-fontsize)
-                            (or fontsize 14)))
-  (customize-save-variable 'variable-fontsize variable-fontsize)
-  (update-variable-pitch-font))
-
-(defun decrease-variable-pitch-font-size ()
-  "Decrease the variable-pitch font size by 1 and update the font."
-  (interactive)
-  (setq variable-fontsize (if variable-fontsize
-                              (max 1 (1- variable-fontsize))
-                            (max 1 (1- (or fontsize 14)))))
-  (customize-save-variable 'variable-fontsize variable-fontsize)
-  (update-variable-pitch-font))
-
-(defun rvb/zoom-in ()
-  "Zoom in: bump both fixed- and variable-pitch fonts by one step.
-
-Unlike `text-scale-adjust' (the default `s-=' binding), this resizes the
-actual frame fonts rather than remapping the buffer-local `default' face,
-so faces `mixed-pitch-mode' keeps fixed-pitch (e.g. code blocks) scale
-along with the rest instead of being left behind."
-  (interactive)
-  (setq rvb/zoom-level (1+ rvb/zoom-level))
-  (update-default-font)
-  (update-variable-pitch-font))
-
-(defun rvb/zoom-out ()
-  "Zoom out: shrink both fixed- and variable-pitch fonts by one step.
-See `rvb/zoom-in'."
-  (interactive)
-  (setq rvb/zoom-level (1- rvb/zoom-level))
-  (update-default-font)
-  (update-variable-pitch-font))
-
-(defun rvb/zoom-reset ()
-  "Reset zoom, restoring the configured base font sizes."
-  (interactive)
-  (setq rvb/zoom-level 0)
-  (update-default-font)
-  (update-variable-pitch-font))
-
-(keymap-global-set "s-=" #'rvb/zoom-in)
-(keymap-global-set "s-+" #'rvb/zoom-in)
-(keymap-global-set "s--" #'rvb/zoom-out)
-(keymap-global-set "s-0" #'rvb/zoom-reset)
-
-(defun list-available-fonts ()
-  "Retrieve a list of available fonts on the current system."
-  (delete-dups (sort (font-family-list) #'string-lessp)))
-
-(defun select-font-family ()
-  "Prompt the user to select a font family live via completion."
-  (interactive)
-  (let ((selected-font (completing-read "Select font family: " (list-available-fonts) nil t)))
-    (setq fontfamily selected-font)
-    (customize-save-variable 'fontfamily fontfamily)
-    (update-default-font)))
-
-(defun select-variable-pitch-font-family ()
-  "Prompt the user to select a variable-pitch font family via completion."
-  (interactive)
-  (let ((selected-font
-         (completing-read "Select variable-pitch font family: "
-                          (list-available-fonts)
-                          nil
-                          t)))
-    (setq variable-fontfamily selected-font)
-    (customize-save-variable 'variable-fontfamily variable-fontfamily)
-    (update-variable-pitch-font)))
+(use-package fontaine
+  :ensure t
+  :init
+  (setq fontaine-latest-state-file
+        (locate-user-emacs-file "fontaine-latest-state.eld")
+        fontaine-presets
+        '((regular
+           :default-height 140)
+          (large
+           :inherit regular
+           :default-height 180)
+          (presentation
+           :inherit regular
+           :default-height 240)
+          (t
+           :default-family "CommitMono"
+           :fixed-pitch-family "CommitMono"
+           :variable-pitch-family "ITC Galliard"
+           :variable-pitch-height 1.0)))
+  :config
+  (fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular))
+  (fontaine-mode 1))
 
 (defun rvb/customize-set-variable (variable value)
   "Set and persist VARIABLE to VALUE."
@@ -390,13 +238,6 @@ without toggling appearance."
   (when (or (and (eq variable 'rvb-light-theme) (eq rvb-current-theme 'light))
             (and (eq variable 'rvb-dark-theme) (eq rvb-current-theme 'dark)))
     (rvb/load-theme-preset value rvb-current-theme)))
-
-(defun rvb/set-font-variable (variable value)
-  "Set, persist, and apply font VARIABLE to VALUE."
-  (rvb/customize-set-variable variable value)
-  (pcase variable
-    ((or 'fontfamily 'fontsize) (update-default-font))
-    ((or 'variable-fontfamily 'variable-fontsize) (update-variable-pitch-font))))
 
 (defun rvb/restore-enabled-themes (themes)
   "Restore THEMES after temporarily previewing other themes."
@@ -416,15 +257,6 @@ The active theme is restored before returning to the settings menu."
       (rvb/restore-enabled-themes enabled-themes))
     selected-theme))
 
-(defun rvb/read-font-family (prompt initial-input history)
-  "Read a font family using PROMPT, INITIAL-INPUT, and HISTORY."
-  (completing-read prompt (list-available-fonts) nil t
-                   initial-input history))
-
-(defun rvb/read-font-size (prompt initial-input _history)
-  "Read a point size using PROMPT and INITIAL-INPUT."
-  (read-number prompt (or initial-input 14)))
-
 (transient-define-infix rvb/ui-light-theme ()
   :class 'transient-lisp-variable
   :variable 'rvb-light-theme
@@ -439,36 +271,7 @@ The active theme is restored before returning to the settings menu."
   :reader #'rvb/read-theme
   :set-value #'rvb/set-theme-variable)
 
-(transient-define-infix rvb/ui-fixed-font-family ()
-  :class 'transient-lisp-variable
-  :variable 'fontfamily
-  :description "Fixed-pitch family"
-  :reader #'rvb/read-font-family
-  :set-value #'rvb/set-font-variable)
-
-(transient-define-infix rvb/ui-fixed-font-size ()
-  :class 'transient-lisp-variable
-  :variable 'fontsize
-  :description "Fixed-pitch size"
-  :reader #'rvb/read-font-size
-  :set-value #'rvb/set-font-variable)
-
-(transient-define-infix rvb/ui-variable-font-family ()
-  :class 'transient-lisp-variable
-  :variable 'variable-fontfamily
-  :description "Variable-pitch family"
-  :reader #'rvb/read-font-family
-  :set-value #'rvb/set-font-variable)
-
-(transient-define-infix rvb/ui-variable-font-size ()
-  :class 'transient-lisp-variable
-  :variable 'variable-fontsize
-  :description "Variable-pitch size"
-  :reader #'rvb/read-font-size
-  :set-value #'rvb/set-font-variable)
-
 (defvar rvb/ui-page-chrome--saved-header-lines nil)
-(defvar rvb/ui-page-chrome--saved-mode-line-parameters nil)
 (defvar rvb/ui-page-chrome--saved-line-number-faces nil
   "Alist mapping (FRAME . FACE) to the line-number background to restore.")
 
@@ -491,12 +294,6 @@ The active theme is restored before returning to the settings menu."
                 (local-variable-p 'header-line-format buffer)
                 (buffer-local-value 'header-line-format buffer))
           rvb/ui-page-chrome--saved-header-lines)))
-
-(defun rvb/ui-page-chrome--save-mode-line-parameter (window)
-  "Remember WINDOW's mode-line parameter before page chrome changes it."
-  (unless (assq window rvb/ui-page-chrome--saved-mode-line-parameters)
-    (push (cons window (window-parameter window 'mode-line-format))
-          rvb/ui-page-chrome--saved-mode-line-parameters)))
 
 (defface rvb/ui-page-chrome-header
   '((t :inherit header-line))
@@ -652,13 +449,10 @@ font matches ordinary buffer text instead of the generic `fixed-pitch' face."
   (when (rvb/ui-page-chrome--window-p window)
     (let ((buffer (window-buffer window)))
       (rvb/ui-page-chrome--save-header-line buffer)
-      (rvb/ui-page-chrome--save-mode-line-parameter window)
       (with-current-buffer buffer
         (setq-local header-line-format
                     '((:eval (rvb/ui-page-chrome--header-line-format
-                               (selected-window))))))
-      (set-window-parameter
-       window 'mode-line-format 'none))))
+                               (selected-window)))))))))
 
 (defun rvb/ui-page-chrome--apply-line-number-faces (frame)
   "Drop the line-number backgrounds in FRAME so numbers blend into the body.
@@ -694,11 +488,7 @@ baseline, so restoring always reverts to the active theme."
         (walk-windows #'rvb/ui-page-chrome--apply-window 'no-minibuf frame)))))
 
 (defun rvb/ui-page-chrome--restore ()
-  "Restore header and mode lines changed by RVB page chrome."
-  (dolist (entry rvb/ui-page-chrome--saved-mode-line-parameters)
-    (when (window-live-p (car entry))
-      (set-window-parameter (car entry) 'mode-line-format (cdr entry))))
-  (setq rvb/ui-page-chrome--saved-mode-line-parameters nil)
+  "Restore header lines changed by RVB page chrome."
   (dolist (entry rvb/ui-page-chrome--saved-header-lines)
     (pcase-let ((`(,buffer ,was-local ,header-line) entry))
       (when (buffer-live-p buffer)
@@ -714,21 +504,17 @@ baseline, so restoring always reverts to the active theme."
   (rvb/ui-page-chrome-refresh))
 
 (define-minor-mode rvb/ui-page-chrome-mode
-  "Show a margin-limited file/status header and hide the bottom mode line."
+  "Show a margin-limited file/status header above the buffer."
   :global t
   :lighter nil
   (if rvb/ui-page-chrome-mode
       (progn
         (add-hook 'window-configuration-change-hook
                   #'rvb/ui-page-chrome--window-change)
-        (add-hook 'window-size-change-functions
-                  #'rvb/ui-page-chrome--window-change)
         (add-hook 'after-make-frame-functions
                   #'rvb/ui-page-chrome--window-change)
         (rvb/ui-page-chrome-refresh))
     (remove-hook 'window-configuration-change-hook
-                 #'rvb/ui-page-chrome--window-change)
-    (remove-hook 'window-size-change-functions
                  #'rvb/ui-page-chrome--window-change)
     (remove-hook 'after-make-frame-functions
                  #'rvb/ui-page-chrome--window-change)
@@ -743,17 +529,10 @@ baseline, so restoring always reverts to the active theme."
    ("l" rvb/ui-light-theme)
    ("d" rvb/ui-dark-theme)]
   ["Fonts"
-   ("f" rvb/ui-fixed-font-family)
-   ("F" rvb/ui-fixed-font-size)
-   ("v" rvb/ui-variable-font-family)
-   ("V" rvb/ui-variable-font-size)]
+   ("f" "Select preset" fontaine-set-preset)
+   ("F" "Toggle recent presets" fontaine-toggle-preset)]
   ["Custom settings"
    ("a" "Appearance settings" (lambda () (interactive) (customize-group 'appearance)))])
-
-;; Ensure the font is set initially
-(rvb/initialize-ui)
-(add-hook 'after-make-frame-functions #'rvb/initialize-ui)
-(add-hook 'window-setup-hook #'rvb/initialize-ui)
 
 ;; Ligatures
 (use-package ligature
@@ -832,7 +611,9 @@ baseline, so restoring always reverts to the active theme."
   :ensure t
   :hook ((prog-mode . diff-hl-mode)
          (dired-mode . diff-hl-dired-mode)
-         (magit-post-refresh . diff-hl-magit-post-refresh)))
+         (magit-post-refresh . diff-hl-magit-post-refresh))
+  :config
+  (global-diff-hl-show-hunk-mouse-mode))
 
 ;;; Auto-select help and temporary windows
 (setq help-window-select t)  ; Automatically select help windows

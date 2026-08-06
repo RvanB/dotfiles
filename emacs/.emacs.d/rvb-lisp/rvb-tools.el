@@ -1,9 +1,3 @@
-;;; PDFs
-(use-package pdf-tools
-  :ensure t
-  :config
-  (setq pdf-view-use-scaling nil))
-
 ;;; graphviz
 (use-package graphviz-dot-mode
   :ensure t
