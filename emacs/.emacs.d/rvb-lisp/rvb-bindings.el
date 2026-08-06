@@ -1,8 +1,6 @@
 (keymap-global-set "s-f" 'forward-symbol)
 (keymap-global-set "s-b" 'backward-symbol)
 
-(keymap-global-set "C-c y" 'consult-yasnippet)
-
 (keymap-global-unset "s-z")
 (keymap-global-unset "C-/")
 (keymap-global-unset "C-?")

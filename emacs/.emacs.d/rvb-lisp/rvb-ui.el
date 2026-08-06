@@ -132,7 +132,7 @@
   "Apply frame-specific appearance settings to FRAME."
   (let ((target-frame (or frame (selected-frame))))
     (when (display-graphic-p target-frame)
-      (set-frame-parameter target-frame 'ns-transparent-titlebar t)
+      (set-frame-parameter target-frame 'ns-transparent-titlebar nil)
       (set-frame-parameter target-frame 'ns-appearance rvb-current-theme))))
 
 (use-package ns-auto-titlebar

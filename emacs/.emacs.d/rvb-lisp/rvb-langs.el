@@ -68,6 +68,12 @@
   :ensure t
   :after eglot)
 
+;; Rust
+(use-package rustic
+  :ensure t
+  :config
+  (setq rustic-lsp-client 'eglot))
+
 (exec-path-from-shell-copy-env "JAVA_HOME")
 
 ;;; Python

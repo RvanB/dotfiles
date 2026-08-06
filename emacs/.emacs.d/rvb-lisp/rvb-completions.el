@@ -154,24 +154,10 @@
     (add-hook 'completion-at-point-functions #'cape-elisp-block nil t)
     (unless my/cape-fallback-capf
       (setq-local my/cape-fallback-capf
-                  (cape-capf-super #'yasnippet-capf #'cape-dabbrev)))
+                  (cape-capf-super  #'cape-dabbrev)))
     (add-hook 'completion-at-point-functions my/cape-fallback-capf t t))
 
   (add-hook 'prog-mode-hook #'my/setup-completion-capfs))
-
-;;; Snippets
-(use-package yasnippet
-  :ensure t
-  :diminish 'yas-minor-mode
-  :config
-  (yas-global-mode 1))
-
-(use-package yasnippet-snippets
-  :ensure t)
-
-(use-package yasnippet-capf
-  :ensure t
-  :after (cape yasnippet))
 
 (defun my/eglot-capf ()
   (when my/cape-fallback-capf
@@ -182,7 +168,6 @@
     (setq-local my/eglot-super-capf
                 (cape-capf-super
                  #'eglot-completion-at-point
-                 #'yasnippet-capf
                  #'cape-dabbrev)))
   (add-hook 'completion-at-point-functions my/eglot-super-capf nil t))
 
