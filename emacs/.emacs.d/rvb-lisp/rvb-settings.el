@@ -11,7 +11,6 @@
 ;; Read more from a process at once
 (setq read-process-output-max (* 1024 1024))
 
-
 ;;; Indentation
 ;; use spaces instead of tabs
 (setq indent-tabs-mode nil)

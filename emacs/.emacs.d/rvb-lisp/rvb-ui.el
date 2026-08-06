@@ -827,6 +827,13 @@ baseline, so restoring always reverts to the active theme."
 ;; (setq split-height-threshold nil)  ; Never split vertically (top-bottom)
 ;; (setq split-width-threshold nil)     ; Always prefer horizontal splits (side-by-side)
 
+;; Diff-hl with mouse support
+(use-package diff-hl
+  :ensure t
+  :hook ((prog-mode . diff-hl-mode)
+         (dired-mode . diff-hl-dired-mode)
+         (magit-post-refresh . diff-hl-magit-post-refresh)))
+
 ;;; Auto-select help and temporary windows
 (setq help-window-select t)  ; Automatically select help windows
 
