@@ -15,20 +15,16 @@
 
 (require 'project)
 
-;;; GitHub Copilot
-;; (use-package copilot
-;;   :vc (:url "https://github.com/copilot-emacs/copilot.el"
-;;             :rev :newest
-;;             :branch "main")
-
-;;   :config
-;;   (add-hook 'prog-mode-hook 'copilot-mode)
-;;   (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
-;;   (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
-;;   )
-
-(use-package agent-shell
-  :ensure t)
+(use-package copilot
+  :ensure t
+  :hook (prog-mode . copilot-mode)
+  :bind (:map copilot-completion-map
+              ("<tab>" . copilot-accept-completion)
+              ("TAB" . copilot-accept-completion)
+              ("C-<tab>" . copilot-accept-completion-by-word)
+              ("C-TAB" . copilot-accept-completion-by-word)
+              ("C-n" . copilot-next-completion)
+              ("C-p" . copilot-previous-completion)))
 
 (defun rvb/run-apple-intelligence-shortcut (shortcut-name)
   "Run macOS Shortcut SHORTCUT-NAME.
