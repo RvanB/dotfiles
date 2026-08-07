@@ -1,8 +1,13 @@
 (use-package treesit
   :ensure nil
   :init
-  (setq treesit-font-lock-level 3)
+  ;; Rust places function calls, methods, operators, properties, and variables
+  ;; in tree-sitter's most detailed font-lock tier.
+  (setq treesit-font-lock-level 4)
   :config
+  ;; Select the tree-sitter mode before mode hooks (not by changing modes in
+  ;; an already Eglot-managed buffer), so the server receives one didOpen.
+  (add-to-list 'major-mode-remap-alist '(python-mode . python-ts-mode))
   (setq treesit-language-source-alist
         '(
           (c          . ("https://github.com/tree-sitter/tree-sitter-c"))
@@ -52,12 +57,27 @@
 
 (exec-path-from-shell-copy-env "PERL5LIB")
 
+(defun rvb/eglot-disable-inlay-hints ()
+  "Keep Eglot inlay hints disabled by default in the current buffer."
+  (eglot-inlay-hints-mode -1))
+
+(defun rvb/eglot-ensure-non-python ()
+  "Start Eglot in programming modes other than Python.
+
+Python starts Eglot later from `python-base-mode-hook', after PET has
+configured the buffer-local environment."
+  (unless (derived-mode-p 'python-base-mode)
+    (eglot-ensure)))
+
 (use-package eglot
   :ensure t
+  :custom
+  (eldoc-idle-delay 0.05)
+  (eglot-send-changes-idle-time 0.05)
   :init
   :hook
-  ;; In prog-mode, ,run eglot ensure and eglot-inlay-hints-mode
-  (prog-mode . eglot-ensure))
+  ((prog-mode . rvb/eglot-ensure-non-python)
+   (eglot-managed-mode . rvb/eglot-disable-inlay-hints)))
 
 ;;; Go
 (use-package go-mode
@@ -71,74 +91,110 @@
 ;; Rust
 (use-package rustic
   :ensure t
+  :init
+  ;; Let Rustic use the richer built-in rust-ts-mode fontification.  In
+  ;; particular, legacy rust-mode does not identify ordinary function calls.
+  (setq rust-mode-treesitter-derive t)
   :config
   (setq rustic-lsp-client 'eglot))
 
 (exec-path-from-shell-copy-env "JAVA_HOME")
 
 ;;; Python
-;; NOTE TO SELF: This is causing problems with syntax highlighting on python-ts-mode startup.
 ;;; PET - Python Executable Tracker
+(defun rvb/pet-export-virtual-env ()
+  "Export PET's virtualenv for Eshell and new subprocesses.
+
+`VIRTUAL_ENV' is global to the Emacs process, so the most recently
+initialized Python project supplies its value."
+  (when-let ((virtualenv (pet-virtualenv-root)))
+    (setenv "VIRTUAL_ENV" (directory-file-name virtualenv))))
+
+(defun rvb/pet-configure-python-shell ()
+  "Use the current virtualenv's IPython for inferior Python when available."
+  (when-let ((ipython (pet-executable-find "ipython")))
+    (setq-local python-shell-interpreter ipython
+                python-shell-interpreter-args
+                "-i --simple-prompt --no-color-info")))
+
+(defun rvb/pyright-config ()
+  "Create or update this project's Pyright configuration from PET.
+
+Preserve existing settings, update the virtualenv location, and add
+the usual defaults only when they are absent.  Return non-nil when the
+configuration file changed."
+  (interactive)
+  (condition-case err
+      (when-let* ((root (pet-project-root))
+                  (virtualenv (pet-virtualenv-root)))
+        (let* ((file (expand-file-name "pyrightconfig.json" root))
+               (config (if (file-exists-p file)
+                           (json-read-file file)
+                         nil))
+               (virtualenv (directory-file-name virtualenv))
+               (defaults
+                '((exclude . ["**/__pycache__/**/*" "**/*.pyc" "**/*.pyo"])
+                  (reportMissingImports . t)
+                  (typeCheckingMode . "basic")))
+               (quiet-diagnostics
+                '(reportAny
+                  reportExplicitAny
+                  reportMissingParameterType
+                  reportUnknownArgumentType
+                  reportUnknownLambdaType
+                  reportUnknownMemberType
+                  reportUnknownParameterType
+                  reportUnknownVariableType
+                  reportMissingTypeStubs
+                  reportUnusedCallResult)))
+          (setf (alist-get 'venvPath config)
+                (file-name-directory virtualenv)
+                (alist-get 'venv config)
+                (file-name-nondirectory virtualenv))
+          ;; Do not require a fully annotated codebase or complain when type
+          ;; inference reaches Any/Unknown.  Concrete type errors and missing
+          ;; imports remain enabled.
+          (dolist (diagnostic quiet-diagnostics)
+            (setf (alist-get diagnostic config) :json-false))
+          (dolist (setting defaults)
+            (unless (assq (car setting) config)
+              (push setting config)))
+          (let ((content
+                 (with-temp-buffer
+                   (insert (json-encode config))
+                   (json-pretty-print-buffer)
+                   (insert "\n")
+                   (buffer-string))))
+            (unless (and (file-exists-p file)
+                         (string= content
+                                  (with-temp-buffer
+                                    (insert-file-contents file)
+                                    (buffer-string))))
+              (write-region content nil file nil 'silent)
+              (message "Updated %s from PET" file)
+              t))))
+    (error
+     (message "Could not update pyrightconfig.json: %s"
+              (error-message-string err))
+     nil)))
+
 (use-package pet
   :ensure t
-  :config)
-
-;; Set VIRTUAL_ENV environment variable to the venv defined in pyright.json
-;; If pyrightconfig.json exists in the project root, get "venvPath" and "venv" from the json object and concatenate them into a variable
-;; Set VIRTUAL_ENV to this variable
-(defun rvb/set-venv ()
-  (interactive)
-  (let* ((config-file (expand-file-name "pyrightconfig.json" (project-root (project-current))))
-         (json-data (json-read-file config-file))
-         (venv-path (cdr (assoc 'venvPath json-data)))
-         (venv (cdr (assoc 'venv json-data))))
-    (when (and venv-path venv)
-      (setenv "VIRTUAL_ENV" (expand-file-name venv venv-path))
-      (message "VIRTUAL_ENV set to: %s" (getenv "VIRTUAL_ENV")))))
-
-(advice-add 'pet-mode :before #'rvb/set-venv)
-
-;;; Pyright configuration
-(defun rvb/pyright-config ()
-  "Create a JSON configuration file for Python using a specified package manager to find the venv."
-  (interactive)
-  (let* ((directory (read-directory-name "Choose directory: "))
-         (package-manager (completing-read "Choose package manager: " '("pipenv" "poetry" "uv")))
-         (venv-path nil)
-         (venv nil))
-    (cond
-     ((string-equal package-manager "pipenv")
-      (with-temp-buffer
-        (cd directory)
-        (let ((full-path (shell-command-to-string "pipenv --venv")))
-  	  (setq venv-path (file-name-directory (directory-file-name (string-trim full-path))))
-          (setq venv (file-name-nondirectory (directory-file-name (string-trim full-path)))))))
-     ((string-equal package-manager "poetry")
-      (with-temp-buffer
-        (cd directory)
-        (let ((full-path (shell-command-to-string "poetry run poetry env info --path 2> /dev/null")))
-          (setq venv-path (file-name-directory (directory-file-name (string-trim full-path))))
-          (setq venv (file-name-nondirectory (directory-file-name (string-trim full-path)))))))
-     ((string-equal package-manager "uv")
-      (with-temp-buffer
-        (cd directory)
-        (setq venv-path (file-name-directory (expand-file-name ".venv" directory)))
-	(setq venv ".venv"))))
-    (setq venv-path (string-trim venv-path))  ; Trim whitespace
-    (let ((json-content
-           (json-encode `((venvPath . ,venv-path)
-                          (venv . ,venv)
-                          (exclude . ["**/__pycache__/**/*"
-                                      "**/*.pyc"
-                                      "**/*.pyo"])
-                          (reportMissingImports . t)
-                          (reportMissingTypeStubs . t)
-                          (reportUnusedCallResult . :json-false)
-                          (typeCheckingMode . "basic")))))
-      (let ((file-path (expand-file-name "pyrightconfig.json" directory)))
-        (with-temp-file file-path
-          (insert json-content))
-        (message "Configuration file saved to %s" file-path)))))
+  :custom
+  ;; Project configuration and virtualenvs live at (or above) the source
+  ;; directory.  Avoid PET's recursive fallback, which otherwise walks large
+  ;; directories such as .venv when `fd' is unavailable.
+  (pet-find-file-functions '(pet-locate-dominating-file))
+  (pet-search-globally nil)
+  :init
+  ;; PET must configure the buffer before Eglot chooses and starts a server.
+  (add-hook 'python-base-mode-hook #'pet-mode -10)
+  (add-hook 'python-base-mode-hook #'eglot-ensure 10)
+  (add-hook 'pet-after-buffer-local-vars-setup
+            #'rvb/pet-export-virtual-env)
+  (add-hook 'pet-after-buffer-local-vars-setup
+            #'rvb/pet-configure-python-shell)
+  (add-hook 'pet-after-buffer-local-vars-setup #'rvb/pyright-config))
 
 (defun rvb/ruff-check-project ()
   ;; get project root with (when-let ((project (project-current))) (project-root project))

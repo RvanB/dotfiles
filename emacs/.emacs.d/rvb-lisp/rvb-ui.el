@@ -14,9 +14,6 @@
 (use-package olivetti
   :ensure t)
 
-(use-package spacious-padding
-  :ensure t)
-
 ;; Diminish minor modes
 (use-package diminish
   :ensure t)
@@ -25,6 +22,13 @@
 (diminish 'eldoc-mode)
 
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+
+;; Enable the standard right-click context menus globally.
+(context-menu-mode 1)
+
+;; Highlight the delimiter matching the one at point.
+(setq show-paren-delay 0)
+(show-paren-mode 1)
 
 ;; ef themes
 (use-package ef-themes
@@ -92,13 +96,18 @@
   (rvb/set-default-frame-parameter parameter value)
   (rvb/set-initial-frame-parameter parameter value))
 
-(defun rvb/load-theme-preset (theme appearance)
-  "Load THEME and set frame APPEARANCE."
+(defun rvb/load-theme-preset (theme appearance &optional no-save)
+  "Load THEME and set frame APPEARANCE.
+
+When NO-SAVE is non-nil, do not persist APPEARANCE."
   (mapc #'disable-theme (copy-sequence custom-enabled-themes))
   (load-theme theme t)
   (setq rvb-current-theme appearance)
-  (customize-save-variable 'rvb-current-theme appearance)
-  (rvb/set-frame-parameter-defaults 'ns-appearance appearance)
+  (unless no-save
+    (customize-save-variable 'rvb-current-theme appearance))
+  ;; Leave the native title bar's appearance to macOS.  The Emacs theme can
+  ;; still be switched independently between its light and dark presets.
+  (rvb/set-frame-parameter-defaults 'ns-appearance nil)
   (dolist (frame (frame-list))
     (rvb/apply-frame-appearance frame))
   ;; Loading a theme re-sets `line-number' and other faces, so re-assert the
@@ -127,22 +136,23 @@
 (defun rvb/ensure-theme-loaded ()
   "Load the configured theme matching `rvb-current-theme' when needed."
   (unless custom-enabled-themes
-    (if (eq rvb-current-theme 'dark)
-        (rvb/use-dark-theme)
-      (rvb/use-light-theme))))
+    (rvb/load-theme-preset
+     (if (eq rvb-current-theme 'dark)
+         rvb-dark-theme
+       rvb-light-theme)
+     rvb-current-theme
+     t)))
 
 (defun rvb/apply-frame-appearance (&optional frame)
   "Apply frame-specific appearance settings to FRAME."
   (let ((target-frame (or frame (selected-frame))))
     (when (display-graphic-p target-frame)
       (set-frame-parameter target-frame 'ns-transparent-titlebar nil)
-      (set-frame-parameter target-frame 'ns-appearance rvb-current-theme))))
+      (set-frame-parameter target-frame 'ns-appearance nil))))
 
-(use-package ns-auto-titlebar
-  :ensure t
-  :config
-  (when (eq system-type 'darwin) (ns-auto-titlebar-mode)))
-
+;; `rvb-settings' loads the persisted Custom values before this module, so the
+;; selected light/dark preset is ready to apply immediately at startup.
+(rvb/ensure-theme-loaded)
 
 (require 'rvb-movement)
 
@@ -153,33 +163,7 @@
 ;;; Disable tool bar
 (tool-bar-mode -1)
 
-(defvar mixed-pitch-fixed-pitch-faces)
-(defvar mixed-pitch-set-height)
-(defvar mixed-pitch-mode)
 (defvar markdown-hide-markup)
-
-(defconst rvb/markdown-fixed-pitch-faces
-  '(markdown-code-face
-    markdown-inline-code-face
-    markdown-pre-face
-    markdown-language-info-face
-    markdown-language-keyword-face)
-  "Markdown faces that should stay fixed-pitch in mixed-pitch buffers.")
-
-(defun rvb/markdown-face-p (face)
-  "Return non-nil when FACE belongs to markdown-mode."
-  (and (symbolp face)
-       (string-prefix-p "markdown-" (symbol-name face))))
-
-(defun rvb/configure-markdown-mixed-pitch-faces ()
-  "Keep only Markdown code faces fixed-pitch for `mixed-pitch-mode'."
-  (setq mixed-pitch-fixed-pitch-faces
-        (append (delq nil
-                      (mapcar (lambda (face)
-                                (unless (rvb/markdown-face-p face)
-                                  face))
-                              mixed-pitch-fixed-pitch-faces))
-                rvb/markdown-fixed-pitch-faces)))
 
 (defun rvb/markdown-hide-markup ()
   "Hide Markdown formatting markup in the current buffer."
@@ -191,37 +175,11 @@
   :hook ((markdown-mode . rvb/markdown-hide-markup)
          (gfm-mode . rvb/markdown-hide-markup)))
 
-(use-package mixed-pitch
-  :ensure t
-  :init
-  (setq mixed-pitch-set-height t)
-  :hook ((markdown-mode . mixed-pitch-mode)
-         (gfm-mode . mixed-pitch-mode))
-  :config
-  (rvb/configure-markdown-mixed-pitch-faces))
-
-(use-package fontaine
-  :ensure t
-  :init
-  (setq fontaine-latest-state-file
-        (locate-user-emacs-file "fontaine-latest-state.eld")
-        fontaine-presets
-        '((regular
-           :default-height 140)
-          (large
-           :inherit regular
-           :default-height 180)
-          (presentation
-           :inherit regular
-           :default-height 240)
-          (t
-           :default-family "CommitMono"
-           :fixed-pitch-family "CommitMono"
-           :variable-pitch-family "ITC Galliard"
-           :variable-pitch-height 1.0)))
-  :config
-  (fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular))
-  (fontaine-mode 1))
+;; Use one fixed-pitch font everywhere.  Setting `variable-pitch' explicitly
+;; prevents packages which inherit it from reintroducing proportional prose.
+(set-face-attribute 'default nil :family "CommitMono" :height 140)
+(set-face-attribute 'fixed-pitch nil :family "CommitMono" :height 1.0)
+(set-face-attribute 'variable-pitch nil :family "CommitMono" :height 1.0)
 
 (defun rvb/customize-set-variable (variable value)
   "Set and persist VARIABLE to VALUE."
@@ -528,70 +486,8 @@ baseline, so restoring always reverts to the active theme."
   ["Themes"
    ("l" rvb/ui-light-theme)
    ("d" rvb/ui-dark-theme)]
-  ["Fonts"
-   ("f" "Select preset" fontaine-set-preset)
-   ("F" "Toggle recent presets" fontaine-toggle-preset)]
   ["Custom settings"
    ("a" "Appearance settings" (lambda () (interactive) (customize-group 'appearance)))])
-
-;; Ligatures
-(use-package ligature
-  :ensure t
-  :config
-  ;; Set ligatures for programming modes
-  (ligature-set-ligatures 'prog-mode '("|||>" "<|||" "<==>" "<!--" "~~>" "||=" "||>"
-				       ":::" "::=" "=:=" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
-				       "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "-<<"
-				       "<~~" "<~>" "<*>" "<||" "<|>" "<$>" "<==" "<=>" "<=<" "<->"
-				       "<--" "<-<" "<<=" "<<-" "<<<" "<+>" "</>" "#_(" "..<"
-				       "..." "+++" "/==" "///" "_|_" "&&" "^=" "~~" "~@" "~="
-				       "~>" "~-" "**" "*>" "*/" "||" "|}" "|]" "|=" "|>" "|-" "{|"
-				       "[|" "]#" "::" ":=" ":>" ":<" "$>" "=>" "!=" "!!" ">:"
-				       ">=" ">>" ">-" "-~" "-|" "->" "-<" "<~" "<*" "<|" "<:"
-				       "<$" "<=" "<>" "<-" "<<" "<+" "</" "#{" "#[" "#:" "#=" "#!"
-				       "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++" "?:"
-				       "?=" "?." "??" "/*" "/=" "/>" "//" "~~" "(*" "*)"
-				       "\\\\" "://"))
-  ;; In org buffers, hand runs of letters to the font shaper and let the
-  ;; font's own ligature table decide what to form (fi, ffi, etc.).  This
-  ;; picks up whatever ligatures the active font provides, while leaving
-  ;; org markup characters (/ * _ = ~ +) untouched.
-  (ligature-set-ligatures
-   'org-mode
-   (mapcar (lambda (char) (list (char-to-string char) "[A-Za-z]+"))
-	   (append (number-sequence ?A ?Z) (number-sequence ?a ?z))))
-  (global-ligature-mode t))
-
-(use-package nerd-icons
-  :ensure t)
-
-(use-package nerd-icons-dired
-  :ensure t
-  :config
-  (add-hook 'dired-mode-hook #'nerd-icons-dired-mode))
-
-;; (use-package nerd-icons-corfu
-;;   :ensure t
-;;   :config
-;;   (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter)
-
-;;   ;; Optionally:
-;;   (setq nerd-icons-corfu-mapping
-;; 	'((array :style "cod" :icon "symbol_array" :face font-lock-type-face)
-;;           (boolean :style "cod" :icon "symbol_boolean" :face font-lock-builtin-face)
-;;           ;; You can alternatively specify a function to perform the mapping,
-;;           ;; use this when knowing the exact completion candidate is important.
-;;           ;; Don't pass `:face' if the function already returns string with the
-;;           ;; face property, though.
-;;           (file :fn nerd-icons-icon-for-file :face font-lock-string-face)
-;;           ;; ...
-;;           (t :style "cod" :icon "code" :face font-lock-warning-face)))
-;;   ;; If you add an entry for t, the library uses that as fallback.
-;;   ;; The default fallback (when it's not specified) is the ? symbol.
-
-;;   ;; The Custom interface is also supported for tuning the variable above.
-;;   )
-
 
 ;; Clearer separation between buffers
 ;; (window-divider-mode)
@@ -602,9 +498,26 @@ baseline, so restoring always reverts to the active theme."
 ;;   :after magit
 ;;   :config (magit-todos-mode 1))
 
-;;; Window splitting preferences - prefer horizontal (side-by-side) splits
-;; (setq split-height-threshold nil)  ; Never split vertically (top-bottom)
-;; (setq split-width-threshold nil)     ; Always prefer horizontal splits (side-by-side)
+;;; Split along the window's longer physical dimension.
+(defun rvb/split-window-longest-dimension (&optional window)
+  "Split WINDOW along its longer pixel dimension.
+
+Wide windows split side-by-side; tall windows split above-and-below.  If the
+preferred direction cannot satisfy Emacs's minimum window sizes, try the other
+direction and return nil when neither split is possible."
+  (let* ((window (or window (selected-window)))
+         (wide-p (> (window-pixel-width window)
+                    (window-pixel-height window)))
+         (preferred-side (if wide-p 'right 'below))
+         (fallback-side (if wide-p 'below 'right)))
+    (or (condition-case nil
+            (split-window window nil preferred-side)
+          (error nil))
+        (condition-case nil
+            (split-window window nil fallback-side)
+          (error nil)))))
+
+(setq split-window-preferred-function #'rvb/split-window-longest-dimension)
 
 ;; Diff-hl with mouse support
 (use-package diff-hl

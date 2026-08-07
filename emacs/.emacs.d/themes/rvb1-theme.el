@@ -1,45 +1,46 @@
-;;; inkpot-theme.el --- conversion of Vim's inkpot colorscheme with direct hex colors
+;;; rvb1-theme.el --- RVB's first dark theme, based on Vim Inkpot
 
 ;; Direct hex color definitions extracted from the correct inkpot color mappings
 ;; These can now be fine-tuned for warmer tints and less contrast
 
-(deftheme inkpot
+(deftheme rvb1
   "Exact conversion of Vim's inkpot colorscheme with direct hex colors for customization.")
 
 ;; Color definitions - using correct mappings from your 88-color file
 ;; You can now modify these hex values directly for warmer tints and less contrast
 (let ((class '((class color) (min-colors 89)))
       ;; Core colors used in the theme (correctly mapped)
-      (bg-primary "#000000")        ; inkpot color 0 → line 1
-      (fg-primary "#ffffff")        ; inkpot color 79 → line 80
-      (bg-secondary "#262626")      ; inkpot color 81 → line 82
-      (fg-secondary "#808080")      ; inkpot color 84 → line 85
-      (bg-highlight "#5f5faf")      ; inkpot color 38 → line 39
-      (cursor-color "#dadada")      ; inkpot color 87 → line 88
-      (fringe-color "#5f5fff")      ; inkpot color 39 → line 40
+      (bg-primary "#000000")        ; inkpot color 0 -> line 1
+      (fg-primary "#ffffff")        ; inkpot color 79 -> line 80
+      (bg-secondary "#262626")      ; inkpot color 81 -> line 82
+      (fg-secondary "#808080")      ; inkpot color 84 -> line 85
+      (bg-highlight "#5f5faf")      ; inkpot color 38 -> line 39
+      (cursor-color "#dadada")      ; inkpot color 87 -> line 88
+      (fringe-color "#5f5fff")      ; inkpot color 39 -> line 40
       
       ;; Syntax highlighting colors (correctly mapped)
-      (keyword-color "#00afff")     ; inkpot color 27 → line 28
-      (function-color "#af5f5f")    ; inkpot color 53 → line 54
-      (string-color "#ffaf5f")      ; inkpot color 73 → line 74
-      (string-bg "#262626")         ; inkpot color 81 → line 82 (string background)
-      (type-color "#00af5f")        ; inkpot color 25 → line 26
-      (number-color "#ff5f5f")      ; inkpot color 69 → line 70
-      (search-bg "#ffaf5f")         ; inkpot color 73 → line 74
-      (search-lazy-bg "#af5f00")    ; inkpot color 52 → line 53
+      (keyword-color "#00afff")     ; inkpot color 27 -> line 28
+      (function-color "#af5f5f")    ; inkpot color 53 -> line 54
+      (string-color "#ffaf5f")      ; inkpot color 73 -> line 74
+      (string-bg "#262626")         ; inkpot color 81 -> line 82 (string background)
+      (type-color "#ff5fff")        ; Inkpot Type magenta
+      (preprocessor-color "#00af5f") ; inkpot color 25 -> line 26
+      (number-color "#ff5f5f")      ; inkpot color 69 -> line 70
+      (search-bg "#ffaf5f")         ; inkpot color 73 -> line 74
+      (search-lazy-bg "#af5f00")    ; inkpot color 52 -> line 53
       
       ;; Git/Magit colors (correctly mapped)
-      (git-branch-local "#00afff")  ; inkpot color 27 → line 28
-      (git-branch-remote "#af5fff") ; inkpot color 55 → line 56
-      (git-added "#00af5f")         ; inkpot color 25 → line 26
-      (git-removed "#ff5f5f")       ; inkpot color 69 → line 70
-      (git-context-bg "#080808")    ; inkpot color 80 → line 81
+      (git-branch-local "#00afff")  ; inkpot color 27 -> line 28
+      (git-branch-remote "#af5fff") ; inkpot color 55 -> line 56
+      (git-added "#00af5f")         ; inkpot color 25 -> line 26
+      (git-removed "#ff5f5f")       ; inkpot color 69 -> line 70
+      (git-context-bg "#080808")    ; inkpot color 80 -> line 81
       
       ;; UI colors (correctly mapped)
-      (minibuffer-prompt "#af5f00") ; inkpot color 52 → line 53
-      (project-dir "#ffafff")       ; inkpot color 75 → line 76
-      (success-color "#00af5f")     ; inkpot color 25 → line 26
-      (paren-match-bg "#00ffff")    ; inkpot color 14 → line 15
+      (minibuffer-prompt "#af5f00") ; inkpot color 52 -> line 53
+      (project-dir "#ffafff")       ; inkpot color 75 -> line 76
+      (success-color "#00af5f")     ; inkpot color 25 -> line 26
+      (paren-match-bg "#00ffff")    ; inkpot color 14 -> line 15
       
       ;; Terminal colors
       (term-red "#ff0000")
@@ -59,13 +60,13 @@
       (term-white "#ffffff")
       
       ;; Additional specific colors (correctly mapped)
-      (line-number-color "#262626") ; inkpot color 81 → line 82
-      (line-number-current "#9e9e9e") ; inkpot color 84 → line 85
-      (dired-flagged-color "#ff5f00") ; inkpot color 68 → line 69
+      (line-number-color "#262626") ; inkpot color 81 -> line 82
+      (line-number-current "#9e9e9e") ; inkpot color 84 -> line 85
+      (dired-flagged-color "#ff5f00") ; inkpot color 68 -> line 69
       )
 
   (custom-theme-set-faces
-   'inkpot
+   'rvb1
 
    `(highlight-numbers-number ((,class (:foreground ,number-color))))
 
@@ -81,7 +82,7 @@
    ;; Font lock - syntax highlighting
    `(font-lock-function-call-face ((,class (:foreground ,function-color))))
    `(font-lock-builtin-face ((,class (:foreground ,keyword-color))))
-   `(font-lock-comment-face ((,class (:foreground ,fg-secondary :slant italic))))
+   `(font-lock-comment-face ((,class (:foreground ,search-lazy-bg))))
    `(font-lock-constant-face ((,class (:inherit default))))
    `(font-lock-function-name-face ((,class (:foreground ,function-color))))
    `(font-lock-keyword-face ((,class (:foreground ,keyword-color))))
@@ -89,14 +90,22 @@
    `(font-lock-type-face ((,class (:foreground ,type-color))))
    `(font-lock-variable-name-face ((,class (:inherit default))))
    `(font-lock-doc-face ((,class (:foreground ,string-color :background ,string-bg))))
-   `(font-lock-preprocessor-face ((,class (:foreground ,type-color))))
+   `(font-lock-preprocessor-face ((,class (:foreground ,preprocessor-color))))
 
-   ;; Mode line
-   `(mode-line ((,class (:foreground ,fg-primary :background ,bg-secondary :weight bold))))
-   `(mode-line-active ((,class (:inherit mode-line))))
-
-   `(mode-line-inactive ((,class (:foreground ,fg-secondary :background ,bg-secondary))))
-   `(mode-line-buffer-id ((,class (:foreground ,fg-primary :weight bold))))
+   ;; Expanded font-lock faces used by tree-sitter modes in Emacs 29+.
+   ;; Keep these aligned with Inkpot's Vim groups: Identifier/Function,
+   ;; Number, Special, and the neutral punctuation groups.
+   `(font-lock-variable-use-face ((,class (:inherit default))))
+   `(font-lock-property-name-face ((,class (:foreground ,function-color))))
+   `(font-lock-property-use-face ((,class (:foreground ,function-color))))
+   `(font-lock-number-face ((,class (:foreground ,number-color))))
+   `(font-lock-operator-face ((,class (:foreground ,keyword-color))))
+   `(font-lock-escape-face ((,class (:foreground ,git-branch-remote))))
+   `(font-lock-regexp-face ((,class (:foreground ,git-branch-remote))))
+   `(font-lock-bracket-face ((,class (:inherit default))))
+   `(font-lock-delimiter-face ((,class (:inherit default))))
+   `(font-lock-punctuation-face ((,class (:inherit default))))
+   `(font-lock-misc-punctuation-face ((,class (:inherit font-lock-punctuation-face))))
 
    `(doom-modeline-project-dir ((,class (:foreground ,project-dir))))
 
@@ -150,8 +159,8 @@
    `(match ((,class (:background ,search-lazy-bg))))
 
    ;; Line numbers
-   `(line-number ((,class (:foreground ,line-number-color :background ,bg-primary))))
-   `(line-number-current-line ((,class (:foreground ,line-number-current :background ,bg-primary :weight bold))))
+   `(line-number ((,class (:foreground ,fringe-color :background ,git-context-bg))))
+   `(line-number-current-line ((,class (:foreground ,fringe-color :background ,git-context-bg :weight bold))))
 
    ;; Magit
    `(magit-branch-local ((,class (:foreground ,git-branch-local))))
@@ -180,7 +189,7 @@
    `(compilation-warning ((,class (:foreground ,fg-primary))))
    `(compilation-info ((,class (:foreground ,fg-primary))))
 
-   `(show-paren-match ((,class (:background ,paren-match-bg :foreground ,fg-primary))))
+   `(show-paren-match ((,class (:background ,paren-match-bg :foreground ,preprocessor-color))))
 
    ;; Links
    `(link ((,class (:foreground ,keyword-color :underline t))))
@@ -200,6 +209,17 @@
    `(flycheck-error ((,class (:underline (:style wave :color ,number-color)))))
    `(flycheck-warning ((,class (:underline (:style wave :color ,string-color)))))
    `(flycheck-info ((,class (:underline (:style wave :color ,keyword-color)))))
+
+   ;; Eglot
+   `(eglot-highlight-symbol-face ((,class (:background ,bg-highlight :weight bold))))
+   `(eglot-mode-line ((,class (:foreground ,type-color :weight bold))))
+   `(eglot-diagnostic-tag-unnecessary-face ((,class (:foreground ,fg-secondary))))
+   `(eglot-diagnostic-tag-deprecated-face
+     ((,class (:foreground ,fg-secondary :strike-through t))))
+   `(eglot-inlay-hint-face ((,class (:foreground ,fg-secondary :height 0.8))))
+   `(eglot-type-hint-face ((,class (:inherit eglot-inlay-hint-face :foreground ,type-color))))
+   `(eglot-parameter-hint-face
+     ((,class (:inherit eglot-inlay-hint-face :foreground ,function-color))))
 
    ;; Company completion
    `(company-tooltip ((,class (:foreground ,fg-primary :background ,bg-secondary))))
@@ -277,6 +297,6 @@
   (add-to-list 'custom-theme-load-path
                (file-name-as-directory (file-name-directory load-file-name))))
 
-(provide-theme 'inkpot)
+(provide-theme 'rvb1)
 
-;;; inkpot-theme.el ends here
+;;; rvb1-theme.el ends here
