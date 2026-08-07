@@ -27,59 +27,81 @@
     (goto-char target-pos)))
 
 ;;; Buffer movement
-(autoload 'View-scroll-half-page-forward "view")
-(autoload 'View-scroll-half-page-backward "view")
+(defgroup rvb-movement nil
+  "RVB movement and scrolling preferences."
+  :group 'convenience)
 
-;; https://www.reddit.com/r/emacs/comments/1g092xp/hack_use_pixelscroll_for_all_scrolling_and/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
-(defun kb/pixel-recenter (&optional arg redisplay)
-  "Similar to `recenter' but with pixel scrolling.
-ARG and REDISPLAY are identical to the original function."
-  ;; See the links in line 6676 in window.c for
-  (when-let* ((current-pixel (pixel-posn-y-at-point))
-              (target-pixel (if (numberp arg)
-                                (* (line-pixel-height) arg)
-                              (* 0.5 (window-body-height nil t))))
-              (distance-in-pixels 0)
-              (pixel-scroll-precision-interpolation-total-time
-               (/ pixel-scroll-precision-interpolation-total-time 2.0)))
-    (setq target-pixel
-          (if (<= 0 target-pixel)
-              target-pixel
-            (- (window-body-height nil t) (abs target-pixel))))
-    (setq distance-in-pixels (- target-pixel current-pixel))
-    (condition-case err
-        (pixel-scroll-precision-interpolate distance-in-pixels nil 1)
-      (error (message "[kb/pixel-recenter] %s" (error-message-string err))))
-    (when redisplay (redisplay t))))
+(defun rvb/enter-god-mode ()
+  "Enter God Mode's command state in the current buffer."
+  (interactive)
+  (god-local-mode 1))
 
-(defconst scroll-ratio 0.5 "Multiplier of the window height to scroll")
+(use-package god-mode
+  :ensure t
+  :init
+  ;; Page chrome provides the state indicator, so suppress the package's
+  ;; ordinary minor-mode lighter.
+  (setq god-mode-lighter-string nil)
+  :bind (("<escape>" . rvb/enter-god-mode))
+  :config
+  ;; Vim-like state transitions without adopting Vim's editing grammar.
+  (keymap-set god-local-mode-map "i" #'god-local-mode)
+  (keymap-set god-local-mode-map "." #'repeat)
+  (keymap-set god-local-mode-map "[" #'backward-paragraph)
+  (keymap-set god-local-mode-map "]" #'forward-paragraph)
+  ;; Enable command state in ordinary editable buffers.  God Mode's default
+  ;; exemptions continue to protect minibuffers, terminals, and special modes.
+  (god-mode))
 
-(defun kb/pixel-scroll-up (&optional arg)
-  "(Nearly) drop-in replacement for `scroll-up' using golden ratio if ARG is nil."
-  (cond
-   ((eq this-command 'scroll-up-line)
-    (funcall (ad-get-orig-definition 'scroll-up) (or arg 1)))
-   (t
-    (unless (eobp)
-      (let* ((lines (or arg (truncate (* (window-text-height) scroll-ratio))))
-             (pixels (* (line-pixel-height) lines)))
-        (pixel-scroll-precision-interpolate (- pixels) nil 1)
-        (rvb/move-point-to-window-center))))))
+(defcustom rvb-scroll-distance 20
+  "Number of lines moved by keyboard scrolling without a prefix argument.
 
-(defun kb/pixel-scroll-down (&optional arg)
-  "(Nearly) drop-in replacement for `scroll-down' using golden ratio if ARG is nil."
-  (cond
-   ((eq this-command 'scroll-down-line)
-    (funcall (ad-get-orig-definition 'scroll-down) (or arg 1)))
-   (t
-    (let* ((lines (or arg (truncate (* (window-text-height) scroll-ratio))))
-           (pixels (* (line-pixel-height) lines)))
-      (pixel-scroll-precision-interpolate pixels nil 1)
-      (rvb/move-point-to-window-center)))))
+This distance is shared by immediate and smooth scrolling so changing the
+animation setting never changes where the command lands."
+  :type 'natnum
+  :group 'rvb-movement)
 
-(defcustom smooth-scroll nil
-  "Variable to enable/disable smooth scrolling"
-  :type 'boolean)
+(defcustom rvb-smooth-scroll nil
+  "When non-nil, animate keyboard scrolling over `rvb-scroll-distance' lines."
+  :type 'boolean
+  :group 'rvb-movement)
+
+(defun rvb/scroll-lines (arg)
+  "Return the requested scroll distance for prefix ARG."
+  (if arg
+      (prefix-numeric-value arg)
+    rvb-scroll-distance))
+
+(defun rvb/move-and-scroll (lines)
+  "Move point by LINES visual lines, scrolling the window as needed.
+
+When `rvb-smooth-scroll' is non-nil, animate toward the same destination
+before placing point there."
+  (let* ((origin (point))
+         (target (save-excursion
+                   (line-move lines t)
+                   (copy-marker (point))))
+         (direction (if (>= target origin) 1 -1))
+         (moved-lines (count-screen-lines
+                       (min origin target) (max origin target))))
+    (when (and rvb-smooth-scroll (> moved-lines 0))
+      (pixel-scroll-precision-interpolate
+       (- (* direction (line-pixel-height) moved-lines)) nil 1))
+    (goto-char target)
+    (set-marker target nil)))
+
+(defun rvb/scroll-up-command (&optional arg)
+  "Move point forward by ARG lines or `rvb-scroll-distance'."
+  (interactive "P")
+  (rvb/move-and-scroll (rvb/scroll-lines arg)))
+
+(defun rvb/scroll-down-command (&optional arg)
+  "Move point backward by ARG lines or `rvb-scroll-distance'."
+  (interactive "P")
+  (rvb/move-and-scroll (- (rvb/scroll-lines arg))))
+
+(advice-add 'scroll-up-command :override #'rvb/scroll-up-command)
+(advice-add 'scroll-down-command :override #'rvb/scroll-down-command)
 
 (use-package ultra-scroll
   :pin "manual"
@@ -89,17 +111,6 @@ ARG and REDISPLAY are identical to the original function."
   :init
   (setq scroll-conservatively 1
         scroll-margin 0)
-  (add-hook 'ultra-scroll-mode-hook
-            (lambda ()
-              (cond
-               (smooth-scroll ;; TODO: This shouldn't just be on the ultra scroll mode hook
-                (advice-add 'scroll-up-command :override 'kb/pixel-scroll-up)
-                (advice-add 'scroll-down-command :override 'kb/pixel-scroll-down)
-                (advice-add 'recenter-top-bottom :override 'kb/pixel-recenter))
-               (t
-                (advice-remove 'scroll-up-command 'kb/pixel-scroll-up)
-                (advice-remove 'scroll-down-command 'kb/pixel-scroll-down)
-                (advice-remove 'recenter-top-bottom 'kb/pixel-recenter)))))
   :config
   (ultra-scroll-mode 1))
 
@@ -230,5 +241,8 @@ go to the real end-of-line.  Useful as an alternative to `end-of-line`."
 This is the opposite of `forward-symbol`."
   (interactive "p")
   (forward-symbol (- (or n 1))))
+
+;; God mode
+
 
 (provide 'rvb-movement)

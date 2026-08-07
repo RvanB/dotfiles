@@ -322,14 +322,23 @@ When FILE-P is non-nil, the final path element is rendered as plain text."
                           crumbs))))
     (apply #'concat (nreverse crumbs))))
 
-(defun rvb/ui-page-chrome--band (window content face)
+(defun rvb/ui-page-chrome--band (window content face &optional god-p)
   "Render CONTENT across WINDOW using FACE.
+
+When GOD-P is non-nil, change only the band's colors to indicate command
+state; retain the normal page-chrome face and font metrics.
 
 The band uses the frame's `default' font attributes so its fixed-width
 font matches ordinary buffer text instead of the generic `fixed-pitch' face."
   (pcase-let* ((frame (window-frame window))
-               (header-background (face-background face frame t))
-               (header-foreground (face-foreground face frame t))
+               ;; Turn the active theme's error foreground into a prominent
+               ;; background without hard-coding a theme-specific red.
+               (header-background
+                (if god-p
+                    (face-foreground 'error frame t)
+                  (face-background face frame t)))
+               (header-foreground
+                (face-foreground face frame t))
                (default-family (face-attribute 'default :family frame))
                (default-height (face-attribute 'default :height frame))
                (default-weight (face-attribute 'default :weight frame))
@@ -361,9 +370,15 @@ font matches ordinary buffer text instead of the generic `fixed-pitch' face."
                                         :underline
                                         `(:color ,header-foreground
                                           :position t))))))
-               (band-face (if font-attrs
-                              (list face font-attrs)
-                            face))
+               (band-face
+                (if god-p
+                    ;; Put the background override ahead of the exact normal
+                    ;; header faces, preserving every font and line metric.
+                    (list (list :background header-background)
+                          face font-attrs)
+                  (if font-attrs
+                      (list face font-attrs)
+                    face)))
                (width (window-total-width window))
                (content (truncate-string-to-width content width))
                (band (concat content
@@ -391,16 +406,23 @@ font matches ordinary buffer text instead of the generic `fixed-pitch' face."
                         mode-line-window-dedicated)
                        display (min-width (6.0))))
                     nil window))
+           ;; Reserve the right edge before truncating long paths so status
+           ;; information can never be pushed out of the header.
+           (path (truncate-string-to-width
+                  path (max 0 (- width (string-width status) 4))))
            (gap (max 2 (- width (string-width path) (string-width status) 2))))
       (truncate-string-to-width
        (concat " " path (make-string gap ?\s) status " ") width))))
 
 (defun rvb/ui-page-chrome--header-line-format (window)
   "Return WINDOW's top file header."
-  (let ((width (window-total-width window)))
+  (let ((width (window-total-width window))
+        (god-p (with-current-buffer (window-buffer window)
+                 (bound-and-true-p god-local-mode))))
     (rvb/ui-page-chrome--band
      window (rvb/ui-page-chrome--header-content window width)
-     'rvb/ui-page-chrome-header)))
+     'rvb/ui-page-chrome-header
+     god-p)))
 
 (defun rvb/ui-page-chrome--apply-window (window)
   "Apply page chrome to WINDOW."
@@ -477,6 +499,10 @@ baseline, so restoring always reverts to the active theme."
     (remove-hook 'after-make-frame-functions
                  #'rvb/ui-page-chrome--window-change)
     (rvb/ui-page-chrome--restore)))
+
+;; Page chrome is the primary editor-state indicator as well as the file
+;; header, so keep it enabled unless explicitly toggled off by the user.
+(rvb/ui-page-chrome-mode 1)
 
 (transient-define-prefix rvb/ui-menu ()
   "Open the UI settings menu."
