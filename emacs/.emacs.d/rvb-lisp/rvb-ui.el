@@ -21,6 +21,22 @@
 ;; Hide eldoc mode
 (diminish 'eldoc-mode)
 
+(use-package vertico-posframe
+  :ensure t
+  :config
+  (vertico-posframe-mode 1))
+
+(use-package transient-posframe
+  :ensure t
+  :config
+  (transient-posframe-mode))
+
+(use-package hydra-posframe
+  :ensure nil
+  :vc (:url "https://github.com/Ladicle/hydra-posframe"
+            :rev :newest)
+  :hook (after-init . hydra-posframe-mode))
+
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
 ;; Enable the standard right-click context menus globally.
@@ -58,20 +74,9 @@
 
 (setq custom-safe-themes t)
 
-;; Theme toggling
-(defcustom rvb-current-theme 'light
-  "The active RVB theme appearance."
-  :type '(choice (const :tag "Light" light)
-                 (const :tag "Dark" dark))
-  :group 'appearance)
-
-(defcustom rvb-light-theme 'modus-operandi
-  "Theme loaded by `rvb/use-light-theme'."
-  :type 'symbol
-  :group 'appearance)
-
-(defcustom rvb-dark-theme 'modus-vivendi
-  "Theme loaded by `rvb/use-dark-theme'."
+;; Current theme
+(defcustom rvb-theme 'rvb2
+  "Theme to load at startup."
   :type 'symbol
   :group 'appearance)
 
@@ -96,17 +101,16 @@
   (rvb/set-default-frame-parameter parameter value)
   (rvb/set-initial-frame-parameter parameter value))
 
-(defun rvb/load-theme-preset (theme appearance &optional no-save)
-  "Load THEME and set frame APPEARANCE.
+(defun rvb/load-theme (theme &optional no-save)
+  "Load THEME and make it the current RVB theme.
 
-When NO-SAVE is non-nil, do not persist APPEARANCE."
+When NO-SAVE is non-nil, do not persist THEME."
   (mapc #'disable-theme (copy-sequence custom-enabled-themes))
   (load-theme theme t)
-  (setq rvb-current-theme appearance)
+  (setq rvb-theme theme)
   (unless no-save
-    (customize-save-variable 'rvb-current-theme appearance))
-  ;; Leave the native title bar's appearance to macOS.  The Emacs theme can
-  ;; still be switched independently between its light and dark presets.
+    (customize-save-variable 'rvb-theme theme))
+  ;; Leave the native title bar's appearance to macOS.
   (rvb/set-frame-parameter-defaults 'ns-appearance nil)
   (dolist (frame (frame-list))
     (rvb/apply-frame-appearance frame))
@@ -116,32 +120,10 @@ When NO-SAVE is non-nil, do not persist APPEARANCE."
              (fboundp 'rvb/ui-page-chrome-refresh))
     (rvb/ui-page-chrome-refresh)))
 
-(defun rvb/use-light-theme ()
-  "Load `rvb-light-theme'."
-  (interactive)
-  (rvb/load-theme-preset rvb-light-theme 'light))
-
-(defun rvb/use-dark-theme ()
-  "Load `rvb-dark-theme'."
-  (interactive)
-  (rvb/load-theme-preset rvb-dark-theme 'dark))
-
-(defun rvb/toggle-theme ()
-  "Toggle between the configured light and dark themes."
-  (interactive)
-  (if (eq rvb-current-theme 'light)
-      (rvb/use-dark-theme)
-    (rvb/use-light-theme)))
-
 (defun rvb/ensure-theme-loaded ()
-  "Load the configured theme matching `rvb-current-theme' when needed."
+  "Load `rvb-theme' when no theme is currently enabled."
   (unless custom-enabled-themes
-    (rvb/load-theme-preset
-     (if (eq rvb-current-theme 'dark)
-         rvb-dark-theme
-       rvb-light-theme)
-     rvb-current-theme
-     t)))
+    (rvb/load-theme rvb-theme t)))
 
 (defun rvb/apply-frame-appearance (&optional frame)
   "Apply frame-specific appearance settings to FRAME."
@@ -151,7 +133,7 @@ When NO-SAVE is non-nil, do not persist APPEARANCE."
       (set-frame-parameter target-frame 'ns-appearance nil))))
 
 ;; `rvb-settings' loads the persisted Custom values before this module, so the
-;; selected light/dark preset is ready to apply immediately at startup.
+;; selected theme is ready to apply immediately at startup.
 (rvb/ensure-theme-loaded)
 
 (require 'rvb-movement)
@@ -181,53 +163,19 @@ When NO-SAVE is non-nil, do not persist APPEARANCE."
 (set-face-attribute 'fixed-pitch nil :family "CommitMono" :height 1.0)
 (set-face-attribute 'variable-pitch nil :family "CommitMono" :height 1.0)
 
-(defun rvb/customize-set-variable (variable value)
-  "Set and persist VARIABLE to VALUE."
-  (set variable value)
-  (customize-save-variable variable value))
-
-(defun rvb/set-theme-variable (variable value)
-  "Set and persist theme VARIABLE to VALUE, reloading it when it is active.
-
-Changing the light theme reloads immediately when the light appearance is
-current, and likewise for the dark theme, so the new choice takes effect
-without toggling appearance."
-  (rvb/customize-set-variable variable value)
-  (when (or (and (eq variable 'rvb-light-theme) (eq rvb-current-theme 'light))
-            (and (eq variable 'rvb-dark-theme) (eq rvb-current-theme 'dark)))
-    (rvb/load-theme-preset value rvb-current-theme)))
-
-(defun rvb/restore-enabled-themes (themes)
-  "Restore THEMES after temporarily previewing other themes."
-  (mapc #'disable-theme (copy-sequence custom-enabled-themes))
-  (dolist (theme (reverse themes))
-    (load-theme theme t)))
-
-(defun rvb/read-theme (_prompt _initial-input _history)
-  "Preview themes with `consult-theme' and return the chosen theme.
-The active theme is restored before returning to the settings menu."
-  (let ((enabled-themes (copy-sequence custom-enabled-themes))
-        selected-theme)
-    (unwind-protect
-        (progn
-          (call-interactively #'consult-theme)
-          (setq selected-theme (car custom-enabled-themes)))
-      (rvb/restore-enabled-themes enabled-themes))
-    selected-theme))
-
-(transient-define-infix rvb/ui-light-theme ()
-  :class 'transient-lisp-variable
-  :variable 'rvb-light-theme
-  :description "Light theme"
-  :reader #'rvb/read-theme
-  :set-value #'rvb/set-theme-variable)
-
-(transient-define-infix rvb/ui-dark-theme ()
-  :class 'transient-lisp-variable
-  :variable 'rvb-dark-theme
-  :description "Dark theme"
-  :reader #'rvb/read-theme
-  :set-value #'rvb/set-theme-variable)
+(defun rvb/select-current-theme ()
+  "Select a theme with Consult and persist it in `rvb-theme'."
+  (interactive)
+  (call-interactively #'consult-theme)
+  (when-let ((theme (car custom-enabled-themes)))
+    (setq rvb-theme theme)
+    (customize-save-variable 'rvb-theme theme)
+    (rvb/set-frame-parameter-defaults 'ns-appearance nil)
+    (dolist (frame (frame-list))
+      (rvb/apply-frame-appearance frame))
+    (when (and (bound-and-true-p rvb/ui-page-chrome-mode)
+               (fboundp 'rvb/ui-page-chrome-refresh))
+      (rvb/ui-page-chrome-refresh))))
 
 (defvar rvb/ui-page-chrome--saved-header-lines nil)
 (defvar rvb/ui-page-chrome--saved-line-number-faces nil
@@ -507,11 +455,8 @@ baseline, so restoring always reverts to the active theme."
 (transient-define-prefix rvb/ui-menu ()
   "Open the UI settings menu."
   ["Actions"
-   ("t" "Toggle light/dark theme" rvb/toggle-theme)
+   ("t" "Change current theme" rvb/select-current-theme)
    ("p" "Toggle page chrome" rvb/ui-page-chrome-mode)]
-  ["Themes"
-   ("l" rvb/ui-light-theme)
-   ("d" rvb/ui-dark-theme)]
   ["Custom settings"
    ("a" "Appearance settings" (lambda () (interactive) (customize-group 'appearance)))])
 
@@ -545,13 +490,31 @@ direction and return nil when neither split is possible."
 
 (setq split-window-preferred-function #'rvb/split-window-longest-dimension)
 
+;; Use a solid bar instead of Diff-hl's outlined hunk-border bitmaps.
+(defun rvb/diff-hl-fringe-bitmap (_type _position)
+  "Return the solid fringe bitmap used for every Diff-hl change type."
+  'rvb/diff-hl-solid-bitmap)
+
+(defun rvb/diff-hl-define-fringe-bitmap ()
+  "Define a narrow, filled Diff-hl bitmap matching the current line height."
+  (when (display-graphic-p)
+    (let ((height (frame-char-height)))
+      (define-fringe-bitmap 'rvb/diff-hl-solid-bitmap
+        (make-vector height #b111)
+        height 3 'center))))
+
 ;; Diff-hl with mouse support
 (use-package diff-hl
   :ensure t
+  :init
+  (setq diff-hl-draw-borders nil
+        diff-hl-fringe-bmp-function #'rvb/diff-hl-fringe-bitmap)
   :hook ((prog-mode . diff-hl-mode)
          (dired-mode . diff-hl-dired-mode)
          (magit-post-refresh . diff-hl-magit-post-refresh))
   :config
+  (rvb/diff-hl-define-fringe-bitmap)
+  (clrhash diff-hl-spec-cache)
   (global-diff-hl-show-hunk-mouse-mode))
 
 ;;; Auto-select help and temporary windows

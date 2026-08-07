@@ -241,6 +241,10 @@
    ;; Diff mode
    `(diff-added ((,class (:foreground ,git-added))))
    `(diff-removed ((,class (:foreground ,git-removed))))
+   ;; Diff-hl fringe bitmaps are drawn with these faces' foregrounds.
+   `(diff-hl-insert ((,class (:foreground ,git-added))))
+   `(diff-hl-delete ((,class (:foreground ,git-removed))))
+   `(diff-hl-change ((,class (:foreground ,string-color))))
    `(diff-header ((,class (:foreground ,keyword-color :weight bold))))
    `(diff-file-header ((,class (:foreground ,function-color :weight bold))))
    `(diff-context ((,class (:inherit default))))
@@ -276,7 +280,7 @@
    `(trailing-whitespace ((,class (:background ,number-color))))
    `(secondary-selection ((,class (:background ,bg-secondary))))
    `(shadow ((,class (:foreground ,fg-secondary))))
-   `(header-line ((,class (:foreground ,fg-primary :background ,bg-secondary))))
+   `(header-line ((,class (:foreground ,fg-primary :background ,bg-secondary :box nil))))
 
    ;; Tab bar/line
    `(tab-bar ((,class (:foreground ,fg-primary :background ,bg-secondary))))

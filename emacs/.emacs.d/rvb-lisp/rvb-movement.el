@@ -31,10 +31,35 @@
   "RVB movement and scrolling preferences."
   :group 'convenience)
 
-(defun rvb/enter-god-mode ()
-  "Enter God Mode's command state in the current buffer."
+(defun rvb/toggle-god-mode ()
+  "Toggle God Mode's command state in the current buffer."
   (interactive)
-  (god-local-mode 1))
+  (god-local-mode (if (bound-and-true-p god-local-mode) -1 1)))
+
+(defface rvb/god-minibuffer-indicator
+  '((t (:inherit error)))
+  "Face for the God Mode state indicator in minibuffer prompts."
+  :group 'rvb-movement)
+
+(defvar-local rvb/god-minibuffer-indicator-overlay nil
+  "Overlay displaying the minibuffer's local God Mode state.")
+
+(defun rvb/update-god-minibuffer-indicator ()
+  "Update the GOD indicator for the current minibuffer's own state."
+  (when (minibufferp)
+    (unless (overlayp rvb/god-minibuffer-indicator-overlay)
+      (setq rvb/god-minibuffer-indicator-overlay
+            (make-overlay (point-min) (point-min) nil t t)))
+    (overlay-put
+     rvb/god-minibuffer-indicator-overlay 'before-string
+     (if (bound-and-true-p god-local-mode)
+         (concat (propertize "■" 'face 'rvb/god-minibuffer-indicator) " ")
+       ""))))
+
+(defun rvb/silence-god-mode-message-in-minibuffer (function &rest args)
+  "Call FUNCTION with ARGS without mode messages in a minibuffer."
+  (let ((inhibit-message (or inhibit-message (minibufferp))))
+    (apply function args)))
 
 (use-package god-mode
   :ensure t
@@ -42,13 +67,19 @@
   ;; Page chrome provides the state indicator, so suppress the package's
   ;; ordinary minor-mode lighter.
   (setq god-mode-lighter-string nil)
-  :bind (("<escape>" . rvb/enter-god-mode))
+  :bind (("<escape>" . rvb/toggle-god-mode))
   :config
+  (advice-add 'god-local-mode :around
+              #'rvb/silence-god-mode-message-in-minibuffer)
   ;; Vim-like state transitions without adopting Vim's editing grammar.
+  (keymap-set god-local-mode-map "<escape>" #'rvb/toggle-god-mode)
   (keymap-set god-local-mode-map "i" #'god-local-mode)
   (keymap-set god-local-mode-map "." #'repeat)
-  (keymap-set god-local-mode-map "[" #'backward-paragraph)
-  (keymap-set god-local-mode-map "]" #'forward-paragraph)
+  (keymap-set god-local-mode-map "[" #'scroll-down-command)
+  (keymap-set god-local-mode-map "]" #'scroll-up-command)
+  (add-hook 'minibuffer-setup-hook #'rvb/update-god-minibuffer-indicator)
+  (add-hook 'god-mode-enabled-hook #'rvb/update-god-minibuffer-indicator)
+  (add-hook 'god-mode-disabled-hook #'rvb/update-god-minibuffer-indicator)
   ;; Enable command state in ordinary editable buffers.  God Mode's default
   ;; exemptions continue to protect minibuffers, terminals, and special modes.
   (god-mode))
