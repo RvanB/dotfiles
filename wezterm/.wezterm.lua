@@ -6,28 +6,31 @@ local config = wezterm.config_builder()
 
 config.use_fancy_tab_bar = false
 
-local function palette_for(appearance)
-  local is_dark = appearance:find('Dark') ~= nil
-  if is_dark then
-    return {
-      color_scheme    = 'Modus-Vivendi',
-      tabline_theme   = 'Modus-Vivendi',
-      bar_bg          = '#1e1e1e',
-      bar_hover_bg    = '#2a2a2a',
-      fg_dim          = '#a8a8a8',
-      fg_bright       = '#ffffff',
-      active_tab_bg   = '#000000',
-    }
-  end
-  return {
-    color_scheme    = 'Modus-Operandi',
-    tabline_theme   = 'Modus-Operandi',
-    bar_bg          = '#e0e0e0',
-    bar_hover_bg    = '#d0d0d0',
-    fg_dim          = '#595959',
-    fg_bright       = '#000000',
-    active_tab_bg   = '#ffffff',
-  }
+local selected_theme = 'rvb2'
+
+local palettes = {
+  rvb1 = {
+    color_scheme  = 'rvb1',
+    tabline_theme = 'rvb1',
+    bar_bg        = '#262626',
+    bar_hover_bg  = '#5f5faf',
+    fg_dim        = '#808080',
+    fg_bright     = '#ffffff',
+    active_tab_bg = '#000000',
+  },
+  rvb2 = {
+    color_scheme  = 'rvb2',
+    tabline_theme = 'rvb2',
+    bar_bg        = '#27282a',
+    bar_hover_bg  = '#667a8b',
+    fg_dim        = '#a7b2aa',
+    fg_bright     = '#eeeeed',
+    active_tab_bg = '#010202',
+  },
+}
+
+local function palette_for(theme)
+  return assert(palettes[theme], 'Unknown terminal theme: ' .. theme)
 end
 
 local function tab_bar_colors(palette)
@@ -51,7 +54,7 @@ local function tabline_overrides(palette)
   }
 end
 
-local initial_palette = palette_for(wezterm.gui.get_appearance())
+local initial_palette = palette_for(selected_theme)
 config.color_scheme = initial_palette.color_scheme
 config.colors = { tab_bar = tab_bar_colors(initial_palette) }
 -- This is where you actually apply your config choices.
@@ -129,21 +132,6 @@ config.keys = {
 }
 
 config.enable_scroll_bar = false
-
-local function sync_appearance(window)
-  if not window then return end
-  local palette = palette_for(window:get_appearance())
-  local overrides = window:get_config_overrides() or {}
-  if overrides.color_scheme ~= palette.color_scheme then
-    overrides.color_scheme = palette.color_scheme
-    overrides.colors = { tab_bar = tab_bar_colors(palette) }
-    window:set_config_overrides(overrides)
-    tabline.set_theme(palette.tabline_theme, tabline_overrides(palette))
-  end
-end
-
-wezterm.on('window-config-reloaded', sync_appearance)
-wezterm.on('window-focus-changed', sync_appearance)
 
 -- Finally, return the configuration to wezterm:
 return config

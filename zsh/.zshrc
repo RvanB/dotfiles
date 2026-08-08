@@ -81,30 +81,37 @@ source "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh"
 autoload -U colors && colors
 autoload -U add-zsh-hook
 
-exit_code_prompt() {
-    local exit_code=$?
-    if [[ $exit_code -ne 0 ]]; then
-        echo "%{$fg[red]%}$exit_code%{$reset_color%}"
-    fi
-}
-
-git_prompt() {
-    local gitstatus="$(git status --short 2>/dev/null)"
-    if [[ -n "$gitstatus" ]]; then
-        echo "%{$fg[red]%}*%{$reset_color%} "
-    fi
-}
-
 source "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
 # add-zsh-hook chpwd auto_activate_uv
 # auto_activate_uv
 
-venv_prompt() {
-    [[ -n "$VIRTUAL_ENV" ]] && echo "(${VIRTUAL_ENV:h:t}) "
+rvb_prompt() {
+    local exit_code=$?
+    local directory=${PWD/#$HOME/~}
+    local max_directory_length=40
+    local prompt_char='>'
+    local user_host_color=10
+    local remote_prefix=
+
+    if (( ${#directory} > max_directory_length )); then
+        local keep=$(( (max_directory_length - 3) / 2 ))
+        directory="${directory[1,keep]}...${directory[-keep,-1]}"
+    fi
+
+    if (( EUID == 0 )); then
+        prompt_char='#'
+        user_host_color=9
+    elif [[ -n "$SSH_CONNECTION" || -n "$SSH_TTY" ]]; then
+        user_host_color=3
+        remote_prefix='[ssh] '
+    fi
+
+    print -nr -- \
+        "%F{7}┌─$(printf '%3d' "$exit_code")%f %F{15}%D{%H:%M}%f %B%F{$user_host_color}${remote_prefix}%n@%m%f%b %B%F{6}${directory}%f%b"$'\n'"%F{7}└─${prompt_char}%f "
 }
 
-PROMPT='$(exit_code_prompt) $(venv_prompt)%f%B%T%b %{$fg[blue]%}%n@%m%f %B${PWD/#$HOME/~}%b%f $(git_prompt)> %{$reset_color%}'
+PROMPT='$(rvb_prompt)'
 
 ########## ALIASES AND UTILITY FUNCTIONS ###########
 

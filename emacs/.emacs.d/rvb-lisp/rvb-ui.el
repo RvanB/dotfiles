@@ -159,7 +159,7 @@ When NO-SAVE is non-nil, do not persist THEME."
 
 ;; Use one fixed-pitch font everywhere.  Setting `variable-pitch' explicitly
 ;; prevents packages which inherit it from reintroducing proportional prose.
-(set-face-attribute 'default nil :family "CommitMono" :height 140)
+(set-face-attribute 'default nil :family "CommitMono" :height 180)
 (set-face-attribute 'fixed-pitch nil :family "CommitMono" :height 1.0)
 (set-face-attribute 'variable-pitch nil :family "CommitMono" :height 1.0)
 
