@@ -11,21 +11,41 @@ local selected_theme = 'rvb2'
 local palettes = {
   rvb1 = {
     color_scheme  = 'rvb1',
-    tabline_theme = 'rvb1',
     bar_bg        = '#262626',
     bar_hover_bg  = '#5f5faf',
     fg_dim        = '#808080',
     fg_bright     = '#ffffff',
     active_tab_bg = '#000000',
+    colors = {
+      foreground = '#ffffff',
+      background = '#000000',
+      cursor_bg = '#dadada',
+      cursor_fg = '#000000',
+      cursor_border = '#dadada',
+      selection_bg = '#5f5faf',
+      selection_fg = '#ffffff',
+      ansi = { '#000000', '#ff0000', '#00af5f', '#f0a050', '#00afff', '#af5f5f', '#5fffaf', '#808080' },
+      brights = { '#595959', '#ff5f5f', '#00ff5f', '#ffaf5f', '#5fcfff', '#af5faf', '#afffaf', '#ffffff' },
+    },
   },
   rvb2 = {
     color_scheme  = 'rvb2',
-    tabline_theme = 'rvb2',
     bar_bg        = '#27282a',
     bar_hover_bg  = '#667a8b',
     fg_dim        = '#a7b2aa',
     fg_bright     = '#eeeeed',
     active_tab_bg = '#010202',
+    colors = {
+      foreground = '#eeeeed',
+      background = '#010202',
+      cursor_bg = '#eeeeed',
+      cursor_fg = '#010202',
+      cursor_border = '#eeeeed',
+      selection_bg = '#eeeeed',
+      selection_fg = '#010202',
+      ansi = { '#010202', '#cb4c52', '#63c174', '#998375', '#667a8b', '#b568a6', '#74b8b7', '#a7b2aa' },
+      brights = { '#a7b2aa', '#ef6f6f', '#d3e3b1', '#fbf695', '#829aaa', '#d184c2', '#77c5c3', '#eeeeed' },
+    },
   },
 }
 
@@ -55,6 +75,12 @@ local function tabline_overrides(palette)
 end
 
 local initial_palette = palette_for(selected_theme)
+local terminal_colors = initial_palette.colors
+
+config.color_schemes = {
+  rvb1 = palettes.rvb1.colors,
+  rvb2 = palettes.rvb2.colors,
+}
 config.color_scheme = initial_palette.color_scheme
 config.colors = { tab_bar = tab_bar_colors(initial_palette) }
 -- This is where you actually apply your config choices.
@@ -76,7 +102,7 @@ local tabline = wezterm.plugin.require("https://github.com/michaelbrusegard/tabl
 tabline.setup({
   options = {
     icons_enabled = true,
-    theme = initial_palette.tabline_theme,
+    theme = terminal_colors,
     tabs_enabled = true,
     section_separators = '',
     component_separators= '',
