@@ -93,4 +93,6 @@
 ;; Modes
 (add-to-list 'auto-mode-alist '("\\.yaml.j2\\'" . yaml-mode))
 
+(setq rvb/project-directories '("~/zephir-meta"))
+
 (provide 'rvb-settings)

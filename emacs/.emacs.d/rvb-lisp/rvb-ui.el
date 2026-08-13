@@ -21,21 +21,21 @@
 ;; Hide eldoc mode
 (diminish 'eldoc-mode)
 
-(use-package vertico-posframe
-  :ensure t
-  :config
-  (vertico-posframe-mode 1))
+;; (use-package vertico-posframe
+;;   :ensure t
+;;   :config
+;;   (vertico-posframe-mode 1))
 
-(use-package transient-posframe
-  :ensure t
-  :config
-  (transient-posframe-mode))
+;; (use-package transient-posframe
+;;   :ensure t
+;;   :config
+;;   (transient-posframe-mode))
 
-(use-package hydra-posframe
-  :ensure nil
-  :vc (:url "https://github.com/Ladicle/hydra-posframe"
-            :rev :newest)
-  :hook (after-init . hydra-posframe-mode))
+;; (use-package hydra-posframe
+;;   :ensure nil
+;;   :vc (:url "https://github.com/Ladicle/hydra-posframe"
+;;             :rev :newest)
+;;   :hook (after-init . hydra-posframe-mode))
 
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 

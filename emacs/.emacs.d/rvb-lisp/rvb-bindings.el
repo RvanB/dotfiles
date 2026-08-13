@@ -56,6 +56,10 @@
 ;;; UI settings menu
 (keymap-global-set "<f6>" 'rvb/ui-menu)
 
+;;; Files
+(keymap-global-set "C-x C-f" 'rvb/find-file)
+(keymap-global-set "C-x C-S-f" 'find-file) ;; classic path-completion find-file
+
 ;;; Projects
 (keymap-global-set "s-p" 'project-switch-project)
 

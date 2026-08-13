@@ -17,6 +17,7 @@
 (require 'rvb-langs)
 (require 'rvb-editing)
 (require 'rvb-movement)
+(require 'rvb-projects)
 (require 'rvb-tools)
 (require 'rvb-ai)
 (require 'rvb-terminals)
