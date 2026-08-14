@@ -179,13 +179,4 @@
 
 (add-hook 'eglot-managed-mode-hook #'my/eglot-capf)
 
-;;; Fast file finder scoped to the VC root (or `default-directory').
-;; `consult-fd' streams candidates from `fd' asynchronously, so it stays
-;; responsive even in large trees like $HOME.  `fd' respects .gitignore;
-;; hidden files are included via `consult-fd-args' (configured above).
-(defun rvb/find-file ()
-  "Find a file under the current VC root, or `default-directory'."
-  (interactive)
-  (consult-fd (or (vc-root-dir) default-directory)))
-
 (provide 'rvb-completions)

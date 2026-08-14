@@ -139,9 +139,9 @@
    `(magit-diff-context-highlight ((,class (:background ,bg-alt))))
 
    ;; Org and Markdown.
-   `(org-level-1 ((,class (:foreground ,yellow :weight bold :height 1.3))))
-   `(org-level-2 ((,class (:foreground ,cyan :weight bold :height 1.2))))
-   `(org-level-3 ((,class (:foreground ,green :weight bold :height 1.1))))
+   `(org-level-1 ((,class (:foreground ,yellow :weight bold))))
+   `(org-level-2 ((,class (:foreground ,cyan :weight bold))))
+   `(org-level-3 ((,class (:foreground ,green :weight bold))))
    `(org-level-4 ((,class (:foreground ,magenta :weight bold))))
    `(org-todo ((,class (:foreground ,red-bright :weight bold))))
    `(org-done ((,class (:foreground ,green :weight bold))))

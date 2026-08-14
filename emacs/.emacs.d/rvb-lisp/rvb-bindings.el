@@ -56,17 +56,22 @@
 ;;; UI settings menu
 (keymap-global-set "<f6>" 'rvb/ui-menu)
 
-;;; Files
-(keymap-global-set "C-x C-f" 'rvb/find-file)
-(keymap-global-set "C-x C-S-f" 'find-file) ;; classic path-completion find-file
-
 ;;; Projects
 (keymap-global-set "s-p" 'project-switch-project)
+
+;;; Multi-repo features
+(keymap-global-set "C-c f" 'rvb-feature-dispatch)
+
+;;; Zoom the current window to the whole frame, and back again
+(keymap-global-set "s-<return>" 'rvb/toggle-full-frame)
 
 ;;; Make C-` shorthand for C-x ` (next-error), and C-~ for previous error
 (keymap-global-set "C-`" 'next-error)
 (keymap-global-set "C-~" 'previous-error)
 
 (keymap-set prog-mode-map "s-u" 'revert-buffer)
+
+(keymap-global-unset "M-s d")
+(keymap-global-set "M-s d" 'consult-fd)
 
 (provide 'rvb-bindings)

@@ -93,6 +93,18 @@
 ;; Modes
 (add-to-list 'auto-mode-alist '("\\.yaml.j2\\'" . yaml-mode))
 
-(setq rvb/project-directories '("~/zephir-meta"))
+;; `rvb/project-directories' is set with `M-x customize-variable' or
+;; `M-x rvb/project-add-directory', so the paths live in `custom-file'
+;; rather than here.
+
+;;; Start at the feature dashboard rather than the splash screen.
+;;; A function value must return a buffer, which is why this is
+;;; `rvb-feature-list-buffer' and not the interactive `rvb-feature-list'.
+;;; Setting this also inhibits the startup screen, and `emacsclient'
+;;; with no target file obeys it too.
+;;; rvb-features.el loads after this file; the function is not called
+;;; until startup finishes, so the forward reference is fine.
+(declare-function rvb-feature-list-buffer "rvb-features" ())
+(setq initial-buffer-choice #'rvb-feature-list-buffer)
 
 (provide 'rvb-settings)

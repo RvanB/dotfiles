@@ -250,9 +250,9 @@
    `(diff-context ((,class (:inherit default))))
 
    ;; Org mode
-   `(org-level-1 ((,class (:foreground ,keyword-color :weight bold :height 1.3))))
-   `(org-level-2 ((,class (:foreground ,function-color :weight bold :height 1.2))))
-   `(org-level-3 ((,class (:foreground ,type-color :weight bold :height 1.1))))
+   `(org-level-1 ((,class (:foreground ,keyword-color :weight bold))))
+   `(org-level-2 ((,class (:foreground ,function-color :weight bold))))
+   `(org-level-3 ((,class (:foreground ,type-color :weight bold))))
    `(org-level-4 ((,class (:foreground ,git-branch-remote :weight bold))))
    `(org-level-5 ((,class (:foreground ,string-color :weight bold))))
    `(org-level-6 ((,class (:foreground ,keyword-color))))

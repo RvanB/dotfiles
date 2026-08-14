@@ -44,21 +44,64 @@
        nil 'file))))
 
 (add-hook 'org-mode-hook (lambda () (add-hook 'before-save-hook 'rvb/cleanup-old-done-items nil t)))
-(add-hook 'org-mode-hook 'olivetti-mode)
+;; (add-hook 'org-mode-hook 'olivetti-mode)
 (add-hook 'org-mode-hook 'visual-line-mode)
-
+(add-hook 'org-mode-hook 'org-indent-mode)
 
 ;; Keep Org's display entirely ASCII: no modern bullets, pretty entities, or
 ;; Unicode folding marker.
 (setq org-auto-align-tags nil
       org-tags-column 0
-      org-catch-invisible-edits 'show-and-error
       org-special-ctrl-a/e t
       org-insert-heading-respect-content t
       org-hide-emphasis-markers t
       org-pretty-entities nil
       org-agenda-tags-column 0
-      org-ellipsis "...")
+      org-ellipsis nil)
+
+(defun rvb/org-hide-fold-ellipsis ()
+  "Remove the display text appended to every folded Org region.
+Recent Org versions interpret an empty `org-ellipsis' string as a
+request for the default three dots, so set the initialized folding
+specifications to no ellipsis explicitly."
+  (dolist (spec org-fold-core--specs)
+    (when (assq :ellipsis (cdr spec))
+      (org-fold-core-set-folding-spec-property
+       (car spec) :ellipsis nil t))))
+
+(add-hook 'org-mode-hook #'rvb/org-hide-fold-ellipsis)
+
+(defconst rvb/org-hidden-preamble-keywords '("title" "issue")
+  "Org keyword lines hidden from the buffer, including their newlines.")
+
+(defconst rvb/org-hidden-preamble-regexp
+  (concat "^[ \t]*#\\+\\(?:"
+          (regexp-opt rvb/org-hidden-preamble-keywords)
+          "\\):[^\n]*\n?")
+  "Regexp matching Org preamble lines hidden by this configuration.")
+
+(defun rvb/org-refresh-hidden-preamble (&rest _)
+  "Refresh overlays hiding configured Org preamble lines."
+  (remove-overlays (point-min) (point-max) 'rvb-org-hidden-preamble t)
+  (save-excursion
+    (goto-char (point-min))
+    (let ((case-fold-search t))
+      (while (and (< (point) (point-max))
+                  (looking-at "[ \t]*\\(?:#\\+.*\\)?$"))
+        (when (looking-at rvb/org-hidden-preamble-regexp)
+          (let ((overlay (make-overlay (match-beginning 0) (match-end 0))))
+            (overlay-put overlay 'rvb-org-hidden-preamble t)
+            (overlay-put overlay 'invisible 'rvb-org-preamble)
+            (overlay-put overlay 'evaporate t)))
+        (forward-line 1)))))
+
+(defun rvb/org-hide-preamble-keywords ()
+  "Hide configured Org preamble keyword lines in the current buffer."
+  (add-to-invisibility-spec 'rvb-org-preamble)
+  (add-hook 'after-change-functions #'rvb/org-refresh-hidden-preamble nil t)
+  (rvb/org-refresh-hidden-preamble))
+
+(add-hook 'org-mode-hook #'rvb/org-hide-preamble-keywords)
 
 (use-package org-tidy
   :ensure t
@@ -70,6 +113,46 @@
   :hook (org-mode . org-autolist-mode))
 
 (setq org-hide-emphasis-markers t)
+
+;;; Mouse support.  `org-mouse' normally gives headline stars a
+;;; `mouse-face' highlight.  With `org-indent-mode' that highlight
+;;; reveals the raw leading stars, and the same artifact shows beside an
+;;; Org Modern folding arrow.  Keep the click behavior but use a direct
+;;; mouse binding with no hover face.
+(require 'org-mouse)
+(setq org-mouse-features (remove 'activate-stars org-mouse-features))
+
+(defun rvb/org-mouse-cycle-heading (event)
+  "Cycle the Org heading clicked in EVENT."
+  (interactive "e")
+  (mouse-set-point event)
+  (org-cycle))
+
+(defvar rvb/org-heading-mouse-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map org-mouse-map)
+    (define-key map [mouse-1] #'rvb/org-mouse-cycle-heading)
+    map)
+  "Mouse map for clickable Org heading markers without a hover face.")
+
+(defun rvb/org-activate-heading-mouse-map ()
+  "Make Org heading markers clickable without highlighting them."
+  (font-lock-add-keywords
+   nil
+   `((,org-outline-regexp
+      0 `(face org-link keymap ,rvb/org-heading-mouse-map) 'prepend))
+   t))
+
+(add-hook 'org-mode-hook #'rvb/org-activate-heading-mouse-map)
+
+(use-package org-modern
+  :ensure t
+  :hook (org-mode . org-modern-mode)
+  :config
+  (setq org-modern-todo nil
+        org-modern-block-fringe t
+        org-modern-table-vertical 0.5
+        org-modern-table-horizontal 0.5))
 
 
 (provide 'rvb-org)
