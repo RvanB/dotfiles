@@ -29,7 +29,7 @@
   :prefix "rvb/")
 
 (defcustom rvb/full-frame-modes
-  '(rvb-feature-list-mode)
+  '()
   "Major modes whose buffers should take over the whole frame.
 Derived modes count, so naming a parent mode covers its children.
 Quitting such a buffer restores the layout that preceded it.

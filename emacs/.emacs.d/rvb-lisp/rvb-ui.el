@@ -159,8 +159,8 @@ When NO-SAVE is non-nil, do not persist THEME."
 
 ;; Use one fixed-pitch font everywhere.  Setting `variable-pitch' explicitly
 ;; prevents packages which inherit it from reintroducing proportional prose.
-(set-face-attribute 'default nil :family "Berkeley Mono" :height 140)
-(set-face-attribute 'fixed-pitch nil :family "Berkeley Mono" :height 140)
+(set-face-attribute 'default nil :family "Berkeley Mono" :height 160)
+(set-face-attribute 'fixed-pitch nil :family "Berkeley Mono")
 (set-face-attribute 'variable-pitch nil :family "ITC Galliard")
 
 ;; The two are the same point size but not the same apparent size: a
