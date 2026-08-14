@@ -159,9 +159,50 @@ When NO-SAVE is non-nil, do not persist THEME."
 
 ;; Use one fixed-pitch font everywhere.  Setting `variable-pitch' explicitly
 ;; prevents packages which inherit it from reintroducing proportional prose.
-(set-face-attribute 'default nil :family "CommitMono" :height 140)
-(set-face-attribute 'fixed-pitch nil :family "CommitMono" :height 1.0)
-(set-face-attribute 'variable-pitch nil :family "Helvetica Neue" :height 1.0)
+(set-face-attribute 'default nil :family "Berkeley Mono" :height 140)
+(set-face-attribute 'fixed-pitch nil :family "Berkeley Mono" :height 140)
+(set-face-attribute 'variable-pitch nil :family "ITC Galliard")
+
+;; The two are the same point size but not the same apparent size: a
+;; monospaced face is drawn large for its em, so prose set in Galliard
+;; reads short beside code set in Berkeley Mono.
+;;
+;; The correction has to scale the *font*, not the face.  `mixed-pitch'
+;; copies only :family and :weight from `variable-pitch' onto `default'
+;; unless `mixed-pitch-set-height' is on, so a :height on that face is
+;; ignored in exactly the buffers where this matters.
+;; `face-font-rescale-alist' is applied when the font is chosen, so it
+;; survives that and covers every other use of the family too.
+
+(defun rvb/variable-pitch-family ()
+  "Return the family `variable-pitch' asks for, or nil for the default."
+  (let ((family (face-attribute 'variable-pitch :family nil t)))
+    (and (stringp family) family)))
+
+(defun rvb/apply-variable-pitch-rescale ()
+  "Make `face-font-rescale-alist' agree with `rvb/variable-pitch-rescale'."
+  (when-let* ((family (rvb/variable-pitch-family))
+              (factor (and (boundp 'rvb/variable-pitch-rescale)
+                           rvb/variable-pitch-rescale)))
+    (setq face-font-rescale-alist
+          (assoc-delete-all family face-font-rescale-alist))
+    (unless (= factor 1.0)
+      (push (cons family factor) face-font-rescale-alist))
+    ;; Fonts already chosen are cached with their old size.
+    (clear-face-cache t)))
+
+(defcustom rvb/variable-pitch-rescale 1.0
+  "Factor by which the `variable-pitch' family is scaled.
+
+1.0 leaves it alone.  Setting it rewrites the family's entry in
+`face-font-rescale-alist' and clears the face cache, so a new value
+takes effect where you set it."
+  :type 'number
+  :group 'appearance
+  :set (lambda (symbol value)
+         (set-default symbol value)
+         (when (fboundp 'rvb/apply-variable-pitch-rescale)
+           (rvb/apply-variable-pitch-rescale))))
 
 (defun rvb/select-current-theme ()
   "Select a theme with Consult and persist it in `rvb-theme'."

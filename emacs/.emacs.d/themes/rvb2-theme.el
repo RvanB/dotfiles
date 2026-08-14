@@ -139,10 +139,15 @@
    `(magit-diff-context-highlight ((,class (:background ,bg-alt))))
 
    ;; Org and Markdown.
-   `(org-level-1 ((,class (:foreground ,yellow :weight bold))))
-   `(org-level-2 ((,class (:foreground ,cyan :weight bold))))
-   `(org-level-3 ((,class (:foreground ,green :weight bold))))
-   `(org-level-4 ((,class (:foreground ,magenta :weight bold))))
+   `(org-level-1 ((,class (:foreground ,yellow :weight normal))))
+   `(org-level-2 ((,class (:foreground ,cyan :weight normal))))
+   `(org-level-3 ((,class (:foreground ,green :weight normal))))
+   `(org-level-4 ((,class (:foreground ,magenta :weight normal))))
+   ;; Not otherwise themed, so they would inherit `outline-N' and its bold.
+   `(org-level-5 ((,class (:weight normal))))
+   `(org-level-6 ((,class (:weight normal))))
+   `(org-level-7 ((,class (:weight normal))))
+   `(org-level-8 ((,class (:weight normal))))
    `(org-todo ((,class (:foreground ,red-bright :weight bold))))
    `(org-done ((,class (:foreground ,green :weight bold))))
    `(org-block ((,class (:background ,bg-alt))))

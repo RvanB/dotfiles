@@ -15,6 +15,7 @@
 ;; session: a reference renders immediately as `owner/repo#42' and
 ;; gains its title when the answer arrives.
 
+(require 'json)
 (require 'ol)
 (require 'subr-x)
 
@@ -160,15 +161,30 @@ names the operation for error messages."
              (message "%s failed: %s" what (string-trim text))
              (funcall callback nil))))))))
 
-(defun rvb/github-fetch-body (key callback)
-  "Fetch the body of issue KEY, then call CALLBACK with it.
-CALLBACK receives the body as a string, or nil on failure."
+(defun rvb/github-fetch-issue (key callback)
+  "Fetch issue KEY, then call CALLBACK with what GitHub said.
+CALLBACK receives a plist of :title, :body and :state, or nil on
+failure.  One request rather than one per field, and the whole JSON
+rather than a `--jq' expression per caller: a body runs to many lines
+and would not survive being packed into a tab-separated row."
   (let ((parts (or (rvb/github--key-parts key)
                    (user-error "Not an issue reference: %s" key))))
     (rvb/github--run
-     (list "api" (format "repos/%s/issues/%s" (car parts) (cdr parts))
-           "--jq" ".body")
-     nil callback (format "Fetching %s" key))))
+     (list "api" (format "repos/%s/issues/%s" (car parts) (cdr parts)))
+     nil
+     (lambda (text)
+       (funcall callback
+                (when text
+                  (condition-case nil
+                      (let ((json (json-parse-string text
+                                                     :object-type 'alist
+                                                     :null-object nil)))
+                        (list :title (alist-get 'title json)
+                              :body (alist-get 'body json)
+                              :state (alist-get 'state json)))
+                    (error (message "Could not read GitHub's answer for %s" key)
+                           nil)))))
+     (format "Fetching %s" key))))
 
 (defun rvb/github-set-body (key body callback)
   "Set the body of issue KEY to BODY, then call CALLBACK.

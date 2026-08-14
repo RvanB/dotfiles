@@ -1,4 +1,8 @@
 ;;; Org mode
+;; Everything below sets Org's own variables and calls its functions, so
+;; load it first rather than relying on `org-mouse' further down to.
+(require 'org)
+
 (setq org-directory
       (file-name-as-directory
        (expand-file-name "orgfiles" user-emacs-directory)))
@@ -47,6 +51,7 @@
 ;; (add-hook 'org-mode-hook 'olivetti-mode)
 (add-hook 'org-mode-hook 'visual-line-mode)
 (add-hook 'org-mode-hook 'org-indent-mode)
+(add-hook 'org-mode-hook 'mixed-pitch-mode)
 
 ;; Keep Org's display entirely ASCII: no modern bullets, pretty entities, or
 ;; Unicode folding marker.
@@ -70,38 +75,6 @@ specifications to no ellipsis explicitly."
        (car spec) :ellipsis nil t))))
 
 (add-hook 'org-mode-hook #'rvb/org-hide-fold-ellipsis)
-
-(defconst rvb/org-hidden-preamble-keywords '("title" "issue")
-  "Org keyword lines hidden from the buffer, including their newlines.")
-
-(defconst rvb/org-hidden-preamble-regexp
-  (concat "^[ \t]*#\\+\\(?:"
-          (regexp-opt rvb/org-hidden-preamble-keywords)
-          "\\):[^\n]*\n?")
-  "Regexp matching Org preamble lines hidden by this configuration.")
-
-(defun rvb/org-refresh-hidden-preamble (&rest _)
-  "Refresh overlays hiding configured Org preamble lines."
-  (remove-overlays (point-min) (point-max) 'rvb-org-hidden-preamble t)
-  (save-excursion
-    (goto-char (point-min))
-    (let ((case-fold-search t))
-      (while (and (< (point) (point-max))
-                  (looking-at "[ \t]*\\(?:#\\+.*\\)?$"))
-        (when (looking-at rvb/org-hidden-preamble-regexp)
-          (let ((overlay (make-overlay (match-beginning 0) (match-end 0))))
-            (overlay-put overlay 'rvb-org-hidden-preamble t)
-            (overlay-put overlay 'invisible 'rvb-org-preamble)
-            (overlay-put overlay 'evaporate t)))
-        (forward-line 1)))))
-
-(defun rvb/org-hide-preamble-keywords ()
-  "Hide configured Org preamble keyword lines in the current buffer."
-  (add-to-invisibility-spec 'rvb-org-preamble)
-  (add-hook 'after-change-functions #'rvb/org-refresh-hidden-preamble nil t)
-  (rvb/org-refresh-hidden-preamble))
-
-(add-hook 'org-mode-hook #'rvb/org-hide-preamble-keywords)
 
 (use-package org-tidy
   :ensure t

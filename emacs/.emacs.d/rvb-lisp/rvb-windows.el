@@ -29,11 +29,15 @@
   :prefix "rvb/")
 
 (defcustom rvb/full-frame-modes
-  '(rvb-feature-list-mode
-    rvb-feature-status-mode)
+  '(rvb-feature-list-mode)
   "Major modes whose buffers should take over the whole frame.
 Derived modes count, so naming a parent mode covers its children.
-Quitting such a buffer restores the layout that preceded it."
+Quitting such a buffer restores the layout that preceded it.
+
+A feature's status buffer is deliberately not here: it is where you
+work, next to the code it describes, so it replaces the window you
+called it from rather than the whole frame.  `rvb/toggle-full-frame'
+zooms it when you do want the frame."
   :type '(repeat symbol)
   :group 'rvb/windows)
 
@@ -135,11 +139,19 @@ from `compilation-mode', so they are covered."
   :type '(repeat symbol)
   :group 'rvb/windows)
 
-(defun rvb/displaying-from-results-p (_buffer &optional _alist)
-  "Return non-nil when the selected window holds a results buffer."
-  (and rvb/results-modes
-       (with-current-buffer (window-buffer (selected-window))
-         (and (derived-mode-p rvb/results-modes) t))))
+(defun rvb/displaying-from-results-p (_buffer &optional alist)
+  "Return non-nil when the selected window holds a results buffer.
+
+Stands down when the caller explicitly allowed the selected window --
+`pop-to-buffer-same-window' passes `inhibit-same-window' nil.  This
+rule is for the hits you step through, not for a buffer you asked to
+see where you are standing, and `display-buffer-alist' otherwise
+overrides the caller."
+  (let ((asked-for-same-window (assq 'inhibit-same-window alist)))
+    (and rvb/results-modes
+         (not (and asked-for-same-window (null (cdr asked-for-same-window))))
+         (with-current-buffer (window-buffer (selected-window))
+           (and (derived-mode-p rvb/results-modes) t)))))
 
 ;; Appended, so the full-frame entry above still wins where both match.
 (add-to-list 'display-buffer-alist

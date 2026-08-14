@@ -31,6 +31,7 @@
 
 ;;; Code:
 
+(require 'autorevert)
 (require 'cl-lib)
 (require 'subr-x)
 (require 'cus-edit)
@@ -48,7 +49,7 @@
 
 ;; Optional: rvb-github.el supplies issue lookups and the issue body
 ;; sync.  Everything here degrades gracefully without it.
-(declare-function rvb/github-fetch-body "rvb-github" (key callback))
+(declare-function rvb/github-fetch-issue "rvb-github" (key callback))
 (declare-function rvb/github-set-body "rvb-github" (key body callback))
 
 ;; Made buffer-local further down, with the status buffer it belongs to.
@@ -113,27 +114,53 @@ Applies to descriptions only."
   "Name of the Org file holding a feature's descriptions.
 
 One file per feature rather than one per repository, so the whole
-feature reads as a single document: the text before the first heading
-describes the feature, and a top-level heading per member repository
-describes that repository's share of it.
+feature reads as a single document under two top-level headings:
+what the work is, and what it took.
 
-    #+title: add-sso
+    #+title: Single sign-on for the reports app
     #+issue: https://github.com/cdlib/zephir-reports/issues/42
 
+    * Description
     Single sign-on across the estate.
 
-    * auth-service
+    ** Open questions
+    Which provider?
+
+    * Implementation
+    ** auth-service
     Adds the OIDC callback endpoint.
 
-    * web-ui
+    ** web-ui
     Swaps the login form for a redirect.
 
-`rvb-feature-pr-body' joins the preamble and a repository's subtree
-into the body of that repository's pull request.
+Description is the feature's own writing, and the only part that has a
+counterpart on GitHub: it is what `rvb-feature-issue-push' sends and
+what `rvb-feature-issue-pull' replaces.  Because GitHub's headings
+start at level one and Org's here start at level two, the text is
+promoted on the way out and demoted on the way back in.
+
+Implementation holds one level-two heading per member repository, and
+that is where the status buffer injects each repository's branch,
+commits and changed files.  Write anything you like under a
+repository's heading; it belongs to that repository, and
+`rvb-feature-pr-body' makes it the body of its pull request.
 
 An optional `#+issue:' keyword links the feature to a GitHub issue or
-pull request, shown under the feature's name in both the list and the
-status buffer.  See `rvb-feature-issue'.")
+pull request.  It is what `rvb-feature-issue-push' and
+`rvb-feature-issue-pull' talk to, and the feature list heads a feature
+with the issue's title and state.  See `rvb-feature-issue'.
+
+`#+title:' is free text and drives nothing: a feature is its
+directory, and that name is what the branches, the record and the
+buffer names are built from.  Pulling an issue writes the issue's
+title here, which is what the feature list reads.  See
+`rvb-feature-title'.")
+
+(defconst rvb-feature-description-heading "Description"
+  "Top-level heading holding a feature's own description.")
+
+(defconst rvb-feature-implementation-heading "Implementation"
+  "Top-level heading holding one sub-heading per member repository.")
 
 
 ;;; Git plumbing
@@ -224,7 +251,7 @@ checkout of BASE itself."
 (defun rvb-feature--branch-candidates (repo)
   "Return branch names in REPO usable as a feature branch.
 Local branches, plus remote branches with their remote prefix stripped,
-since checking out `origin/feat/x' means creating `feat/x'."
+since checking out `origin/add-sso' means creating `add-sso'."
   (let ((locals (rvb-feature--git-lines repo "for-each-ref"
                                         "--format=%(refname:short)" "refs/heads"))
         (remotes (rvb-feature--git-lines repo "for-each-ref"
@@ -241,8 +268,11 @@ since checking out `origin/feat/x' means creating `feat/x'."
 ;;; Features and their records
 
 (defun rvb-feature-default-branch-name (feature _repo)
-  "Return the default branch name for FEATURE."
-  (concat "feat/" feature))
+  "Return the default branch name for FEATURE: the feature's own name.
+Every member repository gets the same branch name unless it is given
+one of its own, so the feature's name is the thread running through
+the worktrees, the branches and the directory alike."
+  feature)
 
 (defun rvb-feature--dir (name)
   "Return the absolute directory of feature NAME."
@@ -343,19 +373,22 @@ still picked up.  Keys: :name :dir :origin :branch :base :base-commit
   (expand-file-name rvb-feature-org-name (rvb-feature--dir feature)))
 
 (defun rvb-feature--ensure-org (feature)
-  "Create FEATURE's Org file if it does not exist.  Return its path."
+  "Create or restructure FEATURE's Org file as needed.  Return its path."
   (let ((file (rvb-feature--org-file feature)))
-    (unless (file-exists-p file)
+    (if (file-exists-p file)
+        (rvb-feature--ensure-structure feature)
       (make-directory (file-name-directory file) t)
       (with-temp-file file
-        (insert "#+title: " feature "\n\n")))
+        (insert "#+title: " feature "\n\n"
+                "* " rvb-feature-description-heading "\n\n"
+                "* " rvb-feature-implementation-heading "\n")))
     file))
-
-(defun rvb-feature--heading-regexp (name)
-  (format "^\\* %s[ \t]*$" (regexp-quote name)))
 
 (defconst rvb-feature--top-heading-regexp "^\\* +\\(.*?\\)[ \t]*$"
   "Match a top-level heading line, capturing everything after the star.")
+
+(defconst rvb-feature--repo-heading-regexp "^\\*\\* +\\(.*?\\)[ \t]*$"
+  "Match a repository heading, capturing everything after the stars.")
 
 (defun rvb-feature--todo-keywords ()
   "Return the configured TODO keywords, without their fast-access keys."
@@ -396,17 +429,168 @@ word of \"Open questions\"."
   "Return the names of FEATURE's member repositories."
   (mapcar (lambda (m) (plist-get m :name)) (rvb-feature-members feature)))
 
+
+;;; Moving around a feature's Org file
+;;
+;; Two top-level headings carry the structure -- Description and
+;; Implementation -- and a repository is a level-two heading under the
+;; second.  Everything below navigates by those, so a heading you write
+;; yourself is just text no matter where you put it.
+
+(defun rvb-feature--section-end (level)
+  "Return the end of the subtree whose heading is on the current line.
+LEVEL is that heading's level: the subtree runs to the next heading at
+that level or above, or to the end of the buffer."
+  (save-excursion
+    (end-of-line)
+    (if (re-search-forward (format "^\\*\\{1,%d\\} " level) nil t)
+        (match-beginning 0)
+      (point-max))))
+
+(defun rvb-feature--goto-section (title)
+  "Move point to the end of the top-level heading line TITLE.
+Return non-nil if there is one.  Matches on the heading's text, so a
+heading the status buffer has decorated still counts."
+  (goto-char (point-min))
+  (let (found)
+    (while (and (not found)
+                (re-search-forward rvb-feature--top-heading-regexp nil t))
+      (when (equal title (rvb-feature--heading-text
+                          (substring-no-properties (match-string 1))))
+        (setq found t)))
+    found))
+
+(defun rvb-feature--section-body (title)
+  "Return (START . END) bounding the body of top-level heading TITLE.
+The heading line itself is not included.  Nil if there is no such
+heading."
+  (save-excursion
+    (when (rvb-feature--goto-section title)
+      (cons (min (point-max) (1+ (line-end-position)))
+            (rvb-feature--section-end 1)))))
+
+(defun rvb-feature--shift-headings (text n)
+  "Return TEXT with every Org heading moved N levels down, or up if N < 0.
+
+This is what lets the description be level two here and level one on
+GitHub: an issue body starts its headings at `#', and nesting them
+under Description would otherwise cost a level on every round trip.
+
+Lines inside a block are left alone -- a `#+begin_example' may well
+contain a row of asterisks that is not a heading."
+  (if (or (zerop n) (null text))
+      text
+    (with-temp-buffer
+      (insert text)
+      (goto-char (point-min))
+      (let ((in-block nil))
+        (while (not (eobp))
+          (cond
+           (in-block
+            (when (looking-at "[ \t]*#\\+end_") (setq in-block nil)))
+           ((looking-at "[ \t]*#\\+begin_") (setq in-block t))
+           ((looking-at "\\(\\*+\\) ")
+            (if (> n 0)
+                (insert (make-string n ?*))
+              ;; Never past level one: a heading has to stay a heading.
+              (delete-char (min (- n) (1- (length (match-string 1))))))))
+          (forward-line 1)))
+      (buffer-string))))
+
+(defun rvb-feature--restructured (members)
+  "Return the current buffer rewritten under the two top-level headings.
+
+MEMBERS names the feature's repositories.  Their headings move under
+Implementation, one level down; everything else -- the text above the
+first heading and any heading that does not name a repository --
+becomes the Description, also one level down, since level one is now
+the structure's."
+  (goto-char (point-min))
+  (let (keywords description implementation)
+    ;; The keyword block, blank lines and all, stays at the top.
+    (while (and (not (eobp)) (looking-at "^[ \t]*\\(?:#\\+.*\\)?$"))
+      (when (looking-at "^[ \t]*#\\+")
+        (push (buffer-substring-no-properties
+               (line-beginning-position) (line-end-position))
+              keywords))
+      (forward-line))
+    (let ((first (save-excursion
+                   (if (re-search-forward "^\\* " nil t)
+                       (match-beginning 0)
+                     (point-max)))))
+      (let ((prose (string-trim (buffer-substring-no-properties (point) first))))
+        (unless (string-empty-p prose) (push prose description)))
+      (goto-char first))
+    (while (re-search-forward rvb-feature--top-heading-regexp nil t)
+      (let* ((title (rvb-feature--heading-text
+                     (substring-no-properties (match-string 1))))
+             (heading-start (line-beginning-position))
+             (body-start (min (point-max) (1+ (line-end-position))))
+             (end (rvb-feature--section-end 1))
+             (body (string-trim (buffer-substring-no-properties body-start end)))
+             (whole (string-trim (buffer-substring-no-properties
+                                  heading-start end))))
+        (goto-char end)
+        (cond
+         ;; Already-structured sections keep their contents as they are.
+         ((equal title rvb-feature-description-heading)
+          (unless (string-empty-p body) (push body description)))
+         ((equal title rvb-feature-implementation-heading)
+          (unless (string-empty-p body) (push body implementation)))
+         ((member title members)
+          (push (rvb-feature--shift-headings whole 1) implementation))
+         (t (unless (string-empty-p whole)
+              (push (rvb-feature--shift-headings whole 1) description))))))
+    (concat
+     (string-join
+      (delq nil
+            (list (and keywords (string-join (nreverse keywords) "\n"))
+                  (concat "* " rvb-feature-description-heading
+                          (when description
+                            (concat "\n" (string-join (nreverse description)
+                                                      "\n\n"))))
+                  (concat "* " rvb-feature-implementation-heading
+                          (when implementation
+                            (concat "\n" (string-join (nreverse implementation)
+                                                      "\n\n"))))))
+      "\n\n")
+     "\n")))
+
+(defun rvb-feature--ensure-structure (feature)
+  "Give FEATURE's Org file its Description and Implementation headings.
+
+A file written before those existed is rewritten by
+`rvb-feature--restructured', and the original kept beside it with a
+tilde appended -- this moves text the user wrote, so there is a way
+back."
+  (let ((file (rvb-feature--org-file feature)))
+    (when (file-readable-p file)
+      (with-temp-buffer
+        (insert-file-contents file)
+        (unless (and (rvb-feature--goto-section rvb-feature-description-heading)
+                     (rvb-feature--goto-section
+                      rvb-feature-implementation-heading))
+          (copy-file file (concat file "~") t)
+          (let ((text (rvb-feature--restructured
+                       (rvb-feature--member-names feature))))
+            (erase-buffer)
+            (insert text)
+            (write-region (point-min) (point-max) file nil 'quiet)))))
+    file))
+
 (defun rvb-feature--ensure-heading (feature name)
-  "Ensure FEATURE's Org file has a top-level heading for NAME."
+  "Ensure FEATURE's Org file has a repository heading for NAME."
   (let ((file (rvb-feature--ensure-org feature)))
     (with-temp-buffer
       (insert-file-contents file)
       (unless (rvb-feature--goto-heading name)
-        (goto-char (point-max))
-        (unless (bolp) (insert "\n"))
-        (unless (looking-back "\n\n" 2) (insert "\n"))
-        (insert "* " name "\n")
-        (write-region (point-min) (point-max) file nil 'quiet)))
+        (let ((impl (rvb-feature--section-body
+                     rvb-feature-implementation-heading)))
+          (goto-char (cdr impl))
+          (unless (bolp) (insert "\n"))
+          (unless (looking-back "\n\n" 2) (insert "\n"))
+          (insert "** " name "\n")
+          (write-region (point-min) (point-max) file nil 'quiet))))
     file))
 
 (defun rvb-feature--fill-prose ()
@@ -461,24 +645,20 @@ font-lock machinery manages ordinary `face' properties itself."
 
 BODY is fontified as Org would show it.  Keys are:
 
-  nil     the feature's own writing: the text before the first
-          heading, minus keyword lines, followed by every top-level
-          heading that does not name a repository, kept whole
-  NAME    a top-level heading naming one of MEMBERS -- that
-          repository's description, sub-headings and all
+  nil     the body of the Description heading -- the feature's own
+          writing, sub-headings and all
+  NAME    a repository heading under Implementation naming one of
+          MEMBERS, and everything under it
 
-Only headings that name a member are repositories.  The rest is yours:
-notes, TODO entries, whatever structure you want, at any level.  Below
-a repository's heading it all belongs to that repository; elsewhere it
-is the feature's own, and shown as one piece rather than split into a
-separate section you cannot get at.
+A file that predates the two structural headings is read the old way,
+so the feature list is right about it before it has been restructured.
 
 MEMBERS defaults to the feature's member names.  The whole file is
 fontified once and sliced up, so a refresh activates `org-mode' a
 single time no matter how many repositories the feature has."
   (let ((file (rvb-feature--org-file feature))
         (members (or members (rvb-feature--member-names feature)))
-        notes result)
+        own result)
     (when (file-readable-p file)
       (with-temp-buffer
         (insert-file-contents file)
@@ -495,49 +675,50 @@ single time no matter how many repositories the feature has."
         (cl-flet ((slice (start end)
                     (let ((s (string-trim (buffer-substring start end))))
                       (unless (string-empty-p s) s))))
-          (goto-char (point-min))
-          (let ((end (if (re-search-forward "^\\* " nil t)
-                         (match-beginning 0)
-                       (point-max))))
-            ;; Skip #+title: and friends; they are not prose.
-            (goto-char (point-min))
-            (while (and (< (point) end) (looking-at "^#\\+"))
-              (forward-line))
-            (when-let* ((text (slice (point) end)))
-              (push text notes)))
-          (goto-char (point-min))
-          (while (re-search-forward rvb-feature--top-heading-regexp nil t)
-            (let* ((raw (substring-no-properties (match-string 1)))
-                   (name (rvb-feature--heading-text raw))
-                   (heading-start (line-beginning-position))
-                   (body-start (min (point-max) (1+ (line-end-position))))
-                   (end (if (re-search-forward "^\\* " nil t)
-                            (goto-char (match-beginning 0))
-                          (point-max))))
-              (if (member name members)
-                  (push (cons name (slice body-start end)) result)
-                ;; Not a repository: keep the heading, it is part of
-                ;; what was written.
-                (when-let* ((text (slice heading-start end)))
-                  (push text notes)))))
-          (when notes
-            (push (cons nil (string-join (nreverse notes) "\n\n")) result)))))
+          (let ((bounds (or (rvb-feature--section-body
+                             rvb-feature-description-heading)
+                            ;; Not restructured yet: the description is
+                            ;; whatever sits above the first heading.
+                            (progn
+                              (goto-char (point-min))
+                              (while (and (not (eobp)) (looking-at "^#\\+"))
+                                (forward-line))
+                              (cons (point)
+                                    (save-excursion
+                                      (if (re-search-forward "^\\* " nil t)
+                                          (match-beginning 0)
+                                        (point-max))))))))
+            (setq own (slice (car bounds) (cdr bounds))))
+          (when-let* ((impl (rvb-feature--section-body
+                             rvb-feature-implementation-heading)))
+            (goto-char (car impl))
+            (while (re-search-forward rvb-feature--repo-heading-regexp
+                                      (cdr impl) t)
+              (let* ((name (rvb-feature--heading-text
+                            (substring-no-properties (match-string 1))))
+                     (body-start (min (point-max) (1+ (line-end-position))))
+                     (end (min (cdr impl) (rvb-feature--section-end 2))))
+                (goto-char end)
+                (when (member name members)
+                  (push (cons name (slice body-start end)) result))))))))
     ;; The feature's own writing first, then the repositories.
-    (let ((own (assoc nil result)))
-      (cons (or own (cons nil nil))
-            (nreverse (delq own result))))))
+    (cons (cons nil own) (nreverse result))))
 
 (defun rvb-feature--goto-heading (name)
-  "Move point past the top-level heading naming NAME.  Return non-nil if found.
-Matches on the heading's text, so a TODO keyword or tags on it make no
-difference."
-  (goto-char (point-min))
-  (let (found)
-    (while (and (not found) (re-search-forward rvb-feature--top-heading-regexp nil t))
-      (when (equal name (rvb-feature--heading-text
-                         (substring-no-properties (match-string 1))))
-        (setq found t)))
-    found))
+  "Move point past NAME's repository heading, under Implementation.
+Return non-nil if there is one.  Matches on the heading's text, so a
+TODO keyword or tags on it make no difference."
+  (when-let* ((impl (rvb-feature--section-body
+                     rvb-feature-implementation-heading)))
+    (goto-char (car impl))
+    (let (found)
+      (while (and (not found)
+                  (re-search-forward rvb-feature--repo-heading-regexp
+                                     (cdr impl) t))
+        (when (equal name (rvb-feature--heading-text
+                           (substring-no-properties (match-string 1))))
+          (setq found t)))
+      found)))
 
 (defun rvb-feature-description (feature name)
   "Return the description text for repository NAME in FEATURE, unfontified."
@@ -546,13 +727,59 @@ difference."
       (with-temp-buffer
         (insert-file-contents file)
         (when (rvb-feature--goto-heading name)
-          (forward-line)
-          (let* ((start (point))
-                 (end (if (re-search-forward "^\\* " nil t)
-                          (match-beginning 0)
-                        (point-max)))
+          (let* ((start (min (point-max) (1+ (line-end-position))))
+                 (end (rvb-feature--section-end 2))
                  (s (string-trim (buffer-substring-no-properties start end))))
             (unless (string-empty-p s) s)))))))
+
+;;; The title
+;;
+;; Nothing here is keyed on the title: a feature is its directory, and
+;; that name is what the branches, the record and the buffers are built
+;; from.  The title is free text, and `rvb-feature-issue-pull' writes
+;; the linked issue's title into it -- so the list can read what the
+;; work is called rather than what its branch is called, with no
+;; network involved.
+
+(defconst rvb-feature--title-keyword-regexp
+  (rx bol (* (any " \t")) "#+title:" (* (any " \t")) (group (* nonl)))
+  "Match the `#+title:' keyword in a feature's Org file.")
+
+(defun rvb-feature--preamble-limit ()
+  "Return the end of the current buffer's keyword block."
+  (save-excursion
+    (goto-char (point-min))
+    (if (re-search-forward "^\\* " nil t) (match-beginning 0) (point-max))))
+
+(defun rvb-feature-title (feature)
+  "Return FEATURE's `#+title:', or nil if it has none of its own.
+
+A title that repeats the directory name says nothing the name does not,
+so it counts as none and the caller falls back to the linked issue."
+  (let ((file (rvb-feature--org-file feature)))
+    (when (file-readable-p file)
+      (with-temp-buffer
+        (insert-file-contents file)
+        (goto-char (point-min))
+        (when (re-search-forward rvb-feature--title-keyword-regexp
+                                 (rvb-feature--preamble-limit) t)
+          (let ((s (string-trim (match-string 1))))
+            (unless (or (string-empty-p s) (equal s feature)) s)))))))
+
+(defun rvb-feature--set-title (feature title)
+  "Set FEATURE's `#+title:' keyword to TITLE."
+  (let ((file (rvb-feature--ensure-org feature)))
+    (with-temp-buffer
+      (insert-file-contents file)
+      (goto-char (point-min))
+      (if (re-search-forward rvb-feature--title-keyword-regexp
+                             (rvb-feature--preamble-limit) t)
+          (replace-match (concat "#+title: " title) t t)
+        (goto-char (point-min))
+        (insert "#+title: " title "\n"))
+      (write-region (point-min) (point-max) file nil 'quiet))
+    file))
+
 
 ;;; The linked issue
 
@@ -592,137 +819,38 @@ Returns nil when there is no such keyword or it cannot be parsed."
               (format "%s/%s#%s" (match-string 1 value) (match-string 2 value)
                       (match-string 3 value))))))))))
 
-(defvar-keymap rvb-feature-issue-map
-  :doc "Keymap on the linked-issue line."
-  "RET" #'rvb-feature-visit-issue
-  "<mouse-1>" #'rvb-feature-visit-issue)
+(defun rvb-feature-own-text (feature)
+  "Return FEATURE's own writing, unfontified: its Description section.
 
-(defun rvb-feature-visit-issue (&optional event)
-  "Open the issue linked at point, or at EVENT's position."
-  (interactive (list last-nonmenu-event))
-  (let* ((pos (if (and event (listp event))
-                  (posn-point (event-end event))
-                (point)))
-         (url (get-text-property pos 'rvb-feature-issue-url)))
-    (if url (browse-url url) (user-error "No issue here"))))
-
-(defun rvb-feature--issue-line (feature refresh)
-  "Return the display line for FEATURE's linked issue, or nil.
-
-The issue's title is the clickable text -- that is the part worth
-reading -- falling back to the `owner/repo#number' reference while the
-title is unknown, or when rvb-github.el is not loaded to look it up.
-REFRESH is called when a pending lookup lands."
-  (when-let* ((key (rvb-feature-issue feature)))
-    (let* ((info (and (fboundp 'rvb/github-lookup)
-                      (rvb/github-lookup key refresh)))
-           (url (if (fboundp 'rvb/github-url)
-                    (rvb/github-url key)
-                  (concat "https://github.com/"
-                          (replace-regexp-in-string "#" "/issues/" key))))
-           (state (and info (fboundp 'rvb/github-state-string)
-                       (rvb/github-state-string (plist-get info :state))))
-           (text (or (plist-get info :title) key)))
-      (rvb-feature--string-faces-to-font-lock
-       (concat
-        (propertize text
-                    'font-lock-face 'rvb-feature-issue
-                    'mouse-face 'highlight
-                    'help-echo url
-                    'keymap rvb-feature-issue-map
-                    'rvb-feature-issue-url url)
-        (if (and state (not (string-empty-p state)))
-            (concat "  " (copy-sequence state))
-          ""))))))
-
-
-(defun rvb-feature--scan-regions (members)
-  "Return the current Org buffer's regions as (KIND START END NAME).
-
-KIND is `preamble' for the text after the `#+' keyword lines and
-before the first heading, `repo' for a top-level heading naming one of
-MEMBERS together with everything under it, and `own' for any other
-top-level heading and its contents.  NAME is the heading's text, or
-nil for the preamble."
-  (let (regions)
-    (goto-char (point-min))
-    (let ((first (if (re-search-forward "^\\* " nil t)
-                     (match-beginning 0)
-                   (point-max))))
-      (goto-char (point-min))
-      (while (and (< (point) first) (looking-at "^#\\+"))
-        (forward-line))
-      (push (list 'preamble (point) first nil) regions)
-      (goto-char (point-min))
-      (while (re-search-forward rvb-feature--top-heading-regexp nil t)
-        (let* ((name (rvb-feature--heading-text
-                      (substring-no-properties (match-string 1))))
-               (start (line-beginning-position))
-               (end (if (re-search-forward "^\\* " nil t)
-                        (goto-char (match-beginning 0))
-                      (point-max))))
-          (push (list (if (member name members) 'repo 'own) start end name)
-                regions))))
-    (nreverse regions)))
-
-
-(defun rvb-feature-preamble (feature)
-  "Return FEATURE's introduction, unfontified: the text above the first
-heading, minus the `#+' keyword lines."
+This is what `rvb-feature-issue-push' sends and what
+`rvb-feature-issue-pull' replaces.  The repository sections are not
+part of it; they have no counterpart on the issue."
   (let ((file (rvb-feature--org-file feature)))
     (when (file-readable-p file)
       (with-temp-buffer
         (insert-file-contents file)
-        (when-let* ((region (assq 'preamble
-                                  (rvb-feature--scan-regions
-                                   (rvb-feature--member-names feature)))))
+        (when-let* ((bounds (rvb-feature--section-body
+                             rvb-feature-description-heading)))
           (let ((s (string-trim (buffer-substring-no-properties
-                                 (nth 1 region) (nth 2 region)))))
+                                 (car bounds) (cdr bounds)))))
             (unless (string-empty-p s) s)))))))
 
-(defun rvb-feature-own-text (feature)
-  "Return FEATURE's own writing, unfontified.
-
-Everything that is not a repository's: the text above the first
-heading, plus any top-level heading that does not name a member, in
-file order.  This is what `rvb-feature-issue-push' sends."
-  (let ((file (rvb-feature--org-file feature)))
-    (when (file-readable-p file)
-      (let ((members (rvb-feature--member-names feature)))
-        (with-temp-buffer
-          (insert-file-contents file)
-          (let ((parts
-                 (delq nil
-                       (mapcar (pcase-lambda (`(,kind ,start ,end ,_name))
-                                 (unless (eq kind 'repo)
-                                   (let ((s (string-trim
-                                             (buffer-substring-no-properties
-                                              start end))))
-                                     (unless (string-empty-p s) s))))
-                               (rvb-feature--scan-regions members)))))
-            (and parts (string-join parts "\n\n"))))))))
-
 (defun rvb-feature--set-own-text (feature text)
-  "Replace FEATURE's own writing with TEXT, keeping the repository sections.
+  "Replace FEATURE's Description with TEXT, keeping everything else.
 
-The inverse of `rvb-feature-own-text': TEXT lands where the preamble
-was, and any other feature-level heading is removed, because TEXT
-already contains whatever those said.  Without that the two would not
-round-trip -- pushing and then pulling would leave every note in the
-file twice."
-  (let ((file (rvb-feature--ensure-org feature))
-        (members (rvb-feature--member-names feature)))
+The inverse of `rvb-feature-own-text'.  Only that one section is
+touched, so the Implementation half -- which is not on GitHub and
+which pulling knows nothing about -- survives a pull untouched."
+  (let ((file (rvb-feature--ensure-org feature)))
     (with-temp-buffer
       (insert-file-contents file)
-      (let* ((regions (rvb-feature--scan-regions members))
-             (preamble (assq 'preamble regions)))
-        ;; Back to front, so earlier positions stay valid.
-        (dolist (region (reverse regions))
-          (when (eq (car region) 'own)
-            (delete-region (nth 1 region) (nth 2 region))))
-        (delete-region (nth 1 preamble) (nth 2 preamble))
-        (goto-char (nth 1 preamble))
-        (insert "\n" (string-trim text) "\n\n"))
+      (let ((bounds (or (rvb-feature--section-body
+                         rvb-feature-description-heading)
+                        (error "%s has no %s heading" file
+                               rvb-feature-description-heading))))
+        (delete-region (car bounds) (cdr bounds))
+        (goto-char (car bounds))
+        (insert (string-trim text) "\n\n"))
       (write-region (point-min) (point-max) file nil 'quiet))
     file))
 
@@ -786,27 +914,31 @@ GitHub's Markdown" rvb-feature-pandoc-executable))
 
 ;;;###autoload
 (defun rvb-feature-issue-pull (feature)
-  "Replace FEATURE's description with the body of its linked issue.
+  "Replace FEATURE's Description section with the body of its linked issue.
 
-Replaces everything of the feature's own -- the text above the first
-heading and any feature-level heading below it -- because that is what
-`rvb-feature-issue-push' sends.  The repository sections are left
-alone; they have no counterpart on GitHub.
+Only that section is replaced -- it is exactly what
+`rvb-feature-issue-push' sends, which is what makes the two inverse
+rather than duplicating your notes on every round trip.  The
+Implementation half is left alone; it has no counterpart on GitHub.
 
-Feature-level headings you already have are removed, since the fetched
-body contains whatever they said.  That is what makes push and pull
-inverse instead of duplicating your notes on every round trip.
+The body arrives as Markdown and is converted to Org by Pandoc, then
+demoted a level so its headings sit under Description -- the inverse
+of the promotion pushing does.
 
-The body arrives as Markdown and is converted to Org by Pandoc, so the
-file stays Org throughout."
+The issue's own title is written to `#+title:' whichever way the body
+goes, including when you decline to replace it: the title names the
+document, and GitHub is where that name is decided."
   (interactive (list (or rvb-feature--buffer-feature (rvb-feature--read-name t))))
   (let ((key (rvb-feature--issue-or-error feature))
         (current (rvb-feature-own-text feature)))
-    (rvb/github-fetch-body
+    (rvb/github-fetch-issue
      key
-     (lambda (body)
-       (when body
-         (let ((body (string-trim body)))
+     (lambda (issue)
+       (when issue
+         (let ((body (string-trim (or (plist-get issue :body) "")))
+               (title (string-trim (or (plist-get issue :title) ""))))
+           (unless (string-empty-p title)
+             (rvb-feature--set-title feature title))
            (cond
             ((string-empty-p body)
              (message "%s has an empty body; nothing to pull" key))
@@ -818,29 +950,33 @@ file stays Org throughout."
                                 feature key))))
              (message "Kept the local description"))
             (t
-             (rvb-feature--set-own-text feature (rvb-feature--from-markdown body))
-             (rvb-feature--after-issue-sync feature)
-             (message "Pulled %s into %s" key feature)))))))))
+             (rvb-feature--set-own-text
+              feature
+              (rvb-feature--shift-headings (rvb-feature--from-markdown body) 1))
+             (message "Pulled %s into %s" key feature)))
+           (rvb-feature--after-issue-sync feature)))))))
 
 ;;;###autoload
 (defun rvb-feature-issue-push (feature)
-  "Set the body of FEATURE's linked issue from its description.
+  "Set the body of FEATURE's linked issue from its Description section.
 
-Sends everything of the feature's own: the text above the first
-heading and any feature-level heading below it.  Only the repository
-sections are held back -- those are per-repository and belong in their
-pull requests, not on the issue.
+Only that section is sent.  The Implementation half is held back --
+it is per-repository and belongs in the pull requests, not on the
+issue.
 
-The text is converted from Org to GitHub-flavoured Markdown by Pandoc,
-so it renders on the issue as it reads here.
+The text is promoted a level first, so a heading written under
+Description as level two arrives on GitHub as `#', then converted from
+Org to GitHub-flavoured Markdown by Pandoc.
 
 This rewrites the issue on GitHub, where other people can see it and
 where there is no undo, so it always asks first."
   (interactive (list (or rvb-feature--buffer-feature (rvb-feature--read-name t))))
   (let* ((key (rvb-feature--issue-or-error feature))
          (body (rvb-feature--to-markdown
-                (or (rvb-feature-own-text feature)
-                    (user-error "%s has no description to push" feature)))))
+                (rvb-feature--shift-headings
+                 (or (rvb-feature-own-text feature)
+                     (user-error "%s has no description to push" feature))
+                 -1))))
     (unless (yes-or-no-p
              (format "Replace the body of %s on GitHub with %s's description? "
                      key feature))
@@ -854,12 +990,14 @@ where there is no undo, so it always asks first."
 
 (defun rvb-feature-pr-body (feature name)
   "Return the pull-request body for repository NAME in FEATURE.
-The feature's introduction followed by that repository's own section,
-as Org.  A future \"create PRs\" command converts it with
-`rvb-feature--to-markdown', the same way pushing an issue does."
-  (let ((parts (delq nil (list (rvb-feature-preamble feature)
+The feature's Description followed by that repository's own section,
+as Org, promoted a level so the description's headings start at one.
+A future
+\"create PRs\" command converts it with `rvb-feature--to-markdown',
+the same way pushing an issue does."
+  (let ((parts (delq nil (list (rvb-feature-own-text feature)
                                (rvb-feature-description feature name)))))
-    (and parts (string-join parts "\n\n"))))
+    (and parts (rvb-feature--shift-headings (string-join parts "\n\n") -1))))
 
 (defun rvb-feature--read-name (&optional require-match)
   "Prompt for a feature name, defaulting to the enclosing one."
@@ -1018,6 +1156,90 @@ rather than creating one."
     (rvb-feature--ensure-heading feature name)
     (message "Added %s to feature %s on %s" name feature branch)
     (rvb-feature-status feature)))
+
+
+;;; Noticing that something changed
+;;
+;; Neither buffer visits a file -- one is an Org file with git's answer
+;; injected, the other is derived from every feature directory at once
+;; -- so ordinary Auto Revert has nothing to watch.  `buffer-stale-
+;; function' is its hook for exactly this case: answer "has anything
+;; changed?" and Auto Revert calls `revert-buffer', which both modes
+;; route to their own refresh.
+;;
+;; Answering means stat, not git.  A commit, checkout, merge or rebase
+;; writes the worktree's index and appends to its reflog; a fetch
+;; writes FETCH_HEAD; editing a description writes the Org file.  All
+;; of those are caught.  Editing a tracked file writes none of them, so
+;; the dirty markers still wait for a refresh you ask for -- the
+;; alternative is running `git status' over every repository on a
+;; five-second timer, which is the cost this avoids.
+
+(defvar-local rvb-feature--signature nil
+  "State of the files behind this buffer when it was last drawn.")
+
+(defun rvb-feature--mtime (file)
+  "Return FILE's modification time, or nil if it is not there."
+  (file-attribute-modification-time (file-attributes file)))
+
+(defun rvb-feature--gitdir (dir)
+  "Return the Git directory of worktree DIR.
+A linked worktree's `.git' is a file naming the real one, which is
+where that worktree's own HEAD, index and reflog live."
+  (let ((dot (expand-file-name ".git" dir)))
+    (cond
+     ((file-directory-p dot) (file-name-as-directory dot))
+     ((file-readable-p dot)
+      (with-temp-buffer
+        (insert-file-contents dot)
+        (goto-char (point-min))
+        (when (looking-at "gitdir:[ \t]*\\(.*\\)$")
+          (file-name-as-directory
+           (expand-file-name (string-trim (match-string 1)) dir))))))))
+
+(defun rvb-feature--worktree-signature (dir)
+  "Return a value that changes when git's state in worktree DIR does.
+
+The reflog is the reliable half: every commit, checkout, merge, reset
+and rebase appends to it.  The index deliberately is not part of this
+-- `git status' rewrites it whenever the working tree was touched in
+the same second, which is exactly what probing a feature does, so
+including it would make every refresh dirty the thing it just read and
+Auto Revert would refresh forever."
+  (when-let* ((gitdir (rvb-feature--gitdir dir)))
+    (mapcar (lambda (f) (rvb-feature--mtime (expand-file-name f gitdir)))
+            '("HEAD" "logs/HEAD" "FETCH_HEAD"))))
+
+(defun rvb-feature--status-signature (feature members)
+  "Return a value that changes when FEATURE's MEMBERS or Org file do."
+  (cons (rvb-feature--mtime (rvb-feature--org-file feature))
+        (mapcar (lambda (m)
+                  (rvb-feature--worktree-signature (plist-get m :dir)))
+                members)))
+
+(defun rvb-feature--list-signature ()
+  "Return a value that changes when any feature does."
+  (cons (rvb-feature--mtime rvb-feature-directory)
+        (mapcar (lambda (name)
+                  (cons (rvb-feature--mtime (rvb-feature--record-file name))
+                        (rvb-feature--status-signature
+                         name (rvb-feature-members name))))
+                (rvb-feature--names))))
+
+(defun rvb-feature--status-stale-p (&optional _noconfirm)
+  "Return non-nil if this feature's status buffer is out of date.
+Never while there are unsaved edits: a redraw rereads the Org file,
+and Auto Revert must not be the thing that throws away what you typed."
+  (and rvb-feature--buffer-feature
+       (not (buffer-modified-p))
+       (not (equal rvb-feature--signature
+                   (rvb-feature--status-signature
+                    rvb-feature--buffer-feature
+                    (rvb-feature-members rvb-feature--buffer-feature))))))
+
+(defun rvb-feature--list-stale-p (&optional _noconfirm)
+  "Return non-nil if the feature list is out of date."
+  (not (equal rvb-feature--signature (rvb-feature--list-signature))))
 
 
 ;;; Collecting status
@@ -1184,23 +1406,41 @@ that is not committed yet."
             ((< days 60) (format "%d weeks ago" (/ days 7)))
             (t (format "%d months ago" (/ days 30)))))))
 
-(defun rvb-feature--summary-script (dirs)
-  "Return a script reporting the last commit time and dirtiness of DIRS."
+(defun rvb-feature--own-commits-range (m)
+  "Return the revision range holding member M's own commits.
+
+Measured from the fork point recorded when the repository was added,
+so a busy upstream does not make an untouched feature look like work
+in progress.  A worktree added by hand has no record to read, and
+falls back to the whole history of its branch."
+  (let ((base (or (plist-get m :base-commit) (plist-get m :base))))
+    (if base (concat base "..HEAD") "HEAD")))
+
+(defun rvb-feature--summary-script (members)
+  "Return a script reporting MEMBERS' last commit time and dirtiness."
   (concat
    (mapconcat
-    (lambda (d)
-      (let ((q (shell-quote-argument (directory-file-name d))))
+    (lambda (m)
+      (let ((q (shell-quote-argument
+                (directory-file-name (plist-get m :dir))))
+            (range (shell-quote-argument (rvb-feature--own-commits-range m))))
         (concat "printf '%s\\t%s\\n' "
-                "\"$(git -C " q " log -1 --format=%ct 2>/dev/null)\" "
+                "\"$(git -C " q " log -1 --format=%ct " range " 2>/dev/null)\" "
                 "\"$(git -C " q " status --porcelain 2>/dev/null | head -c 1)\"\n")))
-    dirs "")
+    members "")
    "exit 0\n"))
 
 (defun rvb-feature--collect-summaries (features callback)
   "Summarise each of FEATURES concurrently, then call CALLBACK with the list.
-One process per feature, each reporting every member's last commit time
-and whether it is dirty.  Each summary is a plist with :name :repos
-:dirty :time :description."
+
+One process per feature, each reporting every member's last commit
+time and whether it is dirty.  Each summary is a plist with :name
+:repos :dirty :time :description.
+
+:time is when the feature was last committed to, and nil if it never
+has been.  Deliberately not the Org file's modification time: that
+moves when a repository is added, when the file is restructured, or
+when a description is saved, none of which is work on the code."
   (if (null features)
       (funcall callback nil)
     (let* ((n (length features))
@@ -1212,15 +1452,11 @@ and whether it is dirty.  Each summary is a plist with :name :repos
               (idx i)
               (members (cl-remove-if (lambda (m) (plist-get m :missing))
                                      (rvb-feature-members name)))
-              (dirs (mapcar (lambda (m) (plist-get m :dir)) members))
-              ;; Editing the description counts as working on the feature.
-              (org-time (file-attribute-modification-time
-                         (file-attributes (rvb-feature--org-file name))))
               (base (list :name name
                           :repos (length members)
                           :description (rvb-feature--summary-description name))))
-         (if (null dirs)
-             (progn (aset results idx (append base (list :dirty 0 :time org-time)))
+         (if (null members)
+             (progn (aset results idx (append base (list :dirty 0 :time nil)))
                     (cl-decf pending))
            (let ((buf (generate-new-buffer " *rvb-feature-summary*")))
              (make-process
@@ -1229,13 +1465,13 @@ and whether it is dirty.  Each summary is a plist with :name :repos
               :noquery t
               :connection-type 'pipe
               :command (list shell-file-name shell-command-switch
-                             (rvb-feature--summary-script dirs))
+                             (rvb-feature--summary-script members))
               :sentinel
               (lambda (proc _event)
                 (when (memq (process-status proc) '(exit signal))
                   (let ((out (with-current-buffer (process-buffer proc)
                                (buffer-string)))
-                        (latest org-time)
+                        (latest nil)
                         (dirty 0))
                     (kill-buffer (process-buffer proc))
                     (dolist (line (split-string out "\n" t))
@@ -1254,11 +1490,15 @@ and whether it is dirty.  Each summary is a plist with :name :repos
         (funcall callback (append results nil))))))
 
 (defun rvb-feature--summary-description (feature)
-  "Return FEATURE's first description paragraph, fontified as Org."
-  (when-let* ((preamble (cdr (assoc nil (rvb-feature--org-sections feature)))))
-    ;; One paragraph is enough for a list; the rest is in the status buffer.
-    (let ((end (string-match "\n[ \t]*\n" preamble)))
-      (if end (substring preamble 0 end) preamble))))
+  "Return FEATURE's first description paragraph, fontified as Org.
+
+One paragraph is enough for a list; the rest is in the status buffer.
+A heading it opens with is kept: descriptions live under Description,
+so their headings start at level two, and level two under the entry's
+own heading is what they mean here as much as in the status buffer."
+  (when-let* ((body (cdr (assoc nil (rvb-feature--org-sections feature)))))
+    (let ((end (string-match "\n[ \t]*\n" body)))
+      (if end (substring body 0 end) body))))
 
 (defun rvb-feature--hint (string)
   "Return STRING with key substitutions applied, faced as a hint.
@@ -1284,17 +1524,53 @@ This preserves faces on text built elsewhere when font-lock redraws it."
         (setq pos next))))
   s)
 
+(defun rvb-feature--entry-heading (name refresh)
+  "Return the heading text for feature NAME in the list.
+
+What the work is called, in order of preference: its `#+title:', the
+title of the issue it is linked to, its directory name.  The state of
+the issue follows either of the first two.  Because
+`rvb-feature-issue-pull' writes the issue's title into the file, a
+feature that has been pulled reads the same with no network at all.
+
+The heading belongs to the entry, so it carries no keymap of its own:
+`RET' and a click open the feature, not the issue in a browser.  The
+URL stays in `help-echo' to be read.  REFRESH is called if a pending
+issue lookup lands."
+  (let* ((key (rvb-feature-issue name))
+         (info (and key (fboundp 'rvb/github-lookup)
+                    (rvb/github-lookup key refresh)))
+         (url (and key (fboundp 'rvb/github-url) (rvb/github-url key)))
+         (state (and info (fboundp 'rvb/github-state-string)
+                     (rvb/github-state-string (plist-get info :state))))
+         (text (or (rvb-feature-title name) (plist-get info :title) name)))
+    (rvb-feature--string-faces-to-font-lock
+     (concat (apply #'propertize text
+                    ;; Faced here rather than left to Org.  Every other
+                    ;; word in this buffer is generated text carrying its
+                    ;; own `font-lock-face', and an entry's heading is no
+                    ;; different -- it is a level-one heading because we
+                    ;; wrote it as one, so it can say so itself instead
+                    ;; of depending on Org's fontification reaching it.
+                    'font-lock-face 'org-level-1
+                    (and url (list 'help-echo url)))
+             (if (and state (not (string-empty-p state)))
+                 (concat "  " (copy-sequence state))
+               "")))))
+
 (defun rvb-feature--insert-entry (s)
-  "Insert summary S as an Org subtree."
-  (let ((name (plist-get s :name))
-        (start (point)))
-    (insert "* " name "  "
+  "Insert summary S as an Org subtree.
+
+A feature is headed by what the work is called rather than by its
+branch name -- see `rvb-feature--entry-heading' -- since the branch
+name is recoverable from the status buffer and the directory."
+  (let* ((name (plist-get s :name))
+         (start (point)))
+    (insert "* " (rvb-feature--entry-heading name (rvb-feature--list-redraw))
+            "  "
             (propertize (rvb-feature--relative-time (plist-get s :time))
                         'font-lock-face 'rvb-feature-count)
             "\n")
-    (when-let* ((issue (rvb-feature--issue-line
-                        name (rvb-feature--list-redraw))))
-      (insert issue "\n"))
     (if-let* ((desc (plist-get s :description)))
         (insert desc "\n")
       (insert (propertize "(no description)"
@@ -1312,11 +1588,18 @@ This preserves faces on text built elsewhere when font-lock redraws it."
     ;; The buttons are overlays and outlive the text under them.
     (remove-overlays (point-min) (point-max) 'rvb-feature-button t)
     (erase-buffer)
-    (insert "\n" (propertize "Features" 'font-lock-face 'rvb-feature-title)
+    ;; An Org keyword rather than a banner of our own, so this buffer
+    ;; opens the way a feature's does.  Faced here for the same reason
+    ;; the entries are: everything in this buffer is generated, and
+    ;; saying so costs less than depending on Org's fontification.
+    (insert (propertize "#+title:" 'font-lock-face 'org-document-info-keyword)
+            " "
+            (propertize "Features" 'font-lock-face 'org-document-title)
             "\n\n")
     (if (null summaries)
         (insert (rvb-feature--hint
-                 "\\<rvb-feature-list-mode-map>Press \\[rvb-feature-create] to start one.")
+                 "\\<rvb-feature-list-mode-map>\
+Press \\[rvb-feature-dispatch] to start one.")
                 "\n")
       (dolist (s (sort (copy-sequence summaries)
                        (lambda (a b)
@@ -1326,16 +1609,6 @@ This preserves faces on text built elsewhere when font-lock redraws it."
                                  ((null tb) t)
                                  (t (time-less-p tb ta)))))))
         (rvb-feature--insert-entry s)))
-    (insert "\n"
-            (rvb-feature--hint
-             (concat
-              "\\<rvb-feature-list-mode-map>"
-              "\\[rvb-feature-create] create   "
-              "\\[rvb-feature-add-repo] add repo   "
-              "\\[rvb-feature-list-visit] open   "
-              "\\[rvb-feature-list-refresh] refresh   "
-              "\\[rvb-feature-dispatch] more"))
-            "\n")
     (set-buffer-modified-p nil)
     (font-lock-flush)
     (font-lock-ensure)
@@ -1372,6 +1645,9 @@ This preserves faces on text built elsewhere when font-lock redraws it."
   (interactive)
   (let ((buf (current-buffer))
         (gen (cl-incf rvb-feature--list-generation)))
+    ;; Recorded before collecting, so a change made while the summaries
+    ;; are being gathered still counts as one Auto Revert should notice.
+    (setq rvb-feature--signature (rvb-feature--list-signature))
     (rvb-feature--collect-summaries
      (rvb-feature--names)
      (lambda (summaries)
@@ -1395,7 +1671,9 @@ This preserves faces on text built elsewhere when font-lock redraws it."
            (get-char-property (1- (point)) 'rvb-feature-entry))))
 
 (defun rvb-feature-list-delete ()
-  "Delete the feature at point."
+  "Delete the feature at point.
+Not bound to a key: deleting a feature is worth naming out loud, and
+the dispatch menu's own entry prompts for which one."
   (interactive)
   (if-let* ((name (rvb-feature--entry-name)))
       (progn (rvb-feature-delete name)
@@ -1404,21 +1682,35 @@ This preserves faces on text built elsewhere when font-lock redraws it."
 
 (defvar-keymap rvb-feature-list-mode-map
   :parent org-mode-map
-  :doc "Keymap for `rvb-feature-list-mode'."
-  "g"   #'rvb-feature-list-refresh
-  "RET" #'rvb-feature-list-visit
-  "a"   #'rvb-feature-add-repo
-  "c"   #'rvb-feature-create
-  "D"   #'rvb-feature-list-delete
-  "?"   #'rvb-feature-dispatch
-  "q"   #'quit-window)
+  :doc "Keymap for `rvb-feature-list-mode'.
+
+`RET' acts on the feature at point and `q' buries the buffer.  Nothing
+here is editable, so those two letters cost nothing; everything else
+lives behind `C-c C-f', the same prefix as in the status buffer, where
+a bare letter would type itself instead.
+
+Redrawing is `revert-buffer', which is what reverting a generated
+buffer means and is already bound wherever you like it."
+  "RET"     #'rvb-feature-list-visit
+  "q"       #'quit-window
+  "C-c C-f" #'rvb-feature-dispatch)
 
 (define-derived-mode rvb-feature-list-mode org-mode "Features"
-  "Org-based major mode listing every feature."
+  "Org-based major mode listing every feature.
+
+Auto Revert keeps it current: this buffer visits no file, so
+`buffer-stale-function' answers for it, and a commit in any member
+worktree redraws the list within `auto-revert-interval'.
+
+\\<rvb-feature-list-mode-map>\\[rvb-feature-list-visit] opens the \
+feature at point, \\[rvb-feature-dispatch] is the
+command menu, and \\[revert-buffer] redraws."
   :interactive nil
   (setq buffer-read-only t)
   (setq-local revert-buffer-function
-              (lambda (&rest _) (rvb-feature-list-refresh))))
+              (lambda (&rest _) (rvb-feature-list-refresh)))
+  (setq-local buffer-stale-function #'rvb-feature--list-stale-p)
+  (auto-revert-mode 1))
 
 ;;;###autoload
 (defun rvb-feature-list-buffer ()
@@ -1460,10 +1752,6 @@ display one."
 ;; this buffer too, while still allowing per-face overrides.  The hues
 ;; carry meaning: green is work you have, red is work you lack or have
 ;; not staged, yellow wants attention, blue is remote-side information.
-
-(defface rvb-feature-title '((t :inherit magit-section-heading))
-  "Face for the feature buffer's title."
-  :group 'rvb-feature)
 
 (defface rvb-feature-issue '((t :inherit link))
   "Face for a feature's linked issue.
@@ -1679,7 +1967,7 @@ which is what keeps git's output out of the Org file."
   (let ((commits (plist-get m :commits))
         (name (plist-get m :name)))
     (when commits
-      (insert "** " (format "Commits (%d)" (length commits)) "\n")
+      (insert "*** " (format "Commits (%d)" (length commits)) "\n")
       (dolist (commit commits)
         (let ((start (point))
               (hash (plist-get commit :hash))
@@ -1697,7 +1985,7 @@ which is what keeps git's output out of the Org file."
   (let ((changed (plist-get m :changed))
         (name (plist-get m :name)))
     (when changed
-      (insert "** " (format "Changed files (%d)" (length changed)) "  ")
+      (insert "*** " (format "Changed files (%d)" (length changed)) "  ")
       (rvb-feature--insert-link
        "View diff"
        (lambda () (rvb-feature--show-member-diff m))
@@ -1724,17 +2012,15 @@ which is what keeps git's output out of the Org file."
           (insert "\n")
           (rvb-feature--protect start (point) 'rvb-feature-repo name))))))
 
-(defun rvb-feature--insert-header (feature)
-  "Insert the generated header for FEATURE below the keyword lines."
-  (goto-char (point-min))
-  (while (and (not (eobp)) (looking-at "^#\\+"))
-    (forward-line))
-  (let ((start (point)))
-    (when-let* ((issue (rvb-feature--issue-line
-                        feature (rvb-feature--status-redraw feature))))
-      (insert issue "\n\n"))
-    (when (< start (point))
-      (rvb-feature--generated start (point)))))
+(defun rvb-feature--protect-sections ()
+  "Protect the structural headings of the feature in this buffer.
+Editing one would cut the file loose from the structure everything
+else navigates by."
+  (dolist (title (list rvb-feature-description-heading
+                       rvb-feature-implementation-heading))
+    (when (rvb-feature--goto-section title)
+      (rvb-feature--protect (line-beginning-position)
+                            (min (point-max) (1+ (line-end-position)))))))
 
 (defun rvb-feature--inject-repo (m &optional gap-before)
   "Inject member M's metadata, adding a visual GAP-BEFORE."
@@ -1768,10 +2054,9 @@ which is what keeps git's output out of the Org file."
                  (lambda () (dired dir))
                  (format "Open %s in Dired" name)))))))
       (when (or (plist-get m :commits) (plist-get m :changed))
-        (goto-char (save-excursion
-                     (if (re-search-forward "^\\* " nil t)
-                         (match-beginning 0)
-                       (point-max))))
+        ;; The end of this repository's subtree: the next repository, or
+        ;; the next top-level section.
+        (goto-char (rvb-feature--section-end 2))
         (let ((start (point))
               (commit-heading (and (plist-get m :commits) (point))))
           (when (plist-get m :commits)
@@ -1786,15 +2071,6 @@ which is what keeps git's output out of the Org file."
             (save-excursion
               (goto-char commit-heading)
               (org-fold-hide-subtree))))))))
-
-(defun rvb-feature--status-redraw (feature)
-  "Return a function redrawing this status buffer from its last probe."
-  (let ((buffer (current-buffer)))
-    (lambda ()
-      (when (buffer-live-p buffer)
-        (with-current-buffer buffer
-          (when rvb-feature--state
-            (rvb-feature--render feature rvb-feature--state)))))))
 
 (defun rvb-feature--render (feature members)
   "Draw FEATURE's Org file with MEMBERS' generated parts injected."
@@ -1813,7 +2089,7 @@ which is what keeps git's output out of the Org file."
         (insert-file-contents file))
       (goto-char (point-max))
       (unless (bolp) (insert "\n"))
-      (rvb-feature--insert-header feature)
+      (rvb-feature--protect-sections)
       (let ((first t))
         (dolist (m members)
           (rvb-feature--inject-repo m (not first))
@@ -1821,7 +2097,12 @@ which is what keeps git's output out of the Org file."
       (when (null members)
         (goto-char (point-max))
         (let ((at (point)))
-          (insert "\nNo repositories yet.  \\[rvb-feature-add-repo] adds one.\n")
+          (insert "\n"
+                  (rvb-feature--hint
+                   (concat "\\<rvb-feature-status-mode-map>"
+                           "No repositories yet.  "
+                           "\\[rvb-feature-dispatch] adds one."))
+                  "\n")
           (rvb-feature--generated at (point))))
       (set-buffer-modified-p nil)
       (goto-char (point-min))
@@ -1847,13 +2128,17 @@ git said."
 (defun rvb-feature-save ()
   "Write what you typed back to the feature's Org file."
   (interactive)
-  (let ((feature (or rvb-feature--buffer-feature
-                     (user-error "Not a feature status buffer")))
-        (text (rvb-feature--editable-text)))
-    (write-region (concat text "\n") nil (rvb-feature--ensure-org feature)
-                  nil 'quiet)
+  (let* ((feature (or rvb-feature--buffer-feature
+                      (user-error "Not a feature status buffer")))
+         (text (rvb-feature--editable-text))
+         (file (rvb-feature--org-file feature)))
+    ;; Deliberately not `rvb-feature--ensure-org': the buffer is the
+    ;; file, structural headings and all, and restructuring what is
+    ;; about to be overwritten would only make a backup of it.
+    (make-directory (file-name-directory file) t)
+    (write-region (concat text "\n") nil file nil 'quiet)
     (set-buffer-modified-p nil)
-    (message "Saved %s" (abbreviate-file-name (rvb-feature--org-file feature)))
+    (message "Saved %s" (abbreviate-file-name file))
     t))
 
 (defun rvb-feature-refresh ()
@@ -1871,9 +2156,16 @@ git said."
          (buf (current-buffer))
          (gen (cl-incf rvb-feature--generation))
          (members (rvb-feature-members feature)))
+    ;; Opening a feature is where a file written before the Description
+    ;; and Implementation headings existed gets restructured.
+    (rvb-feature--ensure-org feature)
     ;; Every member needs a heading to hang its status on.
     (dolist (m members)
       (rvb-feature--ensure-heading feature (plist-get m :name)))
+    ;; Recorded after those writes and before collecting, so writing the
+    ;; Org file ourselves does not read back as somebody else's change.
+    (setq rvb-feature--signature
+          (rvb-feature--status-signature feature members))
     ;; Draw what we already know, then replace it when the probes land.
     (rvb-feature--render feature (or rvb-feature--state members))
     (rvb-feature--collect
@@ -1890,17 +2182,24 @@ git said."
   :doc "Keymap for `rvb-feature-status-mode'.
 
 The buffer is editable, so single letters type themselves.  Commands
-live behind `C-c C-f', and saving is ordinary."
-  "C-c C-f" #'rvb-feature-dispatch
-  "C-c C-r" #'rvb-feature-refresh)
+live behind `C-c C-f'; saving and redrawing are ordinary, with
+\\[save-buffer] and \\[revert-buffer]."
+  "C-c C-f" #'rvb-feature-dispatch)
 
 (define-derived-mode rvb-feature-status-mode org-mode "Feature"
   "Major mode for a feature: its Org file, with git's answer injected.
 
 Everything not generated is editable and saved back to the Org file
-with \\[save-buffer]."
+with \\[save-buffer].
+
+Auto Revert keeps git's half current: this buffer visits no file, so
+`buffer-stale-function' answers for it, and committing in a member
+worktree redraws it.  Never while you have unsaved edits -- a redraw
+rereads the Org file."
   :interactive nil
   (setq-local revert-buffer-function (lambda (&rest _) (rvb-feature-refresh)))
+  (setq-local buffer-stale-function #'rvb-feature--status-stale-p)
+  (auto-revert-mode 1)
   ;; So `C-x C-s' saves the feature rather than asking for a file name.
   (add-hook 'write-contents-functions #'rvb-feature-save nil t))
 
@@ -1931,7 +2230,10 @@ there is no separate switch command."
       (setq rvb-feature--buffer-feature feature
             default-directory (rvb-feature--dir feature))
       (rvb-feature-refresh))
-    (pop-to-buffer buf)))
+    ;; In the window you called it from: a status buffer is where you
+    ;; work, so it should sit where you were looking rather than take
+    ;; the frame or push the code you were reading out of the way.
+    (pop-to-buffer-same-window buf)))
 
 
 ;;; Commands in the status buffer
@@ -1953,7 +2255,7 @@ point -- which is what Org structure already means."
            (let ((members (rvb-feature--member-names rvb-feature--buffer-feature)))
              (save-excursion
                (catch 'found
-                 (while (re-search-backward rvb-feature--top-heading-regexp nil t)
+                 (while (re-search-backward rvb-feature--repo-heading-regexp nil t)
                    (let ((name (rvb-feature--heading-text
                                 (substring-no-properties (match-string 1)))))
                      (when (member name members)
