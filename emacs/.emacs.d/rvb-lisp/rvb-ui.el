@@ -42,6 +42,9 @@
 ;; Enable the standard right-click context menus globally.
 (context-menu-mode 1)
 
+;; Enable tab bar
+(tab-bar-mode)
+
 ;; Highlight the delimiter matching the one at point.
 (setq show-paren-delay 0)
 (show-paren-mode 1)
@@ -254,6 +257,14 @@ takes effect where you set it."
   '((t :inherit highlight))
   "Face used when the pointer is over a page-chrome breadcrumb.")
 
+(defface rvb/ui-page-chrome-scroll-trough
+  '((t :inherit rvb/ui-page-chrome-header))
+  "Face for the length of the buffer, in the header-line scrollbar.")
+
+(defface rvb/ui-page-chrome-scroll-handle
+  '((t :inherit region))
+  "Face for the part of the buffer on screen, in the header-line scrollbar.")
+
 (defvar rvb/ui-page-chrome-breadcrumb-map
   (let ((map (make-sparse-keymap)))
     (define-key map [header-line down-mouse-1]
@@ -319,11 +330,69 @@ When FILE-P is non-nil, the final path element is rendered as plain text."
                           crumbs))))
     (apply #'concat (nreverse crumbs))))
 
-(defun rvb/ui-page-chrome--band (window content face &optional god-p)
+(defun rvb/ui-page-chrome--command-state-p (buffer)
+  "Return non-nil when BUFFER is in God Mode's command state.
+
+God Mode and nothing else.  Read-only used to count as well, on the
+grounds that a buffer you cannot type into is one you can only give
+commands to -- but that was written when God Mode was global and
+exempted Magit, Dired and the rest, leaving them with no state to show
+at all.  Now that command state is somewhere you go, per buffer, they
+have one like everything else, and the old rule only stopped the band
+from following you out of it."
+  (with-current-buffer buffer
+    (bound-and-true-p god-local-mode)))
+
+(defvar rvb/ui-page-chrome--band-map
+  (let ((map (make-sparse-keymap)))
+    ;; Only the press.  The release still arrives as `mouse-1', which is
+    ;; globally `mouse-select-window' -- clicking the band to choose its
+    ;; window goes on working.
+    (define-key map [header-line down-mouse-1] #'ignore)
+    map)
+  "Mouse map for the blank run of the page-chrome band.")
+
+(defun rvb/ui-page-chrome--claim-drag (string)
+  "Stop a drag on STRING from being a drag of the frame.
+
+`mouse-drag-header-line' owns `down-mouse-1' on any header line, and on
+a frame with `drag-with-header-line' set that drags the whole frame
+about.  Which is a fine thing for a header line that is only a label,
+and a poor one for a band carrying a breadcrumb trail and a scrollbar:
+the scrollbar is twelve columns wide, and missing it by one would pick
+up the window instead.
+
+Only where nothing else has claimed the mouse, so that the breadcrumbs
+keep opening Dired and the scrollbar keeps scrolling."
+  (let ((pos 0)
+        (end (length string)))
+    (while (< pos end)
+      (let ((next (or (next-single-property-change pos 'local-map string) end)))
+        (unless (get-text-property pos 'local-map string)
+          (put-text-property pos next 'local-map rvb/ui-page-chrome--band-map
+                             string))
+        (setq pos next)))))
+
+(defun rvb/ui-page-chrome--band-faces (face command-p)
+  "Return the faces a band drawn in FACE is made of.
+
+The command face is kept ahead of FACE rather than replacing it, so
+that FACE's non-colour attributes -- its stipple above all -- survive
+the composition.  Anything else drawn as part of the band asks for the
+faces here, so it cannot end up a different colour from the band it is
+part of."
+  (if command-p (list 'rvb/ui-page-chrome-command face) (list face)))
+
+(defun rvb/ui-page-chrome--band (window content face &optional command-p width)
   "Render CONTENT across WINDOW using FACE.
 
-When GOD-P is non-nil, change only the band's colors to indicate command
-state; retain the normal page-chrome face and font metrics.
+When COMMAND-P is non-nil, change only the band's colors to indicate
+command state; retain the normal page-chrome face and font metrics.
+
+WIDTH is how many columns the band fills, defaulting to the whole
+window.  The scrollbar is given its columns this way: it paints its own
+background, and this band's face would otherwise be laid over the top
+of it.
 
 The band uses the frame's `default' font attributes so its fixed-width
 font matches ordinary buffer text instead of the generic `fixed-pitch' face."
@@ -331,7 +400,7 @@ font matches ordinary buffer text instead of the generic `fixed-pitch' face."
                ;; Command state has its own theme face; it is not an error and
                ;; should not change when diagnostic styling changes.
                (header-background
-                (if god-p
+                (if command-p
                     (face-background 'rvb/ui-page-chrome-command frame t)
                   (face-background face frame t)))
                (default-family (face-attribute 'default :family frame))
@@ -357,19 +426,15 @@ font matches ordinary buffer text instead of the generic `fixed-pitch' face."
                                           (0 . ,rvb/ui-page-chrome-vertical-padding)
                                           :color ,header-background))))))
                (band-face
-                (if god-p
-                    ;; Keep the command face itself so non-color attributes,
-                    ;; especially its graphical stipple, survive composition.
-                    (list 'rvb/ui-page-chrome-command face font-attrs)
-                  (if font-attrs
-                      (list face font-attrs)
-                    face)))
-               (width (window-total-width window))
+                (let ((faces (rvb/ui-page-chrome--band-faces face command-p)))
+                  (if font-attrs (append faces (list font-attrs)) faces)))
+               (width (or width (window-total-width window)))
                (content (truncate-string-to-width content width))
                (band (concat content
                              (make-string (max 0 (- width (string-width content)))
                                           ?\s))))
     (add-face-text-property 0 (length band) band-face nil band)
+    (rvb/ui-page-chrome--claim-drag band)
     band))
 
 (defun rvb/ui-page-chrome--header-content (window width)
@@ -383,12 +448,15 @@ font matches ordinary buffer text instead of the generic `fixed-pitch' face."
                    (rvb/ui-page-chrome--path-breadcrumb default-directory))
                   (t
                    (buffer-name))))
+           ;; Not `mode-line-modified': the mode line carries that, and
+           ;; saying it twice in two bands a screen apart is worse than
+           ;; saying it once where it has always been.  What is left is
+           ;; the things the mode line does not show at all.
            (status (format-mode-line
                     '("%e" mode-line-front-space
                       (:propertize
                        ("" mode-line-mule-info mode-line-client
-                        mode-line-modified mode-line-remote
-                        mode-line-window-dedicated)
+                        mode-line-remote mode-line-window-dedicated)
                        display (min-width (6.0))))
                     nil window))
            ;; Reserve the right edge before truncating long paths so status
@@ -399,15 +467,118 @@ font matches ordinary buffer text instead of the generic `fixed-pitch' face."
       (truncate-string-to-width
        (concat " " path (make-string gap ?\s) status " ") width))))
 
+(defun rvb/ui-page-chrome-scroll-drag (start-event)
+  "Scroll the buffer by dragging the header-line scrollbar.
+
+`mlscroll-mouse' is this, and would have done: it clicks, then follows
+the pointer.  What it will not do is follow it here.  Its loop moves
+the buffer only while `posn-area' says `mode-line', and every event of
+a drag along this band says `header-line' instead -- so the click lands
+and the drag that follows it does nothing at all.
+
+That test cannot be answered from outside, either: `posn-area' is a
+`defsubst', so it is compiled into MLScroll rather than called, and
+rebinding it reaches nothing.  What is left is to keep the loop here,
+where the one line that has to differ can differ.  Everything else is
+MLScroll's, down to the pixel arithmetic, and the scrolling itself is
+still `mlscroll-scroll-to'."
+  (interactive "e")
+  (let* ((start-posn (event-start start-event))
+         (start-win (posn-window start-posn))
+         (lcr (mlscroll-find-index (posn-string start-posn)))
+         ;; Where in the bar the click landed, and where that is on screen.
+         (x (car (posn-object-x-y start-posn)))
+         (xstart-abs (car (posn-x-y start-posn)))
+         (xstart (mlscroll-scroll-to x lcr start-win))
+         event end xnew)
+    (unless (terminal-parameter nil 'xterm-mouse-mode)
+      (pcase-let ((`(,_ ,scroll-width ,border)
+                   (terminal-parameter nil 'mlscroll-size))
+                  (mouse-fine-grained-tracking t))
+        (track-mouse
+          (setq track-mouse 'dragging)
+          (while (and (setq event (read-event))
+                      (mouse-movement-p event))
+            (setq end (event-end event)
+                  xnew (+ xstart (- (car (posn-x-y end)) xstart-abs)))
+            ;; The line: either band counts, so the drag keeps up whether
+            ;; the pointer is over this one or the mode line below.
+            (when (and (memq (posn-area end) '(header-line mode-line))
+                       (>= xnew 0)
+                       (<= xnew (- scroll-width border)))
+              (mlscroll-scroll-to xnew nil start-win))))))))
+
+(defvar rvb/ui-page-chrome--scroll-keymap
+  (let ((map (make-sparse-keymap)))
+    ;; A click on the mode line arrives as a `mode-line' event and a
+    ;; click on the header line as a `header-line' one, so MLScroll's own
+    ;; map is one the bar can never be reached through up here.  The
+    ;; wheel commands are its; the drag is the one above.
+    ;;
+    ;; The press: it jumps the buffer to where it landed, and then
+    ;; follows the pointer, which is what dragging is here.
+    (define-key map [header-line down-mouse-1] #'rvb/ui-page-chrome-scroll-drag)
+    (define-key map [header-line wheel-up] #'mlscroll-wheel)
+    (define-key map [header-line wheel-down] #'mlscroll-wheel)
+    (define-key map [header-line wheel-left] #'ignore)
+    (define-key map [header-line wheel-right] #'ignore)
+    map)
+  "Mouse map for the scrollbar in the header line.")
+
+(defun rvb/ui-page-chrome--scroll-keymap ()
+  "Return the scrollbar's mouse map."
+  rvb/ui-page-chrome--scroll-keymap)
+
+(defun rvb/ui-page-chrome--scroll-spacer (faces)
+  "Return the run of band between the header text and the scrollbar.
+
+Faced, and aligned to where the bar begins.  A plain space would be
+drawn in the `header-line' face instead -- a black notch beside the
+bar -- and padding by columns would leave the pixels the bar does not
+fill at the window's right edge showing the same thing."
+  (when-let* ((size (terminal-parameter nil 'mlscroll-size))
+              (pixels (- (nth 1 size) (nth 2 size))))
+    (let ((spacer (propertize " " 'face faces
+                              'display `(space :align-to
+                                               (- (+ right right-margin)
+                                                  (,pixels))))))
+      (rvb/ui-page-chrome--claim-drag spacer)
+      spacer)))
+
+(defun rvb/ui-page-chrome--scrollbar (window)
+  "Return the scrollbar for WINDOW's header line, or nil.
+
+Nil whenever MLScroll is not running, so the header is exactly what it
+was before without it."
+  (when (and (bound-and-true-p mlscroll-mode)
+             (fboundp 'mlscroll-mode-line)
+             (terminal-parameter nil 'mlscroll-size))
+    (let ((bar (with-selected-window window (mlscroll-mode-line))))
+      (when-let* (((stringp bar))
+                  (keymap (rvb/ui-page-chrome--scroll-keymap)))
+        (setq bar (copy-sequence bar))
+        (put-text-property 0 (length bar) 'local-map keymap bar))
+      bar)))
+
 (defun rvb/ui-page-chrome--header-line-format (window)
   "Return WINDOW's top file header."
-  (let ((width (window-total-width window))
-        (god-p (with-current-buffer (window-buffer window)
-                 (bound-and-true-p god-local-mode))))
-    (rvb/ui-page-chrome--band
-     window (rvb/ui-page-chrome--header-content window width)
-     'rvb/ui-page-chrome-header
-     god-p)))
+  (let* ((bar (rvb/ui-page-chrome--scrollbar window))
+         ;; One column of air, then exactly the bar's own width -- it is
+         ;; `mlscroll-width-chars' characters of the frame's font.
+         (reserved (if bar (1+ mlscroll-width-chars) 0))
+         (width (max 0 (- (window-total-width window) reserved)))
+         (command-p (rvb/ui-page-chrome--command-state-p
+                     (window-buffer window)))
+         (band (rvb/ui-page-chrome--band
+                window (rvb/ui-page-chrome--header-content window width)
+                'rvb/ui-page-chrome-header command-p width)))
+    (if bar
+        (list band
+              (rvb/ui-page-chrome--scroll-spacer
+               (rvb/ui-page-chrome--band-faces 'rvb/ui-page-chrome-header
+                                               command-p))
+              bar)
+      band)))
 
 (defun rvb/ui-page-chrome--apply-window (window)
   "Apply page chrome to WINDOW."
@@ -488,6 +659,43 @@ baseline, so restoring always reverts to the active theme."
 ;; Page chrome is the primary editor-state indicator as well as the file
 ;; header, so keep it enabled unless explicitly toggled off by the user.
 (rvb/ui-page-chrome-mode 1)
+
+;;; The scrollbar, in the header line rather than the mode line
+;;
+;; MLScroll describes its bar in *colours*: one for the length of the
+;; buffer and one for the part of it on screen, worked out from the mode
+;; line's own background.  Under this theme both of those come out the
+;; colour of the page, which is why the bar arrives invisible -- and no
+;; colour could be right anyway, since the band it sits in is black
+;; under one hand and screened under the other.
+;;
+;; Faces can say what colours cannot: a stipple for the length of the
+;; buffer, and a foreground that stays put whatever the band is doing.
+;; The two variables holding the bar's appearance take anything a `face'
+;; property takes, so a face name goes straight in.
+
+(defun rvb/ui-page-chrome--scroll-faces (&rest _)
+  "Point MLScroll's bar at the page-chrome faces."
+  (setq mlscroll-flank-face-properties 'rvb/ui-page-chrome-scroll-trough
+        mlscroll-cur-face-properties 'rvb/ui-page-chrome-scroll-handle))
+
+(use-package mlscroll
+  :ensure t
+  :init
+  ;; Both of these keep MLScroll's hands off the mode line: the bar is
+  ;; placed by `rvb/ui-page-chrome--header-line-format', and the mode
+  ;; line's percentage is left where it is.
+  (setq mlscroll-right-align nil
+        mlscroll-alter-percent-position nil
+        ;; The border is drawn in the mode line's background, which is
+        ;; not where this bar lives.
+        mlscroll-border 0)
+  :config
+  ;; `mlscroll-layout' recomputes the bar's appearance from those colours
+  ;; -- at startup, on a new frame, and on every theme load -- so the
+  ;; faces have to be put back each time it does.
+  (advice-add 'mlscroll-layout :after #'rvb/ui-page-chrome--scroll-faces)
+  (mlscroll-mode 1))
 
 (transient-define-prefix rvb/ui-menu ()
   "Open the UI settings menu."

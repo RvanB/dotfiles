@@ -85,9 +85,31 @@
                                               :box nil :overline ,rule))))
    `(mode-line-buffer-id ((,class (:foreground ,ink :weight bold))))
    `(header-line ((,class (:foreground ,paper :background ,ink :box nil))))
-   `(rvb/ui-page-chrome-command
+   ;; The band says which of the two things the keyboard is doing.
+   ;; Typing into the buffer is the quiet state, so the header is the
+   ;; printed screen; giving commands -- God Mode, or a buffer that
+   ;; cannot be typed into at all -- is the unequivocal one, so it is
+   ;; solid reversed video, as every other strong state here is.
+   ;;
+   ;; `:stipple nil' on the command face is not decoration.  The band
+   ;; composes the command face *over* the header face, so an attribute
+   ;; the command face leaves out is taken from the header face beneath
+   ;; it -- and the screen would show through the solid black.
+   `(rvb/ui-page-chrome-header
      ((,graphic (:inherit rvb3-stipple-face))
       (,class (:foreground ,ink :background ,paper))))
+   `(rvb/ui-page-chrome-command
+     ((,class (:foreground ,paper :background ,ink :stipple nil))))
+   ;; The scrollbar keeps its own colours whichever state the band is
+   ;; in, so that it reads as one thing rather than two: the length of
+   ;; the buffer is a blank strip of paper, and the part of it on screen
+   ;; is a solid mark on that strip.  Both are stated outright rather
+   ;; than inherited, because what they would inherit is the band, which
+   ;; is the thing they must not follow.
+   `(rvb/ui-page-chrome-scroll-trough
+     ((,class (:foreground ,paper :background ,paper :stipple nil))))
+   `(rvb/ui-page-chrome-scroll-handle
+     ((,class (:foreground ,ink :background ,ink :stipple nil))))
    `(rvb/ui-page-chrome-breadcrumb-highlight
      ((,class (:foreground ,ink :background ,paper))))
    `(minibuffer-prompt ((,class (:foreground ,ink))))
@@ -388,40 +410,40 @@
    ;; on ink -- the same reversed video everything else here uses.
 
    ;; Tabs and the rest.
-   ;; The bar is the page; the tab you are on is reversed out of it, and
-   ;; runs into the header line below as one black shape.  Only that tab
-   ;; is ink -- the others are ordinary text on paper, as everything else
-   ;; here is.
+   ;; The bar is a black rule across the top of the frame, and the tab
+   ;; you are on is the page opened out of it: the only paper in the
+   ;; row.  The tabs you are not on are lettering on the rule itself,
+   ;; which is why nothing marks them off -- there is one thing to find
+   ;; here, and it is the white one.
    ;;
    ;; `:box nil' outright on each: the boxes the stock faces carry draw a
-   ;; raised edge along the seam where the current tab meets the header,
-   ;; and a face this theme does not mention keeps whatever its `defface'
-   ;; says.
-   `(tab-bar ((,class (:foreground ,ink :background ,paper :box nil))))
+   ;; raised edge around every tab, and a face this theme does not
+   ;; mention keeps whatever its `defface' says.
+   `(tab-bar ((,class (:foreground ,paper :background ,ink :box nil))))
    `(tab-bar-tab
-     ((,class (:foreground ,paper :background ,ink :weight bold :box nil))))
+     ((,class (:foreground ,ink :background ,paper :weight bold :box nil))))
    `(tab-bar-tab-inactive
-     ((,class (:foreground ,ink :background ,paper :box nil))))
+     ((,class (:foreground ,paper :background ,ink :box nil))))
    `(tab-bar-tab-group-current
-     ((,class (:foreground ,paper :background ,ink :weight bold :box nil))))
+     ((,class (:foreground ,ink :background ,paper :weight bold :box nil))))
    `(tab-bar-tab-group-inactive
-     ((,class (:foreground ,ink :background ,paper :box nil))))
+     ((,class (:foreground ,paper :background ,ink :box nil))))
    `(tab-bar-tab-ungrouped
-     ((,class (:foreground ,grey :background ,paper :box nil))))
-   ;; The tab line reads the same way as the tab bar: paper, with the
-   ;; current tab reversed out of it.  `:box nil' for the same reason --
-   ;; the stock faces carry a `released-button' box, and a face this
-   ;; theme does not mention keeps whatever its `defface' says.
-   `(tab-line ((,class (:foreground ,grey :background ,paper :box nil))))
+     ((,class (:foreground ,comment :background ,ink :box nil))))
+   ;; The tab line reads the same way as the tab bar: a black rule with
+   ;; the current tab opened out of it.  `:box nil' for the same reason
+   ;; -- the stock faces carry a `released-button' box, and a face this
+   ;; theme does not mention keeps its `defface'.
+   `(tab-line ((,class (:foreground ,paper :background ,ink :box nil))))
    `(tab-line-tab-current
-     ((,class (:foreground ,paper :background ,ink :weight bold :box nil))))
+     ((,class (:foreground ,ink :background ,paper :weight bold :box nil))))
    ;; The window's own buffer, in a window that is not selected.
-   `(tab-line-tab ((,class (:foreground ,ink :background ,paper :box nil))))
+   `(tab-line-tab ((,class (:foreground ,paper :background ,ink :box nil))))
    `(tab-line-tab-inactive
-     ((,class (:foreground ,ink :background ,paper :box nil))))
+     ((,class (:foreground ,paper :background ,ink :box nil))))
    `(tab-line-highlight
-     ((,class (:foreground ,ink :background ,paper :underline t :box nil))))
-   `(tab-line-close-highlight ((,class (:foreground ,ink))))
+     ((,class (:foreground ,paper :background ,ink :underline t :box nil))))
+   `(tab-line-close-highlight ((,class (:foreground ,paper))))
    `(widget-field ((,class (:background ,wash :box (:line-width 1 :color ,rule)))))
    `(trailing-whitespace ((,class (:background ,ink))))
    `(whitespace-trailing ((,class (:background ,ink))))

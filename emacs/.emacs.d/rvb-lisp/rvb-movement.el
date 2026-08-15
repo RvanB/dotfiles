@@ -81,10 +81,14 @@
   (keymap-set god-local-mode-map "]" #'scroll-up-command)
   (add-hook 'minibuffer-setup-hook #'rvb/update-god-minibuffer-indicator)
   (add-hook 'god-mode-enabled-hook #'rvb/update-god-minibuffer-indicator)
-  (add-hook 'god-mode-disabled-hook #'rvb/update-god-minibuffer-indicator)
-  ;; Enable command state in ordinary editable buffers.  God Mode's default
-  ;; exemptions continue to protect minibuffers, terminals, and special modes.
-  (god-mode))
+  (add-hook 'god-mode-disabled-hook #'rvb/update-god-minibuffer-indicator))
+
+;; Deliberately not `(god-mode)', which is the global mode: that turns
+;; command state on in every buffer it is not exempt from, including
+;; every buffer opened from then on.  A buffer should start where you
+;; would start typing in it, and command state should be somewhere you
+;; went -- with `\\[rvb/toggle-god-mode]', per buffer, which is what
+;; `god-local-mode' already is.
 
 (defcustom rvb-scroll-distance 20
   "Number of lines moved by keyboard scrolling without a prefix argument.
