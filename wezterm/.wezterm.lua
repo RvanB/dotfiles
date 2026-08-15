@@ -6,7 +6,7 @@ local config = wezterm.config_builder()
 
 config.use_fancy_tab_bar = false
 
-local selected_theme = 'rvb2'
+local selected_theme = 'rvb3'
 
 local palettes = {
   rvb1 = {
@@ -47,6 +47,27 @@ local palettes = {
       brights = { '#a7b2aa', '#ef6f6f', '#d3e3b1', '#fbf695', '#829aaa', '#d184c2', '#77c5c3', '#eeeeed' },
     },
   },
+  rvb3 = {
+    color_scheme  = 'rvb3',
+    bar_bg        = '#171717',
+    bar_hover_bg  = '#fafafa',
+    bar_hover_fg  = '#171717',
+    fg_dim        = '#fafafa',
+    fg_bright     = '#fafafa',
+    active_tab_bg = '#fafafa',
+    active_tab_fg = '#171717',
+    colors = {
+      foreground = '#171717',
+      background = '#fafafa',
+      cursor_bg = '#171717',
+      cursor_fg = '#fafafa',
+      cursor_border = '#171717',
+      selection_bg = '#171717',
+      selection_fg = '#fafafa',
+      ansi = { '#171717', '#171717', '#171717', '#171717', '#171717', '#171717', '#171717', '#171717' },
+      brights = { '#666666', '#171717', '#171717', '#171717', '#171717', '#171717', '#171717', '#171717' },
+    },
+  },
 }
 
 local function palette_for(theme)
@@ -57,7 +78,7 @@ local function tab_bar_colors(palette)
   return {
     background = palette.bar_bg,
     new_tab = { bg_color = palette.bar_bg, fg_color = palette.fg_bright },
-    new_tab_hover = { bg_color = palette.bar_hover_bg, fg_color = palette.fg_bright, italic = false },
+    new_tab_hover = { bg_color = palette.bar_hover_bg, fg_color = palette.bar_hover_fg or palette.fg_bright, italic = false },
   }
 end
 
@@ -67,9 +88,9 @@ local function tabline_overrides(palette)
       c = { fg = palette.fg_dim, bg = palette.bar_bg },
     },
     tab = {
-      active = { fg = palette.fg_bright, bg = palette.active_tab_bg },
+      active = { fg = palette.active_tab_fg or palette.fg_bright, bg = palette.active_tab_bg },
       inactive = { fg = palette.fg_dim, bg = palette.bar_bg },
-      inactive_hover = { fg = palette.fg_bright, bg = palette.bar_hover_bg },
+      inactive_hover = { fg = palette.bar_hover_fg or palette.fg_bright, bg = palette.bar_hover_bg },
     },
   }
 end
@@ -80,6 +101,7 @@ local terminal_colors = initial_palette.colors
 config.color_schemes = {
   rvb1 = palettes.rvb1.colors,
   rvb2 = palettes.rvb2.colors,
+  rvb3 = palettes.rvb3.colors,
 }
 config.color_scheme = initial_palette.color_scheme
 config.colors = { tab_bar = tab_bar_colors(initial_palette) }
@@ -93,7 +115,7 @@ config.initial_rows = 28
 config.font_size = 14
 
 config.font = wezterm.font(
-    'CommitMono',
+    'SF Mono',
     { weight = 'Regular' }
 )
 

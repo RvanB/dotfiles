@@ -172,9 +172,9 @@ compdef _session session
 # Better ls
 ls() {
   if (( $+commands[eza] )); then
-    eza --group-directories-first --icons -a --git "$@"
+    eza --group-directories-first -a --git "$@"
   elif (( $+commands[exa] )); then
-    exa --group-directories-first --icons -a --git "$@"
+    exa --group-directories-first -a --git "$@"
   else
     command ls "$@"
   fi
