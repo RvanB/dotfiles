@@ -51,6 +51,12 @@
 ;; sync.  Everything here degrades gracefully without it.
 (declare-function rvb/github-fetch-issue "rvb-github" (key callback))
 (declare-function rvb/github-set-body "rvb-github" (key body callback))
+(declare-function rvb/github-create-pr "rvb-github"
+                  (dir title body base head callback))
+(declare-function rvb/github-pull-request "rvb-github" (dir branch &optional refresh))
+(declare-function rvb/github-pull-request-pending-p "rvb-github" (dir branch))
+(declare-function rvb/github-forget-pull-request "rvb-github" (dir branch))
+(declare-function rvb/github-state-string "rvb-github" (state))
 
 ;; Made buffer-local further down, with the status buffer it belongs to.
 (defvar rvb-feature--buffer-feature)
@@ -234,6 +240,17 @@ still branches from the canonical clone."
                   '("origin/main" "origin/master"))
       (rvb-feature--git repo "rev-parse" "--abbrev-ref" "HEAD")))
 
+(defun rvb-feature--remote-branch-name (dir ref)
+  "Return REF as the remote's own name for it, for GitHub to read.
+A base is recorded as the ref it was taken from, usually a
+remote-tracking one like `origin/main', which GitHub knows as `main'.
+Only when it really is one, though: a local branch called
+`release/2.0' keeps every part of its name."
+  (if (rvb-feature--git-ok dir "show-ref" "--verify" "--quiet"
+                           (concat "refs/remotes/" ref))
+      (replace-regexp-in-string "\\`[^/]+/" "" ref)
+    ref))
+
 (defun rvb-feature--park-args (repo base)
   "Return checkout arguments moving REPO off a feature branch.
 Prefers the local branch matching BASE, falling back to a detached
@@ -260,8 +277,14 @@ since checking out `origin/add-sso' means creating `add-sso'."
      (append locals
              (delq nil
                    (mapcar (lambda (r)
-                             (let ((short (replace-regexp-in-string "\\`[^/]+/" "" r)))
-                               (unless (equal short "HEAD") short)))
+                             ;; Only what is under a remote: git shortens
+                             ;; `refs/remotes/origin/HEAD' to `origin',
+                             ;; which is the default branch wearing the
+                             ;; remote's name rather than a branch to
+                             ;; check out.
+                             (when (string-match "\\`[^/]+/\\(.+\\)\\'" r)
+                               (let ((short (match-string 1 r)))
+                                 (unless (equal short "HEAD") short))))
                            remotes))))))
 
 
@@ -720,6 +743,26 @@ TODO keyword or tags on it make no difference."
           (setq found t)))
       found)))
 
+(defun rvb-feature--set-description (feature name text)
+  "Replace repository NAME's section in FEATURE with TEXT.
+
+The inverse of `rvb-feature-description', and the same shape as
+`rvb-feature--set-own-text' is to `rvb-feature-own-text': only that one
+section is touched, so what the feature says about itself and what its
+other repositories say survive a pull into this one."
+  (let ((file (rvb-feature--ensure-org feature)))
+    (with-temp-buffer
+      (insert-file-contents file)
+      (unless (rvb-feature--goto-heading name)
+        (error "%s has no heading for %s" file name))
+      (let ((start (min (point-max) (1+ (line-end-position))))
+            (end (rvb-feature--section-end 2)))
+        (delete-region start end)
+        (goto-char start)
+        (insert (string-trim text) "\n\n"))
+      (write-region (point-min) (point-max) file nil 'quiet))
+    file))
+
 (defun rvb-feature-description (feature name)
   "Return the description text for repository NAME in FEATURE, unfontified."
   (let ((file (rvb-feature--org-file feature)))
@@ -990,14 +1033,81 @@ where there is no undo, so it always asks first."
 
 (defun rvb-feature-pr-body (feature name)
   "Return the pull-request body for repository NAME in FEATURE.
-The feature's Description followed by that repository's own section,
-as Org, promoted a level so the description's headings start at one.
-A future
-\"create PRs\" command converts it with `rvb-feature--to-markdown',
-the same way pushing an issue does."
-  (let ((parts (delq nil (list (rvb-feature-own-text feature)
-                               (rvb-feature-description feature name)))))
-    (and parts (rvb-feature--shift-headings (string-join parts "\n\n") -1))))
+
+That repository's own section under Implementation, and only that: the
+feature's Description belongs to the linked issue, which the pull
+request references rather than repeats.
+
+The text is promoted two levels, so a heading written under the
+repository -- level three here, since the repository itself is level
+two -- arrives at one.  `rvb-feature-create-pr' converts it with
+`rvb-feature--to-markdown', the same way pushing an issue does."
+  (when-let* ((own (rvb-feature-description feature name)))
+    (rvb-feature--shift-headings own -2)))
+
+(defcustom rvb-feature-pr-issue-trailer "Implements %s"
+  "Format string naming the feature's issue in a pull request body.
+
+%s is the issue as \"owner/repo#42\", which GitHub renders as a link
+from any repository -- so the pull requests of a feature that spans
+several all point back at the one issue.
+
+Deliberately a reference and not one of GitHub's closing keywords.  A
+keyword, or the linked branch that the Development section is really
+made of, means \"merging this closes the issue\" -- which for a feature
+is wrong in all but the last repository to merge, and there is no
+saying which that will be.  A feature's issue is closed when the
+feature is done, by whoever decides that.
+
+Set this to nil for no trailer at all."
+  :type '(choice (const :tag "None" nil) string)
+  :group 'rvb-feature)
+
+(defun rvb-feature--pr-markdown (feature m)
+  "Return the Markdown body of member M's pull request in FEATURE.
+`rvb-feature-pr-body' converted, with `rvb-feature-pr-issue-trailer'
+naming the feature's issue after it.
+
+The trailer is added to the Markdown rather than to the Org, so it
+reaches GitHub as the reference it is rather than as whatever Pandoc
+would make of a `#' in prose."
+  (let* ((body (when-let* ((org (rvb-feature-pr-body feature (plist-get m :name))))
+                 (rvb-feature--to-markdown org)))
+         (trailer (rvb-feature--issue-trailer feature)))
+    (string-join (delq nil (list body trailer)) "\n\n")))
+
+(defun rvb-feature--issue-trailer (feature)
+  "Return the trailer naming FEATURE's issue, or nil."
+  (when-let* ((rvb-feature-pr-issue-trailer)
+              (issue (rvb-feature-issue feature)))
+    (format rvb-feature-pr-issue-trailer issue)))
+
+(defun rvb-feature--without-issue-trailer (markdown feature)
+  "Return MARKDOWN without the trailer `rvb-feature--pr-markdown' adds.
+
+Pulling a body back has to undo what pushing it added, or the trailer
+would be written into the prose and a second one appended above it on
+every round trip.  Matched against the exact line pushing would write,
+rather than guessed at, so a sentence of your own that happens to
+mention the issue is left alone."
+  (let ((text (string-trim (or markdown "")))
+        (trailer (rvb-feature--issue-trailer feature)))
+    (if (and trailer (string-suffix-p trailer text))
+        (string-trim (substring text 0 (- (length text) (length trailer))))
+      text)))
+
+(defun rvb-feature--pr-key (pr)
+  "Return PR's \"owner/repo#number\", read from its URL.
+Which is how the rest of this talks about anything on GitHub, and the
+URL is already in hand from the lookup that found the pull request."
+  (when-let* ((url (plist-get pr :url)))
+    (when (string-match (rx "github.com/"
+                            (group (+ (not (any "/")))) "/"
+                            (group (+ (not (any "/")))) "/"
+                            "pull/" (group (+ digit)))
+                        url)
+      (format "%s/%s#%s" (match-string 1 url) (match-string 2 url)
+              (match-string 3 url)))))
 
 (defun rvb-feature--read-name (&optional require-match)
   "Prompt for a feature name, defaulting to the enclosing one."
@@ -1068,12 +1178,15 @@ requirement: it is offered as the default, so adding the one you are
 looking at is a single RET.  Whatever you pick is resolved to its main
 worktree, never a linked one.
 
-BRANCH defaults to `rvb-feature-branch-function' and BASE to the
-repository's default branch.  With a prefix argument, prompt for both.
-Use that when a repository needs a branch name of its own, or to pull
-work that already lives on some other branch into the feature: naming
-an existing local or remote branch checks it out in the new worktree
-rather than creating one."
+BRANCH is always asked for, completing over the repository's local and
+remote branches with `rvb-feature-branch-function''s name offered as
+the default.  Take the default -- a single RET -- and that branch is
+created; name one that already exists, locally or on the remote, and
+the worktree checks it out instead, which is how work already under way
+somewhere else is pulled into the feature.
+
+BASE is what a branch being created starts from, and defaults to the
+repository's default branch.  A prefix argument asks for that too."
   (interactive
    (let* ((guess (when-let* ((top (rvb-feature--toplevel)))
                    (rvb-feature--main-worktree top)))
@@ -1082,16 +1195,19 @@ rather than creating one."
           (repo (or (when-let* ((top (rvb-feature--toplevel chosen)))
                       (rvb-feature--main-worktree top))
                     (user-error "%s is not inside a Git repository"
-                                (abbreviate-file-name chosen)))))
+                                (abbreviate-file-name chosen))))
+          (default (funcall rvb-feature-branch-function
+                            feature
+                            (file-name-nondirectory
+                             (directory-file-name repo)))))
      (list feature repo
-           (when current-prefix-arg
-             (let ((default (funcall rvb-feature-branch-function
-                                     feature
-                                     (file-name-nondirectory
-                                      (directory-file-name repo)))))
-               (completing-read (format-prompt "Branch" default)
-                                (rvb-feature--branch-candidates repo)
-                                nil nil nil nil default)))
+           ;; The default leads the candidates as well as being the
+           ;; default, so the branch about to be created is something
+           ;; you can see rather than only something RET does.
+           (completing-read (format-prompt "Branch" default)
+                            (delete-dups
+                             (cons default (rvb-feature--branch-candidates repo)))
+                            nil nil nil nil default)
            (when current-prefix-arg
              (let ((default (rvb-feature--default-base repo)))
                (completing-read (format-prompt "Base ref" default)
@@ -1777,8 +1893,12 @@ The title is the clickable text, so it is faced like a link."
   "Face for neutral counts and separators."
   :group 'rvb-feature)
 
-(defface rvb-feature-clean '((t :inherit magit-diff-added))
-  "Face for the marker on a member with nothing outstanding."
+(defface rvb-feature-clean '((t :inherit default))
+  "Face for the marker on a member with nothing outstanding.
+Deliberately plain: nothing outstanding is the quiet case, and it is
+the badges that want something doing -- ahead, behind, uncommitted,
+conflicts -- that are worth colour.  It still overrides the Org heading
+face it sits on, which is why it is `default' rather than no face."
   :group 'rvb-feature)
 
 (defface rvb-feature-dirty '((t :inherit magit-diff-removed))
@@ -1797,19 +1917,27 @@ The title is the clickable text, so it is faced like a link."
   "Face for unmerged paths."
   :group 'rvb-feature)
 
+(defface rvb-feature-unresolved '((t :inherit warning))
+  "Face for the count of unanswered review conversations."
+  :group 'rvb-feature)
+
 (defface rvb-feature-missing '((t :inherit error))
   "Face for a member whose worktree is gone from disk."
   :group 'rvb-feature)
 
-(defface rvb-feature-added '((t :inherit magit-diff-added))
+;; Adding, modifying and deleting files is what writing code is, not
+;; something to be warned about.  The markers say which of the three a
+;; file is, and a letter says that on its own.
+
+(defface rvb-feature-added '((t :inherit default))
   "Face for files added relative to the base ref."
   :group 'rvb-feature)
 
-(defface rvb-feature-modified '((t :inherit warning))
+(defface rvb-feature-modified '((t :inherit default))
   "Face for files modified relative to the base ref."
   :group 'rvb-feature)
 
-(defface rvb-feature-deleted '((t :inherit magit-diff-removed))
+(defface rvb-feature-deleted '((t :inherit default))
   "Face for files deleted relative to the base ref."
   :group 'rvb-feature)
 
@@ -1923,6 +2051,60 @@ which is what keeps git's output out of the Org file."
   (let ((start (point)))
     (insert label)
     (rvb-feature--make-link start (point) action help)))
+
+(defun rvb-feature--pull-request (m)
+  "Return what GitHub says about member M's pull request, or nil.
+
+The lookup is asynchronous, so the answer is nil the first time and the
+heading offers to open one.  When it lands the buffer is drawn again --
+drawn, not refreshed: nothing about git has changed, and re-probing
+every repository because GitHub answered would be a poor trade."
+  (when-let* (((fboundp 'rvb/github-pull-request))
+              (branch (or (plist-get m :head) (plist-get m :branch)))
+              (buf (current-buffer)))
+    (rvb/github-pull-request
+     (plist-get m :dir) branch
+     (lambda ()
+       (when (buffer-live-p buf)
+         (with-current-buffer buf (rvb-feature--redraw)))))))
+
+(defun rvb-feature--pr-lookup-pending-p (m)
+  "Return non-nil while member M's pull-request lookup is in flight."
+  (when-let* (((fboundp 'rvb/github-pull-request-pending-p))
+              (branch (or (plist-get m :head) (plist-get m :branch))))
+    (rvb/github-pull-request-pending-p (plist-get m :dir) branch)))
+
+(defun rvb-feature--insert-pr-link (m)
+  "Insert member M's pull request, or the offer to open one.
+A pull request that exists is worth more than a button that would fail:
+the heading names it the way GitHub does, `repo#42', and following it
+opens it in a browser.  An open one also says how many review
+conversations are still unresolved, which is the whole reason to look
+at a pull request you have already opened."
+  (let ((name (plist-get m :name))
+        (pr (rvb-feature--pull-request m)))
+    (if (null pr)
+        (rvb-feature--insert-link
+         "Create PR"
+         (lambda () (rvb-feature--create-pr rvb-feature--buffer-feature m))
+         (format "Open a pull request for %s" name))
+      (let ((url (plist-get pr :url))
+            (state (and (fboundp 'rvb/github-state-string)
+                        (rvb/github-state-string (plist-get pr :state))))
+            (unresolved (or (plist-get pr :unresolved) 0)))
+        (rvb-feature--insert-link
+         (format "%s#%s" name (plist-get pr :number))
+         (lambda () (browse-url url))
+         (or (plist-get pr :title) url))
+        (unless (string-empty-p (or state ""))
+          (insert "  " (rvb-feature--string-faces-to-font-lock
+                        (copy-sequence state))))
+        ;; Only while it is open: a conversation nobody resolved before
+        ;; merging is history, and the heading is about what is left to
+        ;; do.
+        (when (and (> unresolved 0) (equal (plist-get pr :state) "open"))
+          (insert "  " (propertize (format "Unresolved %d" unresolved)
+                                   'font-lock-face 'rvb-feature-unresolved)))))))
 
 (defun rvb-feature--repo-branch-string (m)
   "Return member M's branch for its heading."
@@ -2046,6 +2228,9 @@ else navigates by."
           (when-let* ((branch (rvb-feature--repo-branch-string m)))
             (insert "  " branch))
           (insert "  " (rvb-feature--repo-status-string m))
+          (unless (plist-get m :missing)
+            (insert "  ")
+            (rvb-feature--insert-pr-link m))
           (rvb-feature--generated start (point)))
         (rvb-feature--protect
          heading-start (min (point-max) (1+ (line-end-position)))
@@ -2059,7 +2244,18 @@ else navigates by."
                 (rvb-feature--make-link
                  (- end (length name)) end
                  (lambda () (dired dir))
-                 (format "Open %s in Dired" name)))))))
+                 (format "Open %s in Dired" name))))))
+        ;; Somewhere to write.  A repository nobody has written under
+        ;; yet has its generated block starting where the protected
+        ;; heading ends -- two read-only regions meeting, with no
+        ;; position between them that will accept a character.  One
+        ;; blank line is ordinary text, so it is saved with the rest and
+        ;; only has to be added once.
+        (let ((body-start (min (point-max) (1+ (line-end-position)))))
+          (when (= body-start (rvb-feature--section-end 2))
+            (save-excursion
+              (goto-char body-start)
+              (insert "\n")))))
       (when (or (plist-get m :commits) (plist-get m :changed))
         ;; The end of this repository's subtree: the next repository, or
         ;; the next top-level section.
@@ -2118,6 +2314,20 @@ else navigates by."
       (when window
         (set-window-start window (min start (point-max)))))))
 
+(defun rvb-feature--redraw ()
+  "Draw this status buffer again from what is already known.
+For a background answer landing -- a pull-request lookup, say -- where
+nothing was collected and nothing needs to be: unlike
+`rvb-feature-refresh', this rereads no worktree.  Does nothing while
+there are unsaved edits, which a redraw would read the file over."
+  (when (and (derived-mode-p 'rvb-feature-status-mode)
+             rvb-feature--buffer-feature
+             (not (buffer-modified-p)))
+    (rvb-feature--render
+     rvb-feature--buffer-feature
+     (or rvb-feature--state
+         (rvb-feature-members rvb-feature--buffer-feature)))))
+
 (defun rvb-feature--editable-text ()
   "Return the buffer's text with the generated regions removed.
 This is what the Org file is made of: everything typed, and nothing
@@ -2149,7 +2359,12 @@ git said."
     t))
 
 (defun rvb-feature-refresh ()
-  "Recollect and redraw this feature's status."
+  "Recollect and redraw this feature's status.
+
+Asking for one by hand also forgets what GitHub said about each
+repository's pull request, so that somebody else opening one shows up.
+Auto Revert's refreshes do not: they come of committing, which does not
+change GitHub's answer, and each one would cost a call per repository."
   (interactive)
   (unless rvb-feature--buffer-feature
     (user-error "Not a feature status buffer"))
@@ -2163,6 +2378,11 @@ git said."
          (buf (current-buffer))
          (gen (cl-incf rvb-feature--generation))
          (members (rvb-feature-members feature)))
+    (when (and (called-interactively-p 'interactive)
+               (fboundp 'rvb/github-forget-pull-request))
+      (dolist (m members)
+        (when-let* ((branch (or (plist-get m :head) (plist-get m :branch))))
+          (rvb/github-forget-pull-request (plist-get m :dir) branch))))
     ;; Opening a feature is where a file written before the Description
     ;; and Implementation headings existed gets restructured.
     (rvb-feature--ensure-org feature)
@@ -2185,13 +2405,34 @@ git said."
              (setq rvb-feature--state state)
              (rvb-feature--render feature state))))))))
 
+(defun rvb-feature--protected-at-point-p ()
+  "Return non-nil when point sits in protected text.
+That is git's half of the buffer -- read-only, so a bare letter has
+nothing to type itself into there and can carry a command instead."
+  (get-text-property (point) 'read-only))
+
+(defun rvb-feature--protected-key (command)
+  "Return a binding running COMMAND, but only in protected text.
+Elsewhere the `:filter' declines, and key lookup carries on to the maps
+underneath -- which is what leaves the letter typing itself."
+  `(menu-item "" ,command
+              :filter ,(lambda (cmd)
+                         (and (rvb-feature--protected-at-point-p) cmd))))
+
 (defvar-keymap rvb-feature-status-mode-map
   :doc "Keymap for `rvb-feature-status-mode'.
 
 The buffer is editable, so single letters type themselves.  Commands
 live behind `C-c C-f'; saving and redrawing are ordinary, with
-\\[save-buffer] and \\[revert-buffer]."
-  "C-c C-f" #'rvb-feature-dispatch)
+\\[save-buffer] and \\[revert-buffer].
+
+The exceptions are on the protected, read-only text, where nothing can
+be typed anyway: there `g' redraws and `p' opens a pull request for the
+repository at point.  Both are `rvb-feature--protected-key' bindings,
+so in the prose you actually write the letters are still letters."
+  "C-c C-f" #'rvb-feature-dispatch
+  "g" (rvb-feature--protected-key #'rvb-feature-refresh)
+  "p" (rvb-feature--protected-key #'rvb-feature-create-pr))
 
 (define-derived-mode rvb-feature-status-mode org-mode "Feature"
   "Major mode for a feature: its Org file, with git's answer injected.
@@ -2244,6 +2485,45 @@ there is no separate switch command."
 
 
 ;;; Commands in the status buffer
+
+(defun rvb-feature--settle-edits (what &optional destructive)
+  "Deal with this buffer's unsaved edits before WHAT.
+
+Saving is offered either way.  DESTRUCTIVE says the edits are about to
+be written over rather than merely left out, which is a different thing
+to agree to."
+  (when (and (derived-mode-p 'rvb-feature-status-mode) (buffer-modified-p))
+    (if (y-or-n-p (format "Save your edits before %s? " what))
+        (rvb-feature-save)
+      (unless (yes-or-no-p (if destructive "Discard them? " "Go on without them? "))
+        (user-error "Aborted")))))
+
+(defun rvb-feature--read-member (feature)
+  "Prompt for one of FEATURE's repositories."
+  (let* ((members (or (rvb-feature-members feature)
+                      (user-error "%s has no repositories" feature)))
+         (names (mapcar (lambda (m) (plist-get m :name)) members))
+         (default (car names)))
+    (rvb-feature--member-named
+     members
+     (completing-read (format-prompt "Repository" default)
+                      names nil t nil nil default))))
+
+(defun rvb-feature--member-named (members name)
+  "Return the member of MEMBERS called NAME."
+  (cl-find name members :key (lambda (m) (plist-get m :name)) :test #'equal))
+
+(defun rvb-feature--target-member ()
+  "Return (FEATURE . MEMBER) for a command about one repository.
+
+The repository at point when there is one -- these belong to the status
+buffer first -- and otherwise the feature and repository asked for, so
+that the same commands work from the dispatch menu."
+  (let* ((feature (or rvb-feature--buffer-feature (rvb-feature--read-name t)))
+         (m (or (and (equal feature rvb-feature--buffer-feature)
+                     (rvb-feature--section-member))
+                (rvb-feature--read-member feature))))
+    (cons feature m)))
 
 (defun rvb-feature--member (name)
   "Return the member plist named NAME, from the last probe or from disk."
@@ -2298,6 +2578,197 @@ point -- which is what Org structure already means."
   (rvb-feature--show-member-diff
    (or (rvb-feature--section-member)
        (user-error "Point is not in a repository"))))
+
+(defun rvb-feature--pr-push-kind (m)
+  "Return what M's branch needs pushing before a pull request can exist.
+`set' when GitHub has never seen the branch, t when it has commits the
+remote does not, nil when there is nothing to send.  Asked of git
+rather than read from the last probe, because this decides whether to
+push."
+  (let ((dir (plist-get m :dir)))
+    (cond
+     ((not (rvb-feature--git-ok dir "rev-parse" "--verify" "--quiet" "@{u}")) 'set)
+     ((not (equal "0" (rvb-feature--git dir "rev-list" "--count" "@{u}..HEAD"))) t))))
+
+(defun rvb-feature--create-pr (feature m)
+  "Open a pull request on GitHub for member M of FEATURE.
+
+The body is what you wrote under this repository's heading, converted
+to Markdown, so the status buffer is what reviewers read.  The title is
+the feature's `#+title:', or its name when it has none.
+
+It ends with `rvb-feature-pr-issue-trailer' naming the feature's
+`#+issue:', so a reviewer can get from any of the feature's pull
+requests to the one issue -- a reference, which is all it should be:
+see that variable for why nothing here asks GitHub to close anything.
+
+That body is read from the Org file rather than from this buffer,
+which is why unsaved edits are saved first.
+
+The branch is pushed when it has to be: GitHub will not open a pull
+request for a branch it has never seen, and one that is behind what
+you have locally would open a pull request missing the work."
+  (let* ((name (plist-get m :name))
+         (dir (plist-get m :dir))
+         (branch (or (plist-get m :head) (plist-get m :branch)))
+         (base (rvb-feature--remote-branch-name
+                dir (or (plist-get m :base) (rvb-feature--default-base dir))))
+         (title (or (rvb-feature-title feature) feature))
+         (buf (current-buffer))
+         written push)
+    (when (plist-get m :missing)
+      (user-error "%s is missing from disk" name))
+    (when (or (null branch) (equal branch "(detached)"))
+      (user-error "%s is not on a branch" name))
+    ;; Only what is already known -- the lookup behind this is
+    ;; asynchronous, so gh is still the one that decides.  This is for
+    ;; the heading that is showing the pull request as this is typed.
+    (when-let* ((pr (rvb-feature--pull-request m)))
+      (user-error "%s#%s is already open for %s"
+                  name (plist-get pr :number) branch))
+    (when (equal branch base)
+      (user-error "%s is on %s, which is its own base" name branch))
+    (rvb-feature--settle-edits "opening the pull request")
+    (setq push (rvb-feature--pr-push-kind m)
+          written (rvb-feature-pr-body feature name))
+    ;; It is on GitHub for other people to see afterwards, so ask before
+    ;; rather than undo after -- and say so when there is nothing written
+    ;; under the heading, since an empty description is rarely meant.
+    (unless (yes-or-no-p
+             (format "Open a pull request for %s (%s -> %s)%s%s? "
+                     name branch base
+                     (if push ", pushing first" "")
+                     (if written "" ", with no description")))
+      (user-error "Aborted"))
+    (when push
+      (message "Pushing %s..." branch)
+      (apply #'rvb-feature--git! dir "push"
+             (when (eq push 'set) (list "--set-upstream" "origin" branch))))
+    (rvb/github-create-pr
+     dir title (rvb-feature--pr-markdown feature m) base branch
+     (lambda (url)
+       (when url
+         ;; The URL is the one thing gh says that is worth keeping, and
+         ;; pasting it under the heading is the usual next move.
+         (kill-new url)
+         (message "Opened %s (copied)" url)
+         (when (buffer-live-p buf)
+           (with-current-buffer buf
+             (when (and (derived-mode-p 'rvb-feature-status-mode)
+                        (not (buffer-modified-p)))
+               (rvb-feature-refresh)))))))))
+
+(defun rvb-feature-create-pr ()
+  "Open a pull request for the repository at point.
+The link on each repository's heading runs this too.  See
+`rvb-feature--create-pr' for what ends up in it."
+  (interactive)
+  (let ((target (rvb-feature--target-member)))
+    (rvb-feature--create-pr (car target) (cdr target))))
+
+(defun rvb-feature--pr-or-error (m)
+  "Return member M's pull request, or explain that there is not one."
+  (or (rvb-feature--pull-request m)
+      (user-error "No pull request for %s%s" (plist-get m :name)
+                  ;; A lookup that has not landed yet reads the same as
+                  ;; none at all, and the heading is where you can see
+                  ;; which of the two this is.
+                  (if (rvb-feature--pr-lookup-pending-p m)
+                      " yet -- still asking GitHub"
+                    ""))))
+
+;;;###autoload
+(defun rvb-feature-pr-pull ()
+  "Replace this repository's section with the body of its pull request.
+
+The counterpart of `rvb-feature-pr-push', and the same bargain as
+`rvb-feature-issue-pull' makes over the feature's own description: only
+this repository's section is replaced, so the rest of the feature is
+untouched by a pull into one of its repositories.
+
+The body arrives as Markdown and is converted to Org by Pandoc, then
+demoted two levels so its headings sit under the repository -- the
+inverse of the promotion pushing does.  The trailer naming the issue is
+dropped, being pushing's work rather than yours.
+
+The body is fetched rather than read from what the heading already
+knows: a description is worth pulling when somebody has edited it, and
+that is exactly what a cached answer would not show."
+  (interactive)
+  (let* ((target (rvb-feature--target-member))
+         (feature (car target))
+         (m (cdr target))
+         (name (plist-get m :name))
+         (key (rvb-feature--pr-key (rvb-feature--pr-or-error m)))
+         (current (rvb-feature-description feature name)))
+    (unless key
+      (user-error "Cannot tell which pull request %s's is" name))
+    ;; It is the Org file this writes, and this buffer is showing it.
+    (rvb-feature--settle-edits "pulling the description" t)
+    (rvb/github-fetch-issue
+     key
+     (lambda (pr)
+       (when pr
+         (let ((body (rvb-feature--without-issue-trailer
+                      (or (plist-get pr :body) "") feature))
+               ;; Compared as Markdown, which is what pushing would
+               ;; send: converting the other way and comparing Org would
+               ;; call a description unchanged only if Pandoc's blank
+               ;; lines happened to land where yours are.
+               (mine (or (when-let* ((org (rvb-feature-pr-body feature name)))
+                           (rvb-feature--to-markdown org))
+                         "")))
+           (cond
+            ((string-empty-p body)
+             (message "%s has an empty body; nothing to pull" key))
+            ((equal body mine)
+             (message "%s already matches %s" name key))
+            ((and current
+                  (not (yes-or-no-p
+                        (format "Replace %s's section with the body of %s? "
+                                name key))))
+             (message "Kept what %s says locally" name))
+            (t
+             (rvb-feature--set-description
+              feature name
+              (rvb-feature--shift-headings (rvb-feature--from-markdown body) 2))
+             (message "Pulled %s into %s" key name)))
+           (rvb-feature--after-issue-sync feature)))))))
+
+;;;###autoload
+(defun rvb-feature-pr-push ()
+  "Set the body of this repository's pull request from its section.
+
+The counterpart of `rvb-feature-pr-pull'.  What is sent is exactly what
+opening the pull request would have sent -- this repository's section,
+promoted, converted to Markdown, and the issue trailer after it -- so
+the two commands stay inverse and a description edited here catches up
+with one opened days ago.
+
+This rewrites the pull request on GitHub, where reviewers can see it
+and where there is no undo, so it always asks first."
+  (interactive)
+  (let* ((target (rvb-feature--target-member))
+         (feature (car target))
+         (m (cdr target))
+         (name (plist-get m :name))
+         (key (rvb-feature--pr-key (rvb-feature--pr-or-error m))))
+    (unless key
+      (user-error "Cannot tell which pull request %s's is" name))
+    (rvb-feature--settle-edits "pushing the description")
+    (let ((body (rvb-feature--pr-markdown feature m)))
+      (when (string-empty-p (string-trim body))
+        (user-error "%s has no description to push" name))
+      (unless (yes-or-no-p
+               (format "Replace the body of %s on GitHub with %s's section? "
+                       key name))
+        (user-error "Aborted"))
+      (rvb/github-set-body
+       key body
+       (lambda (result)
+         (when result
+           (rvb-feature--after-issue-sync feature)
+           (message "Pushed %s's section to %s" name key)))))))
 
 (defun rvb-feature-remove-repo (&optional feature name)
   "Remove the repository at point from this feature.
@@ -2407,10 +2878,11 @@ Removes its worktree and offers to delete the branch."
 (transient-define-prefix rvb-feature-dispatch ()
   "Work on features that span several repositories.
 
-Only commands that make sense from anywhere belong here.  Anything
-that reads the section at point -- editing a description, for one --
-is bound in `rvb-feature-status-mode-map' instead, where there is a
-section to read."
+Only commands that make sense from anywhere belong here.  The
+pull-request commands qualify: they act on the repository at point when
+there is one and ask which repository when there is not.  What does not
+qualify is anything with no answer to fall back on -- following a link,
+say -- which is bound in `rvb-feature-status-mode-map' instead."
   [["Feature"
     ("c" "Create a feature" rvb-feature-create)
     ("a" "Add a repo to a feature" rvb-feature-add-repo)
@@ -2419,6 +2891,10 @@ section to read."
    ["Issue"
     ("i p" "Pull description from the issue" rvb-feature-issue-pull)
     ("i P" "Push description to the issue" rvb-feature-issue-push)]
+   ["Pull request"
+    ("r c" "Create for a repository" rvb-feature-create-pr)
+    ("r p" "Pull description from the PR" rvb-feature-pr-pull)
+    ("r P" "Push description to the PR" rvb-feature-pr-push)]
    ["Manage"
     ("f" "Fetch all" rvb-feature-fetch-all)
     ("k" "Remove a repo" rvb-feature-remove-repo)
