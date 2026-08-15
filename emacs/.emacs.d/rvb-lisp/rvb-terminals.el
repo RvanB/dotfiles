@@ -2,11 +2,16 @@
 ;;   :ensure t
 ;;   )
 
-;; (use-package vterm
-;;   :ensure t
-;;   :init
-;;   (setq vterm-max-scrollback 100000)
-;;   )
+(use-package vterm
+  :ensure t
+  :init
+  (setq vterm-max-scrollback 100000)
+  )
+
+(use-package multi-vterm
+  :ensure t
+  :init
+  )
 
 ;; https://mocompute.codeberg.page/item/2024/2024-09-03-emacs-project-vterm.html
 (defun my-project-shell ()

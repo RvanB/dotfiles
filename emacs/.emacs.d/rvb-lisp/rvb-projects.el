@@ -181,5 +181,77 @@ for directories that are not repositories."
                    nil t))
 (setq project-prompter #'rvb/project-prompt)
 
+;;; The buffer list, grouped by project
+;;
+;; `ibuffer' groups by whatever `ibuffer-filter-groups' says, which is
+;; ordinarily written by hand.  The projects worth grouping by are the
+;; ones that happen to be open, and they change through the day -- a
+;; feature is a project only while it exists -- so the groups are
+;; generated from the buffers themselves every time the list is drawn.
+
+;; Defined in ibuf-ext.el, which arrives with Ibuffer rather than with
+;; this file.
+(defvar ibuffer-filter-groups)
+
+(defvar rvb/ibuffer--projects (make-hash-table :test #'eq)
+  "Which project each buffer belonged to when the groups were last built.
+
+A snapshot rather than a lookup: `ibuffer' evaluates a group's
+predicate once per buffer *per group*, and answering each of those from
+`project-current' would walk the roots hundreds of times to draw one
+list.")
+
+(defun rvb/ibuffer-buffer-project ()
+  "Return the name of the current buffer's project, from the snapshot."
+  (gethash (current-buffer) rvb/ibuffer--projects))
+
+(defun rvb/ibuffer--project-name (buffer)
+  "Return the name of BUFFER's project, or nil if it is in none.
+
+Asked of `project-current', so a buffer is in a project here exactly
+when `project-find-file' from it would search that project -- features
+included, since `rvb/project-try' detects those too."
+  (with-current-buffer buffer
+    (when-let* ((project (project-current)))
+      (project-name project))))
+
+(defun rvb/ibuffer-project-groups ()
+  "Return `ibuffer-filter-groups' for the projects that are open now.
+
+Also refreshes the snapshot the groups' predicates read.  Buffers whose
+names begin with a space are Emacs' own and are never listed; leaving
+them out keeps a project out of the groups when nothing of it is
+actually on show."
+  (clrhash rvb/ibuffer--projects)
+  (let (names)
+    (dolist (buffer (buffer-list))
+      (unless (string-prefix-p " " (buffer-name buffer))
+        (when-let* ((name (rvb/ibuffer--project-name buffer)))
+          (puthash buffer name rvb/ibuffer--projects)
+          (cl-pushnew name names :test #'equal))))
+    (mapcar (lambda (name)
+              (list name (cons 'predicate
+                               `(equal (rvb/ibuffer-buffer-project) ,name))))
+            (sort names #'string<))))
+
+(defun rvb/ibuffer-set-project-groups (&rest _)
+  "Regroup this Ibuffer by project.
+Everything outside a project is left to Ibuffer's own default group,
+at the bottom."
+  (when (derived-mode-p 'ibuffer-mode)
+    (setq ibuffer-filter-groups (rvb/ibuffer-project-groups))))
+
+;; Before every redraw rather than on `ibuffer-hook', which runs only
+;; when the `ibuffer' command is called and only after the list has been
+;; drawn: groups set there would show up one refresh late, and never at
+;; all for the `g' that a new project's first buffer calls for.
+(advice-add 'ibuffer-update :before #'rvb/ibuffer-set-project-groups)
+
+;; Grouping lives in ibuf-ext, which plain `ibuffer' does not load --
+;; it requires it only when the command is passed groups as an argument.
+;; Without this, `ibuffer-filter-groups' is a variable nothing reads and
+;; every buffer quietly lands in the default group.
+(with-eval-after-load 'ibuffer (require 'ibuf-ext))
+
 (provide 'rvb-projects)
 ;;; rvb-projects.el ends here

@@ -377,13 +377,40 @@
    ;; on ink -- the same reversed video everything else here uses.
 
    ;; Tabs and the rest.
-   `(tab-bar ((,class (:foreground ,grey :background ,paper))))
-   `(tab-bar-tab ((,class (:inherit rvb3-selected-face
-                                   :box (:line-width 1 :color ,ink)))))
-   `(tab-bar-tab-inactive ((,class (:foreground ,ink :background ,paper))))
-   `(tab-line ((,class (:foreground ,grey :background ,paper))))
-   `(tab-line-tab-current ((,class (:inherit rvb3-selected-face))))
-   `(tab-line-tab-inactive ((,class (:foreground ,ink :background ,paper))))
+   ;; The bar is the page; the tab you are on is reversed out of it, and
+   ;; runs into the header line below as one black shape.  Only that tab
+   ;; is ink -- the others are ordinary text on paper, as everything else
+   ;; here is.
+   ;;
+   ;; `:box nil' outright on each: the boxes the stock faces carry draw a
+   ;; raised edge along the seam where the current tab meets the header,
+   ;; and a face this theme does not mention keeps whatever its `defface'
+   ;; says.
+   `(tab-bar ((,class (:foreground ,ink :background ,paper :box nil))))
+   `(tab-bar-tab
+     ((,class (:foreground ,paper :background ,ink :weight bold :box nil))))
+   `(tab-bar-tab-inactive
+     ((,class (:foreground ,ink :background ,paper :box nil))))
+   `(tab-bar-tab-group-current
+     ((,class (:foreground ,paper :background ,ink :weight bold :box nil))))
+   `(tab-bar-tab-group-inactive
+     ((,class (:foreground ,ink :background ,paper :box nil))))
+   `(tab-bar-tab-ungrouped
+     ((,class (:foreground ,grey :background ,paper :box nil))))
+   ;; The tab line reads the same way as the tab bar: paper, with the
+   ;; current tab reversed out of it.  `:box nil' for the same reason --
+   ;; the stock faces carry a `released-button' box, and a face this
+   ;; theme does not mention keeps whatever its `defface' says.
+   `(tab-line ((,class (:foreground ,grey :background ,paper :box nil))))
+   `(tab-line-tab-current
+     ((,class (:foreground ,paper :background ,ink :weight bold :box nil))))
+   ;; The window's own buffer, in a window that is not selected.
+   `(tab-line-tab ((,class (:foreground ,ink :background ,paper :box nil))))
+   `(tab-line-tab-inactive
+     ((,class (:foreground ,ink :background ,paper :box nil))))
+   `(tab-line-highlight
+     ((,class (:foreground ,ink :background ,paper :underline t :box nil))))
+   `(tab-line-close-highlight ((,class (:foreground ,ink))))
    `(widget-field ((,class (:background ,wash :box (:line-width 1 :color ,rule)))))
    `(trailing-whitespace ((,class (:background ,ink))))
    `(whitespace-trailing ((,class (:background ,ink))))

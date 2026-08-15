@@ -664,4 +664,73 @@ direction and return nil when neither split is possible."
       (c64-frame--apply (selected-frame))
     (c64-frame--restore-state (selected-frame))))
 
+;;; Tab buttons as letters rather than pictures
+;;
+;; The buttons in the tab bar -- the close cross, the new-tab plus, the
+;; history chevrons -- are icons, and on a graphical display an icon is
+;; an image.  Two things follow, and both of them show:
+;;
+;;   The image is drawn with a face of its own, `shadow', which carries a
+;;   background as well as a foreground.  That background is painted into
+;;   the middle of whatever tab the button sits on, so the current tab
+;;   ends up with a white patch and a black cross in it instead of its
+;;   own colours.  No theme can fix that: one static face cannot be both
+;;   of the two kinds of tab it lands on.
+;;
+;;   The image is `:margin 1', a pixel on every side, and taller than the
+;;   text beside it.  The tab bar's row is sized to the tallest thing in
+;;   it, and the pixels the tabs do not reach are painted with the bar's
+;;   own face -- a pale line between the tabs and the header line right
+;;   under them.
+;;
+;; Text has neither problem.  `tab-bar-tab-name-format-face' adds the
+;; tab's face to the whole name, close button included, so the cross
+;; takes the colours of the tab it belongs to; and a row of text is as
+;; tall as text, so the current tab fills it to the edge.
+;;
+;; Defined here rather than assigned: `tab-bar--load-buttons' runs each
+;; time `tab-bar-mode' is turned on and would overwrite a variable set
+;; from here, but it defines each icon only `unless' one already exists.
+(require 'icons)
+
+(define-icon tab-bar-close nil
+  '((text " ✕"))
+  "Icon for closing the clicked tab."
+  :version "30.1"
+  :help-echo "Click to close tab")
+
+(define-icon tab-bar-new nil
+  '((text " + "))
+  "Icon for creating a new tab."
+  :version "30.1"
+  :help-echo "New tab")
+
+;; The history chevrons only appear with `tab-bar-history-mode', which
+;; defines them when it is turned on -- same `unless', same treatment.
+(define-icon tab-bar-back nil
+  '((text " < "))
+  "Icon for going back in tab history."
+  :version "30.1")
+
+(define-icon tab-bar-forward nil
+  '((text " > "))
+  "Icon for going forward in tab history."
+  :version "30.1")
+
+;; The tab line's close button is the same picture with the same face,
+;; and its button variable is built when tab-line.el loads -- which is
+;; after this file, so defining the icon here is enough there too.
+(define-icon tab-line-close nil
+  '((text " ✕"))
+  "Icon for closing the clicked tab."
+  :version "30.1"
+  :help-echo "Click to close tab")
+
+;; The button *strings* are built once, when `tab-bar-mode' is turned on,
+;; from whatever icons existed at that moment.  A tab bar already running
+;; when this file is loaded therefore keeps its pictures until the mode
+;; is toggled.  Rebuilding here means re-evaluating this file is enough.
+(when (fboundp 'tab-bar--load-buttons)
+  (tab-bar--load-buttons))
+
 (provide 'rvb-ui)
