@@ -6,7 +6,15 @@
 
 ;;; Magit
 (use-package magit
-  :ensure t)
+  :ensure t
+  :config
+  ;; Magit's default hunk-region treatment deliberately replaces the
+  ;; backgrounds *outside* an internal selection with the context background.
+  ;; That is incompatible with white-on-black additions: it leaves their white
+  ;; foreground on the white page.  The ordinary region face already marks the
+  ;; selected text, while Magit's boundary overlay marks its line range.
+  (setq magit-diff-highlight-hunk-region-functions
+        '(magit-diff-highlight-hunk-region-using-overlays)))
 
 ;;; Where my Git repositories live.
 ;;

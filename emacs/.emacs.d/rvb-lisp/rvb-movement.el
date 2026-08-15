@@ -36,6 +36,8 @@
   (interactive)
   (god-local-mode (if (bound-and-true-p god-local-mode) -1 1)))
 
+(setq-default cursor-type 'box)
+
 (defface rvb/god-minibuffer-indicator
   '((t (:inherit error)))
   "Face for the God Mode state indicator in minibuffer prompts."

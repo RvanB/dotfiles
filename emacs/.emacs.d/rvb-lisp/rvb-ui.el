@@ -159,8 +159,8 @@ When NO-SAVE is non-nil, do not persist THEME."
 
 ;; Use one fixed-pitch font everywhere.  Setting `variable-pitch' explicitly
 ;; prevents packages which inherit it from reintroducing proportional prose.
-(set-face-attribute 'default nil :family "Berkeley Mono" :height 160)
-(set-face-attribute 'fixed-pitch nil :family "Berkeley Mono")
+(set-face-attribute 'default nil :family "SF Mono" :height 140)
+(set-face-attribute 'fixed-pitch nil :family "SF Mono")
 (set-face-attribute 'variable-pitch nil :family "ITC Galliard")
 
 ;; The two are the same point size but not the same apparent size: a
@@ -222,7 +222,7 @@ takes effect where you set it."
 (defvar rvb/ui-page-chrome--saved-line-number-faces nil
   "Alist mapping (FRAME . FACE) to the line-number background to restore.")
 
-(defcustom rvb/ui-page-chrome-vertical-padding 6
+(defcustom rvb/ui-page-chrome-vertical-padding 0
   "Vertical padding, in pixels, around page chrome header text."
   :type 'integer
   :group 'appearance)
@@ -245,6 +245,14 @@ takes effect where you set it."
 (defface rvb/ui-page-chrome-header
   '((t :inherit header-line))
   "Face for the RVB page-chrome top header band.")
+
+(defface rvb/ui-page-chrome-command
+  '((t :inherit rvb/ui-page-chrome-header))
+  "Face supplying the page-chrome command-state colours.")
+
+(defface rvb/ui-page-chrome-breadcrumb-highlight
+  '((t :inherit highlight))
+  "Face used when the pointer is over a page-chrome breadcrumb.")
 
 (defvar rvb/ui-page-chrome-breadcrumb-map
   (let ((map (make-sparse-keymap)))
@@ -277,7 +285,7 @@ takes effect where you set it."
   "Return clickable breadcrumb LABEL opening DIRECTORY in Dired."
   (propertize label
               'local-map rvb/ui-page-chrome-breadcrumb-map
-              'mouse-face 'highlight
+              'mouse-face 'rvb/ui-page-chrome-breadcrumb-highlight
               'help-echo (format "Open %s in Dired" directory)
               'follow-link t
               'rvb/ui-page-chrome-directory directory))
@@ -320,14 +328,12 @@ state; retain the normal page-chrome face and font metrics.
 The band uses the frame's `default' font attributes so its fixed-width
 font matches ordinary buffer text instead of the generic `fixed-pitch' face."
   (pcase-let* ((frame (window-frame window))
-               ;; Turn the active theme's error foreground into a prominent
-               ;; background without hard-coding a theme-specific red.
+               ;; Command state has its own theme face; it is not an error and
+               ;; should not change when diagnostic styling changes.
                (header-background
                 (if god-p
-                    (face-foreground 'error frame t)
+                    (face-background 'rvb/ui-page-chrome-command frame t)
                   (face-background face frame t)))
-               (header-foreground
-                (face-foreground face frame t))
                (default-family (face-attribute 'default :family frame))
                (default-height (face-attribute 'default :height frame))
                (default-weight (face-attribute 'default :weight frame))
@@ -350,21 +356,11 @@ font matches ordinary buffer text instead of the generic `fixed-pitch' face."
                                         `(:line-width
                                           (0 . ,rvb/ui-page-chrome-vertical-padding)
                                           :color ,header-background))))))
-               ;; `:box' can't draw a top-only rule, so use overline and
-               ;; underline for top- and bottom-only rules with theme colors.
-               (_ (when (stringp header-foreground)
-                    (setq font-attrs
-                          (append font-attrs
-                                  (list :overline header-foreground
-                                        :underline
-                                        `(:color ,header-foreground
-                                          :position t))))))
                (band-face
                 (if god-p
-                    ;; Put the background override ahead of the exact normal
-                    ;; header faces, preserving every font and line metric.
-                    (list (list :background header-background)
-                          face font-attrs)
+                    ;; Keep the command face itself so non-color attributes,
+                    ;; especially its graphical stipple, survive composition.
+                    (list 'rvb/ui-page-chrome-command face font-attrs)
                   (if font-attrs
                       (list face font-attrs)
                     face)))
@@ -531,18 +527,22 @@ direction and return nil when neither split is possible."
 
 (setq split-window-preferred-function #'rvb/split-window-longest-dimension)
 
-;; Use a solid bar instead of Diff-hl's outlined hunk-border bitmaps.
+;; Use a chunky solid block instead of Diff-hl's thin outlined bitmaps.
 (defun rvb/diff-hl-fringe-bitmap (_type _position)
-  "Return the solid fringe bitmap used for every Diff-hl change type."
-  'rvb/diff-hl-solid-bitmap)
+  "Return the screened fringe bitmap used for every Diff-hl change type."
+  'rvb/diff-hl-stipple-bitmap)
 
 (defun rvb/diff-hl-define-fringe-bitmap ()
-  "Define a narrow, filled Diff-hl bitmap matching the current line height."
+  "Define a six-pixel checkerboard Diff-hl bitmap at the current line height."
   (when (display-graphic-p)
-    (let ((height (frame-char-height)))
-      (define-fringe-bitmap 'rvb/diff-hl-solid-bitmap
-        (make-vector height #b111)
-        height 3 'center))))
+    (let ((height (frame-char-height))
+          (width 6)
+          (rows (make-vector (frame-char-height) 0)))
+      (dotimes (row height)
+        (aset rows row (if (zerop (% row 2)) #b101010 #b010101)))
+      (define-fringe-bitmap 'rvb/diff-hl-stipple-bitmap
+        rows
+        height width 'center))))
 
 ;; Diff-hl with mouse support
 (use-package diff-hl

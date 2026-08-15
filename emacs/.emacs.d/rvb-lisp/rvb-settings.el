@@ -105,6 +105,5 @@
 ;;; rvb-features.el loads after this file; the function is not called
 ;;; until startup finishes, so the forward reference is fine.
 (declare-function rvb-feature-list-buffer "rvb-features" ())
-(setq initial-buffer-choice #'rvb-feature-list-buffer)
 
 (provide 'rvb-settings)
