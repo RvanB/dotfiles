@@ -104,6 +104,13 @@
   (rvb/set-default-frame-parameter parameter value)
   (rvb/set-initial-frame-parameter parameter value))
 
+(defun rvb/theme-ns-appearance (&optional theme)
+  "Return the native macOS appearance requested by THEME.
+
+Themes declare their preference with the `rvb/ns-appearance' symbol
+property.  A missing preference leaves the appearance up to macOS."
+  (get (or theme rvb-theme) 'rvb/ns-appearance))
+
 (defun rvb/load-theme (theme &optional no-save)
   "Load THEME and make it the current RVB theme.
 
@@ -113,8 +120,8 @@ When NO-SAVE is non-nil, do not persist THEME."
   (setq rvb-theme theme)
   (unless no-save
     (customize-save-variable 'rvb-theme theme))
-  ;; Leave the native title bar's appearance to macOS.
-  (rvb/set-frame-parameter-defaults 'ns-appearance nil)
+  (rvb/set-frame-parameter-defaults
+   'ns-appearance (rvb/theme-ns-appearance theme))
   (dolist (frame (frame-list))
     (rvb/apply-frame-appearance frame))
   ;; Loading a theme re-sets `line-number' and other faces, so re-assert the
@@ -133,7 +140,8 @@ When NO-SAVE is non-nil, do not persist THEME."
   (let ((target-frame (or frame (selected-frame))))
     (when (display-graphic-p target-frame)
       (set-frame-parameter target-frame 'ns-transparent-titlebar nil)
-      (set-frame-parameter target-frame 'ns-appearance nil))))
+      (set-frame-parameter target-frame 'ns-appearance
+                           (rvb/theme-ns-appearance)))))
 
 ;; `rvb-settings' loads the persisted Custom values before this module, so the
 ;; selected theme is ready to apply immediately at startup.
@@ -214,7 +222,8 @@ takes effect where you set it."
   (when-let ((theme (car custom-enabled-themes)))
     (setq rvb-theme theme)
     (customize-save-variable 'rvb-theme theme)
-    (rvb/set-frame-parameter-defaults 'ns-appearance nil)
+    (rvb/set-frame-parameter-defaults
+     'ns-appearance (rvb/theme-ns-appearance theme))
     (dolist (frame (frame-list))
       (rvb/apply-frame-appearance frame))
     (when (and (bound-and-true-p rvb/ui-page-chrome-mode)

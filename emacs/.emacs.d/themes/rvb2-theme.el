@@ -9,6 +9,8 @@
 (deftheme rvb2
   "A muted, screenshot-derived terminal theme.")
 
+(put 'rvb2 'rvb/ns-appearance 'dark)
+
 (let ((class '((class color) (min-colors 89)))
       ;; Screenshot-derived terminal palette.
       (bg          "#010202")

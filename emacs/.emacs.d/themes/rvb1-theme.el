@@ -6,6 +6,8 @@
 (deftheme rvb1
   "Exact conversion of Vim's inkpot colorscheme with direct hex colors for customization.")
 
+(put 'rvb1 'rvb/ns-appearance 'dark)
+
 ;; Color definitions - using correct mappings from your 88-color file
 ;; You can now modify these hex values directly for warmer tints and less contrast
 (let ((class '((class color) (min-colors 89)))

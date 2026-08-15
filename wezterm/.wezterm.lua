@@ -116,7 +116,7 @@ config.font_size = 14
 
 config.font = wezterm.font(
     'SF Mono',
-    { weight = 'Regular' }
+    { weight = 'Medium' }
 )
 
 local tabline = wezterm.plugin.require("https://github.com/michaelbrusegard/tabline.wez")

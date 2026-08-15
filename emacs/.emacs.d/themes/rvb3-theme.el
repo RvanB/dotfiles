@@ -25,6 +25,8 @@
 (deftheme rvb3
   "A one-bit digital page of ink, paper, screens, and reversed video.")
 
+(put 'rvb3 'rvb/ns-appearance 'dark)
+
 (let ((class '((class color) (min-colors 89)))
       (graphic '((type graphic) (class color) (min-colors 89)))
       ;; A fully neutral scale gives the page the cool cast of an early digital
