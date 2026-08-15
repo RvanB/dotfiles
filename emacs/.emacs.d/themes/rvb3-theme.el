@@ -287,6 +287,17 @@
    `(magit-diff-lines-boundary
      ((,class (:foreground ,paper :background ,ink :extend t))))
    `(magit-diff-file-heading ((,class (:foreground ,ink :weight bold))))
+   ;; Magit writes its own header line in the log, diff, refs and stash
+   ;; buffers, replacing the page chrome's.  Left alone it inherits
+   ;; `magit-section-heading' and comes out as a pale band where every
+   ;; other window has a black one, so it is pointed back at the band it
+   ;; is standing in for.  The keys named in it need the reversed
+   ;; foreground to be legible there, since their own face is a syntax
+   ;; face meant for the page.
+   `(magit-header-line ((,class (:inherit header-line))))
+   `(magit-header-line-key ((,class (:foreground ,paper :weight bold))))
+   `(magit-header-line-log-select
+     ((,class (:inherit header-line :weight bold))))
    `(magit-hash ((,class (:foreground ,grey))))
    `(magit-dimmed ((,class (:foreground ,grey))))
    `(magit-log-author ((,class (:foreground ,soft))))
