@@ -141,17 +141,18 @@
                                            :box (:line-width 1 :color ,ink)))))
 
    ;; Diagnostics.
-   `(error ((,class (:inherit rvb3-selected-face))))
-   `(warning ((,class (:inherit rvb3-selected-face))))
+   `(error ((,class (:foreground ,ink :background ,paper :underline (:style wave :color ,ink)))))
+   `(warning ((,class (:foreground ,ink :background ,paper :underline (:style wave :color ,comment)))))
+   `(success ((,class (:foreground ,ink :background ,paper :weight bold))))
    `(success ((,class (:foreground ,ink))))
    `(flymake-error ((,class (:inherit rvb3-selected-face))))
-   `(flymake-warning ((,class (:inherit rvb3-selected-face))))
+   `(flymake-warning ((,class (:inherit warning))))
    `(flymake-note ((,class (:underline (:style wave :color ,rule)))))
-   `(flycheck-error ((,class (:inherit rvb3-selected-face))))
-   `(flycheck-warning ((,class (:inherit rvb3-selected-face))))
+   `(flycheck-error ((,class (:inherit error))))
+   `(flycheck-warning ((,class (:inherit warning))))
    `(flycheck-info ((,class (:underline (:style wave :color ,rule)))))
-   `(compilation-error ((,class (:inherit rvb3-selected-face))))
-   `(compilation-warning ((,class (:inherit rvb3-selected-face))))
+   `(compilation-error ((,class (:inherit error))))
+   `(compilation-warning ((,class (:inherit warning))))
    `(compilation-info ((,class (:foreground ,soft))))
    `(eglot-highlight-symbol-face ((,class (:inherit rvb3-stipple-face))))
    `(eglot-mode-line ((,class (:foreground ,ink))))
@@ -173,6 +174,7 @@
    `(corfu-quick2 ((,class (:foreground ,ink :background ,paper :weight bold))))
    `(corfu-popupinfo ((,class (:foreground ,ink :background ,paper
                                           :box (:line-width 1 :color ,ink)))))
+   `(copilot-overlay-face ((,class (:foreground ,rule))))
    ;; Match faces leave foreground and background unspecified.  They therefore
    ;; remain black on ordinary candidates and white on reversed selections.
    `(company-tooltip-common ((,class (:weight bold))))
