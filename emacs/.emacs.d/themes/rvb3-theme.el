@@ -145,7 +145,7 @@
    `(warning ((,class (:foreground ,ink :background ,paper :underline (:style wave :color ,comment)))))
    `(success ((,class (:foreground ,ink :background ,paper :weight bold))))
    `(success ((,class (:foreground ,ink))))
-   `(flymake-error ((,class (:inherit rvb3-selected-face))))
+   `(flymake-error ((,class (:inherit error))))
    `(flymake-warning ((,class (:inherit warning))))
    `(flymake-note ((,class (:underline (:style wave :color ,rule)))))
    `(flycheck-error ((,class (:inherit error))))
