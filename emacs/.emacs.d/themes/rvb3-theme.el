@@ -343,6 +343,39 @@
    `(sh-heredoc ((,class (:foreground ,soft))))
    `(sh-quoted-exec ((,class (:foreground ,soft))))
 
+   ;; vterm.  The same palette the terminal emulators are given for this
+   ;; theme -- see ghostty/themes/rvb3 and wezterm/colors/rvb3.toml -- so
+   ;; a shell reads the same whether it runs inside Emacs or beside it.
+   ;; No chromatic colour at all: a program asking for red gets ink, and
+   ;; the one distinction kept is bright black, which is what dimmed
+   ;; output asks for and the only thing the palette can say quietly.
+   ;;
+   ;; Both attributes on every face.  vterm takes the foreground of the
+   ;; palette face for a foreground colour code and the background of the
+   ;; same face for a background one, so a face with only one of them set
+   ;; leaves half the codes falling back to the default.
+   `(vterm-color-black ((,class (:foreground ,ink :background ,ink))))
+   `(vterm-color-red ((,class (:foreground ,ink :background ,ink))))
+   `(vterm-color-green ((,class (:foreground ,ink :background ,ink))))
+   `(vterm-color-yellow ((,class (:foreground ,ink :background ,ink))))
+   `(vterm-color-blue ((,class (:foreground ,ink :background ,ink))))
+   `(vterm-color-magenta ((,class (:foreground ,ink :background ,ink))))
+   `(vterm-color-cyan ((,class (:foreground ,ink :background ,ink))))
+   `(vterm-color-white ((,class (:foreground ,ink :background ,ink))))
+   `(vterm-color-bright-black
+     ((,class (:foreground ,comment :background ,comment))))
+   `(vterm-color-bright-red ((,class (:foreground ,ink :background ,ink))))
+   `(vterm-color-bright-green ((,class (:foreground ,ink :background ,ink))))
+   `(vterm-color-bright-yellow ((,class (:foreground ,ink :background ,ink))))
+   `(vterm-color-bright-blue ((,class (:foreground ,ink :background ,ink))))
+   `(vterm-color-bright-magenta ((,class (:foreground ,ink :background ,ink))))
+   `(vterm-color-bright-cyan ((,class (:foreground ,ink :background ,ink))))
+   `(vterm-color-bright-white ((,class (:foreground ,ink :background ,ink))))
+   ;; `vterm-color-underline' and `vterm-color-inverse-video' are left to
+   ;; inherit `default', which is already what this theme wants of them:
+   ;; an underline in ink, and reversed video that Emacs swaps into paper
+   ;; on ink -- the same reversed video everything else here uses.
+
    ;; Tabs and the rest.
    `(tab-bar ((,class (:foreground ,grey :background ,paper))))
    `(tab-bar-tab ((,class (:inherit rvb3-selected-face
