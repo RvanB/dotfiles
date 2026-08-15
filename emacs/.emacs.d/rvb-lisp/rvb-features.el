@@ -1138,7 +1138,14 @@ rather than creating one."
        (local  (rvb-feature--git! repo "worktree" "add" worktree branch))
        (remote (rvb-feature--git! repo "worktree" "add" "--track" "-b" branch
                                   worktree (concat "origin/" branch)))
-       (t      (rvb-feature--git! repo "worktree" "add" "-b" branch worktree base))))
+       ;; --no-track: BASE is a remote-tracking ref, and git's default
+       ;; `branch.autoSetupMerge' would make it the new branch's
+       ;; upstream -- so a fresh feature branch would report itself
+       ;; ahead of origin/master and offer it as a push target.  The
+       ;; base is recorded below and read back by the probe script;
+       ;; nothing here needs an upstream to find it.
+       (t      (rvb-feature--git! repo "worktree" "add" "--no-track"
+                                  "-b" branch worktree base))))
     (let ((default-directory (file-name-as-directory worktree)))
       (run-hook-with-args 'rvb-feature-setup-functions worktree repo))
     (rvb-feature--record-member

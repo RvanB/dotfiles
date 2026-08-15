@@ -50,9 +50,9 @@
 (add-hook 'org-mode-hook (lambda () (add-hook 'before-save-hook 'rvb/cleanup-old-done-items nil t)))
 ;; (add-hook 'org-mode-hook 'olivetti-mode)
 (add-hook 'org-mode-hook 'visual-line-mode)
-(add-hook 'org-mode-hook 'org-indent-mode)
-(add-hook 'org-mode-hook 'mixed-pitch-mode)
-(add-hook 'org-mode-hook 'olivetti-mode)
+;; (add-hook 'org-mode-hook 'org-indent-mode)
+;; (add-hook 'org-mode-hook 'mixed-pitch-mode)
+;; (add-hook 'org-mode-hook 'olivetti-mode)
 
 ;; Keep Org's display entirely ASCII: no modern bullets, pretty entities, or
 ;; Unicode folding marker.
