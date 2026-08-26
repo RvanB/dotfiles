@@ -15,6 +15,7 @@
 ;; session: a reference renders immediately as `owner/repo#42' and
 ;; gains its title when the answer arrives.
 
+(require 'cl-lib)
 (require 'json)
 (require 'ol)
 (require 'subr-x)
@@ -70,24 +71,93 @@ with the double slash rather than the scheme.")
 (defvar rvb/github--cache (make-hash-table :test #'equal)
   "Cache of what GitHub said, keyed by what was asked.
 
-A key is either \"owner/repo#number\" for an issue or pull request, or
-`rvb/github--pr-key' for \"the pull request for this branch\" -- two
-questions, one session's worth of answers, so `rvb/github-refresh'
-clears both.
+A key is \"owner/repo#number\" for an issue or pull request,
+`rvb/github--due-key' for \"which iteration is that issue in\", or
+`rvb/github--pr-key' for \"the pull request for this branch\" -- three
+questions, one cache of answers, so `rvb/github-refresh' clears them
+all.
 
-A value is `pending' while a lookup is in flight, `unknown' if the
-lookup failed, `none' if GitHub answered that there is nothing, or a
-plist of what it said.")
+A value is `pending' while the first lookup is in flight, `unknown' if
+the lookup failed, `none' if GitHub answered that there is nothing, or
+a plist of what it said.")
+
+(defvar rvb/github--cache-time (make-hash-table :test #'equal)
+  "When each `rvb/github--cache' entry was answered, in `float-time'.")
+
+(defvar rvb/github--pending (make-hash-table :test #'equal)
+  "Keys whose lookup is in flight.
+
+Separate from the cache because a re-ask keeps displaying the old
+answer while the new one is on its way: the value has to stay put, so
+`pending' cannot be it.")
+
+(defcustom rvb/github-cache-ttl 300
+  "Seconds an answer from GitHub is trusted before it is asked for again.
+
+The cache is what makes a redraw free -- a status buffer looks every
+reference up each time it is drawn -- but nothing here is told when
+GitHub changes.  Without an expiry, an issue closed while Emacs is
+running goes on reading as open until `rvb/github-refresh'.
+
+A stale entry is displayed as it is while the new answer is fetched,
+and a failed re-ask keeps the answer it had, so neither costs the
+buffer the title it was already showing.
+
+nil never expires anything."
+  :type '(choice (const :tag "Never expire" nil) integer)
+  :group 'rvb/github)
+
+(defun rvb/github--ask-p (key)
+  "Return non-nil if KEY should be looked up now.
+Either nothing is known about it, or what is known has passed
+`rvb/github-cache-ttl'.  A lookup already in flight is never asked
+again."
+  (and (not (gethash key rvb/github--pending))
+       (let ((info (gethash key rvb/github--cache)))
+         (or (null info)
+             (and rvb/github-cache-ttl
+                  (> (- (float-time)
+                        (or (gethash key rvb/github--cache-time) 0))
+                     rvb/github-cache-ttl))))))
+
+(defun rvb/github--begin (key)
+  "Note that a lookup of KEY has started."
+  (puthash key t rvb/github--pending)
+  (unless (gethash key rvb/github--cache)
+    (puthash key 'pending rvb/github--cache)))
+
+(defun rvb/github--finish (key value)
+  "Record VALUE as the answer for KEY, and that its lookup has landed.
+
+A failed re-ask keeps whatever GitHub last said rather than replacing
+it with `unknown': the network is a worse witness than a five-minute
+old answer, and the timestamp is stamped either way so the failure is
+not retried on the next redraw."
+  (remhash key rvb/github--pending)
+  (let ((old (gethash key rvb/github--cache)))
+    (unless (and (eq value 'unknown) (consp old))
+      (puthash key value rvb/github--cache)))
+  (puthash key (float-time) rvb/github--cache-time))
+
+(defun rvb/github-forget (key)
+  "Forget what was cached about KEY."
+  (remhash key rvb/github--cache)
+  (remhash key rvb/github--cache-time))
 
 
 ;;; Rendering
 
 (defun rvb/github-state-string (state)
-  "Return a display string for STATE, one of \"open\", \"closed\", \"merged\"."
+  "Return a display string for STATE, one of \"open\", \"closed\", \"merged\".
+
+The word alone, with no marker in front of it.  A marker earns its
+place where the text has no colour to spare, and here it has: this is
+rendered into body text, where the face carries the meaning and a glyph
+in front of it only competes with the word."
   (pcase state
-    ("open" (propertize "● open" 'face 'rvb/github-open))
-    ("merged" (propertize "✔ merged" 'face 'rvb/github-merged))
-    ("closed" (propertize "✔ closed" 'face 'rvb/github-closed))
+    ("open" (propertize "open" 'face 'rvb/github-open))
+    ("merged" (propertize "merged" 'face 'rvb/github-merged))
+    ("closed" (propertize "closed" 'face 'rvb/github-closed))
     (_ "")))
 
 (defun rvb/github--render (key)
@@ -213,7 +283,7 @@ that any content survives verbatim."
      (lambda (result)
        ;; The answer is the updated issue; drop it from the cache so the
        ;; next render shows what GitHub now has.
-       (when result (remhash key rvb/github--cache))
+       (when result (rvb/github-forget key))
        (funcall callback result))
      (format "Updating %s" key))))
 
@@ -318,7 +388,7 @@ pull request\" had better be sure."
 
 (defun rvb/github-forget-pull-request (dir branch)
   "Forget what was cached about BRANCH's pull request in DIR."
-  (remhash (rvb/github--pr-key dir branch) rvb/github--cache))
+  (rvb/github-forget (rvb/github--pr-key dir branch)))
 
 (defun rvb/github-pull-request (dir branch &optional refresh)
   "Return the pull request for BRANCH in DIR's repository, or nil.
@@ -343,8 +413,8 @@ the old answer for; `rvb/github-refresh' forgets the rest."
                ;; there, and this is called from a redraw, where
                ;; signalling would cost the whole buffer.
                (file-directory-p dir)
-               (null info))
-      (puthash key 'pending rvb/github--cache)
+               (rvb/github--ask-p key))
+      (rvb/github--begin key)
       (let ((out (generate-new-buffer " *rvb-github*"))
             (default-directory (file-name-as-directory dir)))
         (make-process
@@ -367,11 +437,193 @@ the old answer for; `rvb/github-refresh' forgets the rest."
              (let ((text (with-current-buffer (process-buffer proc) (buffer-string)))
                    (ok (zerop (process-exit-status proc))))
                (kill-buffer (process-buffer proc))
-               (puthash key
-                        (if ok (or (rvb/github--parse-pr text) 'none) 'unknown)
-                        rvb/github--cache)
+               (rvb/github--finish
+                key (if ok (or (rvb/github--parse-pr text) 'none) 'unknown))
                (when refresh (funcall refresh))))))))
     (and (consp info) info)))
+
+;;; When an issue is due
+;;
+;; GitHub has no due date on an issue.  What a team actually plans
+;; against is the iteration field on a project board, and an iteration
+;; is a start date and a length -- so "due" here means the last day of
+;; the iteration the issue was put in.
+;;
+;; This is a second request rather than more fields on the one that
+;; fetches the title, because reading a project board needs the
+;; `read:project' scope and the title does not: folded together, a
+;; token without that scope would lose the titles too.  Apart it
+;; degrades to no due dates at all, which is what a team not using
+;; iterations should see anyway.
+
+(defconst rvb/github--iteration-query "
+query($owner:String!,$repo:String!,$number:Int!){
+  repository(owner:$owner,name:$repo){
+    issue(number:$number){
+      projectItems(first:10){
+        nodes{
+          fieldValues(first:50){
+            nodes{
+              ... on ProjectV2ItemFieldIterationValue{
+                title startDate duration
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}"
+  "GraphQL asking which iterations an issue is scheduled in.
+
+Every field value of the issue's project items, of which only the
+iteration ones answer anything: the inline fragment leaves the rest as
+empty objects, which is cheaper than asking what type each one is.")
+
+(defun rvb/github--due-key (key)
+  "Return the cache key for the iteration lookup of issue KEY."
+  (concat key "@iteration"))
+
+(defun rvb/github--iteration-end (start duration)
+  "Return the last day of an iteration as a \"YYYY-MM-DD\" string.
+START is its first day and DURATION its length in days -- the two
+things GitHub records about an iteration -- so the day it ends on is
+the last one it covers, not the one after."
+  (when (and (stringp start) (numberp duration) (> duration 0))
+    (pcase-let ((`(,_ ,_ ,_ ,day ,month ,year . ,_) (parse-time-string start)))
+      (when (and day month year)
+        ;; Midday, so that a day's arithmetic cannot be undone by an
+        ;; hour of daylight saving.
+        (format-time-string "%Y-%m-%d"
+                            (encode-time 0 0 12 (+ day duration -1) month year))))))
+
+(defun rvb/github--parse-iteration (text)
+  "Return the iteration in GraphQL answer TEXT as a plist, or nil.
+
+The one ending soonest, when an issue is on more than one board: what
+a due date is for is knowing when the work is wanted, and the earliest
+claim on it is the one that decides that."
+  (condition-case nil
+      (let* ((json (json-parse-string text :object-type 'alist
+                                      :null-object nil :false-object nil))
+             (items (alist-get 'nodes
+                               (alist-get 'projectItems
+                                          (alist-get 'issue
+                                                     (alist-get 'repository
+                                                                (alist-get 'data json))))))
+             best)
+        (dotimes (i (length items))
+          (let ((values (alist-get 'nodes (alist-get 'fieldValues (aref items i)))))
+            (dotimes (j (length values))
+              (let* ((value (aref values j))
+                     (end (rvb/github--iteration-end
+                           (alist-get 'startDate value)
+                           (alist-get 'duration value))))
+                (when (and end (or (null best) (string< end (plist-get best :due))))
+                  (setq best (list :iteration (alist-get 'title value)
+                                   :due end)))))))
+        best)
+    (error nil)))
+
+(defcustom rvb/github-fetch-iterations t
+  "Whether to ask which iteration an issue is scheduled in.
+
+The one lookup here that needs more than the `repo' scope: reading a
+project board wants `read:project' as well.  Set this to nil for a
+team that does not plan in iterations, or to decline the extra scope
+-- everything else goes on working, and due dates are simply not
+shown."
+  :type 'boolean
+  :group 'rvb/github)
+
+(defvar rvb/github--scope-warned nil
+  "Whether the missing `read:project' scope has been reported already.")
+
+(defun rvb/github--note-missing-scope (text)
+  "Say how to grant `read:project' if that is what TEXT complains about.
+
+A warning rather than a message, and once per session: the lookup
+fails silently by design, so without something that stays on screen
+the only symptom is a due date that never appears and no way to find
+out why."
+  (when (and (not rvb/github--scope-warned)
+             (string-match-p "read:project" (or text "")))
+    (setq rvb/github--scope-warned t)
+    (display-warning
+     'rvb/github
+     (format "Due dates are off: the %s token cannot read project boards.
+
+Grant it the scope:
+
+    %s auth refresh -s read:project
+
+Or set `rvb/github-fetch-iterations' to nil to stop asking.  Nothing
+else here needs that scope; titles and states are unaffected."
+             rvb/github-executable rvb/github-executable)
+     :warning)))
+
+(defun rvb/github-issue-due (key &optional refresh)
+  "Return when issue KEY is due, from the iteration it is scheduled in.
+
+A plist of :iteration, the iteration's name, and :due, the last day it
+covers as a \"YYYY-MM-DD\" string.  Nil covers both \"it is in no
+iteration\" and \"nobody has asked yet\": a caller shows a due date or
+does not, and draws again if that turns out to be wrong.  REFRESH is
+called when a pending lookup lands.
+
+Cached and expired like every other lookup here -- see
+`rvb/github-cache-ttl' -- so moving an issue to the next sprint shows
+up without restarting Emacs."
+  (let* ((parts (rvb/github--key-parts key))
+         (cache-key (and parts (rvb/github--due-key key)))
+         (info (and cache-key (gethash cache-key rvb/github--cache))))
+    (when (and parts
+               rvb/github-fetch-titles
+               rvb/github-fetch-iterations
+               (executable-find rvb/github-executable)
+               (rvb/github--ask-p cache-key))
+      (rvb/github--begin cache-key)
+      (let ((out (generate-new-buffer " *rvb-github*"))
+            (owner-repo (split-string (car parts) "/")))
+        (make-process
+         :name "rvb-github-iteration"
+         :buffer out
+         :noquery t
+         :connection-type 'pipe
+         :stderr out
+         :command (list rvb/github-executable "api" "graphql"
+                        "-f" (concat "query=" rvb/github--iteration-query)
+                        "-f" (concat "owner=" (car owner-repo))
+                        "-f" (concat "repo=" (cadr owner-repo))
+                        "-F" (concat "number=" (cdr parts)))
+         :sentinel
+         (lambda (proc _event)
+           (when (memq (process-status proc) '(exit signal))
+             (let ((text (with-current-buffer (process-buffer proc) (buffer-string)))
+                   (ok (zerop (process-exit-status proc))))
+               (kill-buffer (process-buffer proc))
+               (unless ok (rvb/github--note-missing-scope text))
+               (rvb/github--finish
+                cache-key
+                (if ok (or (rvb/github--parse-iteration text) 'none) 'unknown))
+               (when refresh (funcall refresh))))))))
+    (and (consp info) info)))
+
+(defun rvb/github-issue-expired-p (key)
+  "Return non-nil if what is known about issue KEY has gone stale.
+
+An answer already in hand that has passed `rvb/github-cache-ttl' --
+its title and state, or the iteration it is due in.  For a caller that
+redraws on a timer and wants asking GitHub again to be part of that:
+nothing on disk changes when an issue is closed in a browser, so
+without this a list of issues never notices.
+
+Never true of a reference nobody has looked up yet, which the redraw
+itself will fetch, nor of one whose lookup is in flight."
+  (cl-some (lambda (k)
+             (and (consp (gethash k rvb/github--cache))
+                  (rvb/github--ask-p k)))
+           (list key (rvb/github--due-key key))))
 
 (defun rvb/github-reference (key &optional refresh)
   "Return the display string for KEY, of the form \"owner/repo#42\".
@@ -387,8 +639,8 @@ redrawing a report -- so this works outside Org too."
   "Look up NUMBER in REPO asynchronously, then call REFRESH."
   (when (and rvb/github-fetch-titles
              (executable-find rvb/github-executable)
-             (not (gethash key rvb/github--cache)))
-    (puthash key 'pending rvb/github--cache)
+             (rvb/github--ask-p key))
+    (rvb/github--begin key)
     (let ((out (generate-new-buffer " *rvb-github*")))
       (make-process
        :name "rvb-github"
@@ -408,19 +660,19 @@ redrawing a report -- so this works outside Org too."
            (let ((text (with-current-buffer (process-buffer proc) (buffer-string)))
                  (ok (zerop (process-exit-status proc))))
              (kill-buffer (process-buffer proc))
-             (puthash key
-                      (if (not ok)
-                          'unknown
-                        (pcase-let ((`(,title ,state ,merged)
-                                     (split-string (string-trim text) "\t")))
-                          (if (null title)
-                              'unknown
-                            (list :title title
-                                  :state (if (and merged
-                                                  (not (string-empty-p merged)))
-                                             "merged"
-                                           state)))))
-                      rvb/github--cache)
+             (rvb/github--finish
+              key
+              (if (not ok)
+                  'unknown
+                (pcase-let ((`(,title ,state ,merged)
+                             (split-string (string-trim text) "\t")))
+                  (if (null title)
+                      'unknown
+                    (list :title title
+                          :state (if (and merged
+                                          (not (string-empty-p merged)))
+                                     "merged"
+                                   state))))))
              (when refresh (funcall refresh)))))))))
 
 
@@ -466,6 +718,7 @@ BRACKETP is non-nil for a bracketed link."
   "Forget every cached issue title and look them up again."
   (interactive)
   (clrhash rvb/github--cache)
+  (clrhash rvb/github--cache-time)
   (dolist (buffer (buffer-list))
     (with-current-buffer buffer
       (when (derived-mode-p 'org-mode)

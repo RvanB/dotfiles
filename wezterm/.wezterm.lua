@@ -6,7 +6,7 @@ local config = wezterm.config_builder()
 
 config.use_fancy_tab_bar = false
 
-local selected_theme = 'rvb3'
+local selected_theme = 'rvb2'
 
 local palettes = {
   rvb1 = {
@@ -168,13 +168,7 @@ config.keys = {
   -- Option-Left/Right for word navigation
   { key = 'b', mods = 'OPT', action = wezterm.action.SendString '\x1bb' },
   { key = 'f', mods = 'OPT', action = wezterm.action.SendString '\x1bf' },
-  -- Ctrl+K for kill line
-  {
-      key = 'k', mods = 'CTRL', action = wezterm.action.SendKey {
-      key = 'U',
-      mods = 'CTRL'
-    },
-  },
+  
   -- M-backspace (Delete a Word backwards)
   { key = 'Backspace',  mods = 'ALT', action = wezterm.action.SendKey({ key = 'w', mods = 'CTRL' }) }
 }

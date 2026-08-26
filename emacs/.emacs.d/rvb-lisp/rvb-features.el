@@ -32,6 +32,7 @@
 ;;; Code:
 
 (require 'autorevert)
+(require 'calendar)
 (require 'cl-lib)
 (require 'subr-x)
 (require 'cus-edit)
@@ -57,6 +58,10 @@
 (declare-function rvb/github-pull-request-pending-p "rvb-github" (dir branch))
 (declare-function rvb/github-forget-pull-request "rvb-github" (dir branch))
 (declare-function rvb/github-state-string "rvb-github" (state))
+(declare-function rvb/github-issue-due "rvb-github" (key &optional refresh))
+(declare-function rvb/github-lookup "rvb-github" (key &optional refresh))
+(declare-function rvb/github-url "rvb-github" (key))
+(declare-function rvb/github-issue-expired-p "rvb-github" (key))
 
 ;; Made buffer-local further down, with the status buffer it belongs to.
 (defvar rvb-feature--buffer-feature)
@@ -107,10 +112,68 @@ upstream, not from whatever the clone last pulled."
   :type 'boolean
   :group 'rvb-feature)
 
+(defcustom rvb-feature-list-separator " · "
+  "String between the facts on a feature's metadata line.
+Change it to \" | \", \" — \" or plain \"  \" to taste; it is only ever
+punctuation between fields, so nothing reads it back."
+  :type 'string
+  :group 'rvb-feature)
+
 (defcustom rvb-feature-fill-column 70
   "Column that prose is filled to in the feature buffers.
 Applies to descriptions only."
   :type 'integer
+  :group 'rvb-feature)
+
+(defcustom rvb-feature-agent 'codex
+  "Command-line coding agent a feature is assigned to.
+`rvb-feature-assign-to-agent' runs it non-interactively from the
+feature directory, where it can see every member repository."
+  :type '(choice (const :tag "Codex CLI" codex)
+                 (const :tag "Claude Code" claude))
+  :group 'rvb-feature)
+
+(defcustom rvb-feature-agent-prompt
+  (concat
+   "Implement the feature described in feature.org.  Treat that file as "
+   "the authoritative specification.  Inspect all repository worktrees in "
+   "this directory, make the required changes in the appropriate "
+   "repositories, and run the relevant tests.  Read and follow any "
+   "repository-local instructions.  Do not commit.  Finish with a concise "
+   "summary of the changes, the verification performed, and any unresolved "
+   "questions.")
+  "Instructions given to the coding agent for every feature.
+The feature name, working directory and path to `feature.org' are
+appended automatically, so this can concentrate on how the work
+should be done."
+  :type 'string
+  :group 'rvb-feature)
+
+(defcustom rvb-feature-codex-executable "codex"
+  "Codex CLI executable used by `rvb-feature-assign-to-agent'."
+  :type 'string
+  :group 'rvb-feature)
+
+(defcustom rvb-feature-codex-arguments
+  '("exec" "workspace-write" "--approve-for-me"
+    "--skip-git-repo-check" "--color" "never")
+  "Arguments used to run Codex CLI non-interactively.
+The prompt is sent on standard input.  The feature directory itself
+is not a Git repository, which is why the default includes
+`--skip-git-repo-check'; its children are the member worktrees."
+  :type '(repeat string)
+  :group 'rvb-feature)
+
+(defcustom rvb-feature-claude-executable "claude"
+  "Claude Code executable used by `rvb-feature-assign-to-agent'."
+  :type 'string
+  :group 'rvb-feature)
+
+(defcustom rvb-feature-claude-arguments
+  '("--print" "--permission-mode" "auto")
+  "Arguments used to run Claude Code non-interactively.
+The prompt is sent on standard input."
+  :type '(repeat string)
   :group 'rvb-feature)
 
 (defconst rvb-feature-record-name ".feature.eld"
@@ -155,6 +218,16 @@ An optional `#+issue:' keyword links the feature to a GitHub issue or
 pull request.  It is what `rvb-feature-issue-push' and
 `rvb-feature-issue-pull' talk to, and the feature list heads a feature
 with the issue's title and state.  See `rvb-feature-issue'.
+
+An optional `#+due:' keyword says when the work is wanted:
+
+    #+due: <2026-08-21 Fri>
+
+The feature list sorts on it, ahead of the iteration the linked issue
+is scheduled in on a project board -- a date written here is a
+decision, and the board is only where the default comes from.  It also
+means due dates work with no GitHub at all, which the board's do not.
+See `rvb-feature-due'.
 
 `#+title:' is free text and drives nothing: a feature is its
 directory, and that name is what the branches, the record and the
@@ -862,6 +935,47 @@ Returns nil when there is no such keyword or it cannot be parsed."
               (format "%s/%s#%s" (match-string 1 value) (match-string 2 value)
                       (match-string 3 value))))))))))
 
+
+;;; When a feature is wanted by
+
+(defconst rvb-feature--due-keyword-regexp
+  (rx bol (* (any " \t")) "#+due:" (* (any " \t")) (group (+ nonl)))
+  "Match the `#+due:' keyword in a feature's Org file.")
+
+(defconst rvb-feature--date-regexp
+  (rx (group (= 4 digit)) "-" (group (= 2 digit)) "-" (group (= 2 digit)))
+  "Match a calendar date inside a `#+due:' value.")
+
+(defun rvb-feature-due (feature)
+  "Return the day FEATURE is wanted by, as a \"YYYY-MM-DD\" string.
+
+Read from a `#+due:' keyword in the feature's Org file, which takes an
+Org timestamp or a bare date -- all three of these mean the same day:
+
+    #+due: <2026-08-21 Fri>
+    #+due: [2026-08-21]
+    #+due: 2026-08-21
+
+The date is picked out of the value rather than the value being
+parsed, so an Org timestamp keeps whatever else it carries -- a day
+name, a repeater -- without any of it having to be understood here.
+
+Nil when there is no such keyword, or nothing in it looks like a date.
+This is what the feature list sorts on when it is set, in preference
+to the iteration the linked issue is scheduled in: a date written down
+here is a decision, and the board is only where the default comes
+from.  See `rvb-feature--entry-before-p'."
+  (let ((file (rvb-feature--org-file feature)))
+    (when (file-readable-p file)
+      (with-temp-buffer
+        (insert-file-contents file)
+        (goto-char (point-min))
+        (when (re-search-forward rvb-feature--due-keyword-regexp
+                                 (rvb-feature--preamble-limit) t)
+          (let ((value (match-string 1)))
+            (when (string-match rvb-feature--date-regexp value)
+              (match-string 0 value))))))))
+
 (defun rvb-feature-own-text (feature)
   "Return FEATURE's own writing, unfontified: its Description section.
 
@@ -1360,9 +1474,28 @@ and Auto Revert must not be the thing that throws away what you typed."
                     rvb-feature--buffer-feature
                     (rvb-feature-members rvb-feature--buffer-feature))))))
 
+(defun rvb-feature--github-stale-p ()
+  "Return non-nil if what GitHub said about a feature's issue has expired.
+
+Git is not the only thing that can date this list: an issue closed in
+a browser changes nothing on disk, and the list is left saying a
+feature is still open and sorting it as though it were.  So an answer
+past `rvb/github-cache-ttl' counts as staleness too, and Auto Revert
+redraws -- which is what asks GitHub again.
+
+Only answers already in hand: a reference nobody has looked up yet is
+fetched by the redraw itself, and one whose lookup is in flight is
+already on its way, so neither is a reason to redraw again."
+  (and (fboundp 'rvb/github-issue-expired-p)
+       (cl-some (lambda (name)
+                  (when-let* ((key (rvb-feature-issue name)))
+                    (rvb/github-issue-expired-p key)))
+                (rvb-feature--names))))
+
 (defun rvb-feature--list-stale-p (&optional _noconfirm)
   "Return non-nil if the feature list is out of date."
-  (not (equal rvb-feature--signature (rvb-feature--list-signature))))
+  (or (not (equal rvb-feature--signature (rvb-feature--list-signature)))
+      (rvb-feature--github-stale-p)))
 
 
 ;;; Collecting status
@@ -1529,6 +1662,52 @@ that is not committed yet."
             ((< days 60) (format "%d weeks ago" (/ days 7)))
             (t (format "%d months ago" (/ days 30)))))))
 
+(defun rvb-feature--format-date (date)
+  "Return DATE, a \"YYYY-MM-DD\" string, as \"30 Sep\".
+The year is added only when it is not this one: naming it every time
+costs a third of the width to say what is nearly always today's year."
+  (when (string-match rvb-feature--date-regexp date)
+    (let ((year (string-to-number (match-string 1 date)))
+          (month (string-to-number (match-string 2 date)))
+          (day (string-to-number (match-string 3 date))))
+      (format-time-string
+       (if (= year (string-to-number (format-time-string "%Y")))
+           "%-d %b" "%-d %b %Y")
+       ;; Midday, so no timezone can drag the date onto its neighbour.
+       (encode-time 0 0 12 day month year)))))
+
+(defun rvb-feature--days-until (date)
+  "Return whole days from today to DATE, a \"YYYY-MM-DD\" string.
+
+Negative once DATE has passed, zero on the day itself.  Counted in
+calendar days rather than elapsed hours, so \"tomorrow\" means the next
+date on the calendar however late in the evening it is now."
+  (when (and date (string-match rvb-feature--date-regexp date))
+    (- (calendar-absolute-from-gregorian
+        (list (string-to-number (match-string 2 date))
+              (string-to-number (match-string 3 date))
+              (string-to-number (match-string 1 date))))
+       (calendar-absolute-from-gregorian (calendar-current-date)))))
+
+(defun rvb-feature--relative-due (date)
+  "Describe DATE, a \"YYYY-MM-DD\" string, relative to today.
+
+Phrased the way `rvb-feature--relative-time' phrases the past, so a
+line carrying both reads in one voice: what you want from a list is
+how long you have, not which Tuesday it falls on.  Far enough out that
+counting weeks stops meaning anything, the date itself says more."
+  (when-let* ((days (rvb-feature--days-until date)))
+    (cond ((<= days -14) (format "overdue %d weeks" (/ (- days) 7)))
+          ((<= days -7)  "overdue a week")
+          ((<  days -1)  (format "overdue %d days" (- days)))
+          ((=  days -1)  "overdue a day")
+          ((=  days 0)   "due today")
+          ((=  days 1)   "due tomorrow")
+          ((<  days 7)   (format "due in %d days" days))
+          ((<  days 14)  "due next week")
+          ((<  days 60)  (format "due in %d weeks" (/ days 7)))
+          (t (format "due %s" (rvb-feature--format-date date))))))
+
 (defun rvb-feature--own-commits-range (m)
   "Return the revision range holding member M's own commits.
 
@@ -1647,39 +1826,195 @@ This preserves faces on text built elsewhere when font-lock redraws it."
         (setq pos next))))
   s)
 
-(defun rvb-feature--entry-heading (name refresh)
+(defun rvb-feature--feature-info (name refresh)
+  "Return what is known about the work feature NAME stands for.
+
+A plist:
+
+  :key :url     its `#+issue:', when it is linked to one
+  :title :state what GitHub says about that issue
+  :due          the day it is wanted by, as \"YYYY-MM-DD\"
+  :due-from     where that day came from: `keyword' or `iteration'
+  :iteration    the iteration it came from, when it came from one
+
+:due is the feature's own `#+due:' keyword when it has one, and
+otherwise the last day of the iteration its issue is scheduled in.
+Written down beats fetched: a date set by hand is a decision, and the
+board is only where the default comes from.  A local date takes
+:iteration out with it -- the day is no longer that sprint's, and
+still naming the sprint would misreport where it came from.
+
+Note that a feature needs no issue to be due: the keyword is read
+whether or not there is one, which is what makes due dates work
+without the `read:project' scope, or without GitHub at all.
+
+The GitHub lookups are asynchronous and cached, so this is cheap to
+call on every redraw; REFRESH is what draws the caller again when one
+lands.  Called once per entry and carried on the summary, because both
+the heading and the order of the list are decided by it."
+  (let* ((key (rvb-feature-issue name))
+         (issue (and key (fboundp 'rvb/github-lookup)
+                     (rvb/github-lookup key refresh)))
+         (iteration (and key (fboundp 'rvb/github-issue-due)
+                         (rvb/github-issue-due key refresh)))
+         (local (rvb-feature-due name)))
+    (append
+     (when key
+       (list :key key
+             :url (and (fboundp 'rvb/github-url) (rvb/github-url key))))
+     (list :title (plist-get issue :title)
+           :state (plist-get issue :state))
+     (if local
+         (list :due local :due-from 'keyword)
+       (list :due (plist-get iteration :due)
+             :due-from (and (plist-get iteration :due) 'iteration)
+             :iteration (plist-get iteration :iteration))))))
+
+(defun rvb-feature--entry-heading (name info)
   "Return the heading text for feature NAME in the list.
 
 What the work is called, in order of preference: its `#+title:', the
-title of the issue it is linked to, its directory name.  The state of
-the issue follows either of the first two.  Because
+title of the issue it is linked to, its directory name.  Because
 `rvb-feature-issue-pull' writes the issue's title into the file, a
 feature that has been pulled reads the same with no network at all.
 
+INFO is `rvb-feature--feature-info' for the feature, and only its
+`#+issue:' URL is used here, for `help-echo'.  Everything else it
+knows is on the line below -- see `rvb-feature--entry-meta' -- because
+Org paints a whole headline with the level face, so nothing put up
+here can keep a colour of its own.
+
 The heading belongs to the entry, so it carries no keymap of its own:
 `RET' and a click open the feature, not the issue in a browser.  The
-URL stays in `help-echo' to be read.  REFRESH is called if a pending
-issue lookup lands."
-  (let* ((key (rvb-feature-issue name))
-         (info (and key (fboundp 'rvb/github-lookup)
-                    (rvb/github-lookup key refresh)))
-         (url (and key (fboundp 'rvb/github-url) (rvb/github-url key)))
-         (state (and info (fboundp 'rvb/github-state-string)
-                     (rvb/github-state-string (plist-get info :state))))
-         (text (or (rvb-feature-title name) (plist-get info :title) name)))
-    (rvb-feature--string-faces-to-font-lock
-     (concat (apply #'propertize text
-                    ;; Faced here rather than left to Org.  Every other
-                    ;; word in this buffer is generated text carrying its
-                    ;; own `font-lock-face', and an entry's heading is no
-                    ;; different -- it is a level-one heading because we
-                    ;; wrote it as one, so it can say so itself instead
-                    ;; of depending on Org's fontification reaching it.
-                    'font-lock-face 'org-level-1
-                    (and url (list 'help-echo url)))
-             (if (and state (not (string-empty-p state)))
-                 (concat "  " (copy-sequence state))
-               "")))))
+URL stays in `help-echo' to be read."
+  (let ((url (plist-get info :url))
+        (text (or (rvb-feature-title name) (plist-get info :title) name)))
+    (apply #'propertize text
+           ;; Faced here rather than left to Org.  Every other word in
+           ;; this buffer is generated text carrying its own
+           ;; `font-lock-face', and an entry's heading is no different
+           ;; -- it is a level-one heading because we wrote it as one,
+           ;; so it can say so itself instead of depending on Org's
+           ;; fontification reaching it.
+           'font-lock-face 'org-level-1
+           (and url (list 'help-echo url)))))
+
+(defun rvb-feature--state-string (state)
+  "Return STATE as a word for the feature list, or nil.
+
+Its own rendering rather than `rvb/github-state-string': that one
+answers for pull requests too, where a closed one is a rejection worth
+colouring as such, while a closed issue is simply work that is done."
+  (pcase state
+    ("open"   (propertize "open" 'font-lock-face 'rvb-feature-open))
+    ("closed" (propertize "closed" 'font-lock-face 'rvb-feature-done))
+    ("merged" (propertize "merged" 'font-lock-face 'rvb-feature-done))))
+
+(defun rvb-feature--due-string (info)
+  "Return when INFO's work is wanted, as faced text, or nil.
+
+The iteration it came from follows in brackets when it came from one:
+the date is the thing to act on, and the sprint is only where it came
+from -- useful to recognise, not the point."
+  (when-let* ((due (plist-get info :due))
+              (text (rvb-feature--relative-due due)))
+    (let ((days (rvb-feature--days-until due))
+          (iteration (plist-get info :iteration)))
+      (propertize (if iteration (format "%s (%s)" text iteration) text)
+                  'font-lock-face
+                  (cond ((< days 0) 'rvb-feature-overdue)
+                        ((< days 2) 'rvb-feature-due-soon)
+                        (t 'rvb-feature-due))))))
+
+(defun rvb-feature--activity-string (time)
+  "Return when a feature was last committed to, as faced text."
+  (propertize (if time
+                  (concat "committed " (rvb-feature--relative-time time))
+                "no commits yet")
+              'font-lock-face 'rvb-feature-count))
+
+(defun rvb-feature--agent-info (feature)
+  "Return (LABEL . PROCESS) while FEATURE's agent is running."
+  (when-let* ((process (rvb-feature--agent-process feature))
+              ((process-live-p process)))
+    (cons (or (process-get process 'rvb-feature-agent-label) "Agent")
+          process)))
+
+(defun rvb-feature--insert-agent-status (feature &optional agent)
+  "Insert FEATURE's running-agent status and a link to its output.
+Return non-nil when an agent is running, nil without inserting
+anything otherwise.  AGENT, when non-nil, is the value already
+returned by `rvb-feature--agent-info'."
+  (when-let* ((agent (or agent (rvb-feature--agent-info feature))))
+    (let ((label (car agent)))
+      (insert (propertize (format "%s is implementing this feature" label)
+                          'font-lock-face 'rvb-feature-agent-running)
+              (propertize rvb-feature-list-separator
+                          'font-lock-face 'rvb-feature-count))
+      (rvb-feature--insert-link
+       "Open output"
+       (lambda () (rvb-feature-show-agent feature))
+       (format "Open %s's output for this feature" label)))
+    t))
+
+(defun rvb-feature--entry-meta (s)
+  "Return summary S's metadata line: its state, its due date, its activity.
+
+A line of its own under the heading rather than trailing the title,
+because Org paints a whole headline with the level face: anything put
+up there comes out the same colour as the title whatever face it
+carries, which is no way to tell an overdue date from a quiet one.
+Below the heading it is ordinary body text, and the faces mean what
+they say.
+
+A finished feature's due date is left off -- it is history, and the
+entry is already at the foot of the list."
+  (let* ((info (plist-get s :info))
+         (parts (delq nil
+                      (list (rvb-feature--state-string (plist-get info :state))
+                            (unless (rvb-feature--entry-closed-p s)
+                              (rvb-feature--due-string info))
+                            (rvb-feature--activity-string
+                             (plist-get s :time))))))
+    (mapconcat #'identity parts
+               (propertize rvb-feature-list-separator
+                           'font-lock-face 'rvb-feature-count))))
+
+(defun rvb-feature--entry-closed-p (s)
+  "Return non-nil if summary S's issue has been closed.
+
+A feature with no issue, or one GitHub has not answered about yet,
+counts as open: work is in progress until something says it is not,
+and a lookup still in flight is no reason to bury an entry."
+  (member (plist-get (plist-get s :info) :state) '("closed" "merged")))
+
+(defun rvb-feature--entry-before-p (a b)
+  "Return non-nil if summary A belongs above summary B in the list.
+
+Three questions in order.  Is it still open -- what is being worked on
+comes first, and a feature whose issue is closed has nothing left
+wanting attention.  When is it due -- the last day of the iteration
+its issue is scheduled in, soonest first, with anything not in an
+iteration after everything that is.  When was it last committed to --
+most recent first, which is what separates two features due the same
+week."
+  (let ((closed-a (rvb-feature--entry-closed-p a))
+        (closed-b (rvb-feature--entry-closed-p b))
+        (due-a (plist-get (plist-get a :info) :due))
+        (due-b (plist-get (plist-get b :info) :due))
+        (time-a (plist-get a :time))
+        (time-b (plist-get b :time)))
+    (cond
+     ((and closed-a (not closed-b)) nil)
+     ((and closed-b (not closed-a)) t)
+     ;; ISO dates, so string order is date order.
+     ((not (equal due-a due-b))
+      (cond ((null due-a) nil)
+            ((null due-b) t)
+            (t (string< due-a due-b))))
+     ((null time-a) nil)
+     ((null time-b) t)
+     (t (time-less-p time-b time-a)))))
 
 (defun rvb-feature--insert-entry (s)
   "Insert summary S as an Org subtree.
@@ -1689,11 +2024,13 @@ branch name -- see `rvb-feature--entry-heading' -- since the branch
 name is recoverable from the status buffer and the directory."
   (let* ((name (plist-get s :name))
          (start (point)))
-    (insert "* " (rvb-feature--entry-heading name (rvb-feature--list-redraw))
-            "  "
-            (propertize (rvb-feature--relative-time (plist-get s :time))
-                        'font-lock-face 'rvb-feature-count)
-            "\n")
+    (insert "* " (rvb-feature--entry-heading name (plist-get s :info)) "\n"
+            (rvb-feature--entry-meta s))
+    (when-let* ((agent (rvb-feature--agent-info name)))
+      (insert (propertize rvb-feature-list-separator
+                          'font-lock-face 'rvb-feature-count))
+      (rvb-feature--insert-agent-status name agent))
+    (insert "\n")
     (if-let* ((desc (plist-get s :description)))
         (insert desc "\n")
       (insert (propertize "(no description)"
@@ -1705,9 +2042,16 @@ name is recoverable from the status buffer and the directory."
                                'rear-nonsticky t))))
 
 (defun rvb-feature--render-list (summaries)
-  "Draw SUMMARIES as Org subtrees, most recently worked on first."
+  "Draw SUMMARIES as Org subtrees, in `rvb-feature--entry-before-p' order.
+
+Each summary is given its `rvb-feature--feature-info' as :info first,
+since both the heading and the order are read from it.  The GitHub
+half of that is asynchronous, so the first draw of a session orders
+the list by what is written down locally and draws again as GitHub
+answers."
   (let ((inhibit-read-only t)
-        (entry (rvb-feature--entry-name)))
+        (entry (rvb-feature--entry-name))
+        (redraw (rvb-feature--list-redraw)))
     ;; The buttons are overlays and outlive the text under them.
     (remove-overlays (point-min) (point-max) 'rvb-feature-button t)
     (erase-buffer)
@@ -1724,13 +2068,13 @@ name is recoverable from the status buffer and the directory."
                  "\\<rvb-feature-list-mode-map>\
 Press \\[rvb-feature-dispatch] to start one.")
                 "\n")
-      (dolist (s (sort (copy-sequence summaries)
-                       (lambda (a b)
-                         (let ((ta (plist-get a :time))
-                               (tb (plist-get b :time)))
-                           (cond ((null ta) nil)
-                                 ((null tb) t)
-                                 (t (time-less-p tb ta)))))))
+      (dolist (s (sort (mapcar
+                        (lambda (s)
+                          (append (list :info (rvb-feature--feature-info
+                                                (plist-get s :name) redraw))
+                                  s))
+                        summaries)
+                       #'rvb-feature--entry-before-p))
         (rvb-feature--insert-entry s)))
     (set-buffer-modified-p nil)
     (font-lock-flush)
@@ -1852,7 +2196,8 @@ display one."
 
 ;;;###autoload
 (defun rvb-feature-list ()
-  "Show every feature, most recently worked on first.
+  "Show every feature, the ones still open and due soonest first.
+See `rvb-feature--entry-before-p' for the order in full.
 `RET' opens the status buffer for the feature at point."
   (interactive)
   (pop-to-buffer (rvb-feature-list-buffer)))
@@ -1891,6 +2236,34 @@ The title is the clickable text, so it is faced like a link."
 
 (defface rvb-feature-count '((t :inherit magit-dimmed))
   "Face for neutral counts and separators."
+  :group 'rvb-feature)
+
+(defface rvb-feature-open '((t :inherit rvb-feature-count))
+  "Face for a feature whose issue is still open.
+Dim on purpose: nearly everything in the list is open, and a colour
+every entry wears is one that tells you nothing."
+  :group 'rvb-feature)
+
+(defface rvb-feature-done '((t :inherit success))
+  "Face for a feature whose issue is closed or merged.
+Deliberately not `error' the way a closed *pull request* is: a closed
+issue is work that is finished, not work that was rejected."
+  :group 'rvb-feature)
+
+(defface rvb-feature-due '((t :inherit rvb-feature-count))
+  "Face for a due date with time still on it."
+  :group 'rvb-feature)
+
+(defface rvb-feature-due-soon '((t :inherit warning))
+  "Face for work due today or tomorrow."
+  :group 'rvb-feature)
+
+(defface rvb-feature-overdue '((t :inherit error))
+  "Face for work whose due date has passed."
+  :group 'rvb-feature)
+
+(defface rvb-feature-agent-running '((t :inherit success))
+  "Face for the status of an agent implementing a feature."
   :group 'rvb-feature)
 
 (defface rvb-feature-clean '((t :inherit default))
@@ -2052,6 +2425,46 @@ which is what keeps git's output out of the Org file."
     (insert label)
     (rvb-feature--make-link start (point) action help)))
 
+(defun rvb-feature--inject-agent-status (feature)
+  "Put FEATURE's running-agent status in the Org keyword block."
+  (when-let* ((agent (rvb-feature--agent-info feature)))
+    (save-excursion
+      (goto-char (point-min))
+      ;; Keep it immediately below the title when there is one.  With
+      ;; no title it becomes the first line of the same keyword block.
+      (if (re-search-forward rvb-feature--title-keyword-regexp
+                             (rvb-feature--preamble-limit) t)
+          (forward-line 1)
+        (goto-char (point-min)))
+      (let ((start (point)))
+        (insert (propertize "#+agent:" 'font-lock-face
+                            'org-document-info-keyword)
+                " ")
+        (rvb-feature--insert-agent-status feature agent)
+        (insert "\n")
+        (rvb-feature--generated start (point)
+                                'rvb-feature-agent-status t)))))
+
+(defun rvb-feature--update-agent-status ()
+  "Update only the running-agent line in this feature status buffer.
+
+Unlike a full redraw, this preserves unsaved edits.  That matters when
+the user chose to assign the on-disk specification without first
+saving the prose currently being edited."
+  (let ((inhibit-read-only t)
+        (modified (buffer-modified-p))
+        (pos (point-min)))
+    (save-excursion
+      (while (setq pos (text-property-any
+                        pos (point-max) 'rvb-feature-agent-status t))
+        (let ((end (or (next-single-property-change
+                        pos 'rvb-feature-agent-status nil (point-max))
+                       (point-max))))
+          (remove-overlays pos end 'rvb-feature-button t)
+          (delete-region pos end)))
+      (rvb-feature--inject-agent-status rvb-feature--buffer-feature))
+    (set-buffer-modified-p modified)))
+
 (defun rvb-feature--pull-request (m)
   "Return what GitHub says about member M's pull request, or nil.
 
@@ -2105,6 +2518,64 @@ at a pull request you have already opened."
         (when (and (> unresolved 0) (equal (plist-get pr :state) "open"))
           (insert "  " (propertize (format "Unresolved %d" unresolved)
                                    'font-lock-face 'rvb-feature-unresolved)))))))
+
+(defun rvb-feature--generated-suffix (start end)
+  "Mark START..END as generated text appended to a line you still own.
+
+Like `rvb-feature--generated', but deliberately not front-sticky.  The
+`#+issue:' keyword is yours to edit -- it is how a feature is linked to
+an issue in the first place -- and a front-sticky region butting
+against the end of it would mean the last character of the URL could
+not be corrected."
+  (add-text-properties start end
+                       (list 'read-only t
+                             'rear-nonsticky t
+                             'rvb-feature-generated t)))
+
+(defun rvb-feature--issue-annotation (feature)
+  "Return what GitHub says about FEATURE's issue, ready to display.
+
+Whether it is still open, and the iteration it is due in.  Nil when
+the feature is linked to no issue, or while nothing has come back yet.
+
+The lookups are asynchronous, like the pull-request ones, so this
+answers nil the first time and the buffer is drawn again when they
+land -- drawn, not refreshed: no worktree needs rereading because
+GitHub answered."
+  (when-let* ((buf (current-buffer))
+              ((rvb-feature-issue feature)))
+    (let* ((redraw (lambda ()
+                     (when (buffer-live-p buf)
+                       (with-current-buffer buf (rvb-feature--redraw)))))
+           (info (rvb-feature--feature-info feature redraw))
+           (parts (delq nil
+                        (list (rvb-feature--state-string (plist-get info :state))
+                              ;; Only a date that came off the board.  A
+                              ;; `#+due:' keyword is already on screen a
+                              ;; line away -- this buffer is the file --
+                              ;; and echoing it back would read as a
+                              ;; second, disagreeing date.
+                              (and (eq (plist-get info :due-from) 'iteration)
+                                   (rvb-feature--due-string info))))))
+      (when parts
+        (mapconcat #'identity parts rvb-feature-list-separator)))))
+
+(defun rvb-feature--inject-issue (feature)
+  "Annotate FEATURE's `#+issue:' line with what GitHub says about it.
+
+On that line rather than beside the title, because it is what the
+annotation is about: the title is free text of the feature's own, and
+whether the work is still open and when it is due are the issue's."
+  (when-let* ((text (rvb-feature--issue-annotation feature)))
+    (save-excursion
+      (goto-char (point-min))
+      ;; Unbounded, like the search `rvb-feature-issue' reads the
+      ;; keyword with, so the annotation lands on the line it read.
+      (when (re-search-forward rvb-feature--issue-keyword-regexp nil t)
+        (end-of-line)
+        (let ((start (point)))
+          (insert "  " text)
+          (rvb-feature--generated-suffix start (point)))))))
 
 (defun rvb-feature--repo-branch-string (m)
   "Return member M's branch for its heading."
@@ -2293,6 +2764,8 @@ else navigates by."
       (goto-char (point-max))
       (unless (bolp) (insert "\n"))
       (rvb-feature--protect-sections)
+      (rvb-feature--inject-agent-status feature)
+      (rvb-feature--inject-issue feature)
       (let ((first t))
         (dolist (m members)
           (rvb-feature--inject-repo m (not first))
@@ -2497,6 +2970,157 @@ to agree to."
         (rvb-feature-save)
       (unless (yes-or-no-p (if destructive "Discard them? " "Go on without them? "))
         (user-error "Aborted")))))
+
+(defun rvb-feature--agent-label ()
+  "Return the display name of `rvb-feature-agent'."
+  (pcase rvb-feature-agent
+    ('codex "Codex")
+    ('claude "Claude Code")
+    (_ (symbol-name rvb-feature-agent))))
+
+(defun rvb-feature--agent-command ()
+  "Return the command list for `rvb-feature-agent'."
+  (pcase rvb-feature-agent
+    ('codex
+     (cons rvb-feature-codex-executable rvb-feature-codex-arguments))
+    ('claude
+     (cons rvb-feature-claude-executable rvb-feature-claude-arguments))
+    (_ (user-error "Unknown feature agent: %s" rvb-feature-agent))))
+
+(defun rvb-feature--agent-prompt (feature)
+  "Return the prompt assigning FEATURE to the configured agent."
+  (let ((dir (file-name-as-directory (rvb-feature--dir feature))))
+    (concat (string-trim-right rvb-feature-agent-prompt)
+            "\n\nFeature: " feature
+            "\nSpecification: " (rvb-feature--org-file feature)
+            "\nWorking directory: " dir "\n")))
+
+(defun rvb-feature--agent-buffer-name (feature)
+  "Return the output buffer name used by FEATURE's coding agent."
+  (format "*feature agent: %s*" feature))
+
+(defun rvb-feature--agent-buffer (feature)
+  "Return the output buffer used by FEATURE's coding agent."
+  (get-buffer-create (rvb-feature--agent-buffer-name feature)))
+
+(defun rvb-feature--agent-process (feature)
+  "Return FEATURE's agent process, or nil when it has no output buffer."
+  (when-let* ((buffer (get-buffer (rvb-feature--agent-buffer-name feature))))
+    (get-buffer-process buffer)))
+
+(defun rvb-feature-show-agent (feature)
+  "Open FEATURE's coding-agent output buffer."
+  (interactive
+   (list (or rvb-feature--buffer-feature
+             (and (derived-mode-p 'rvb-feature-list-mode)
+                  (rvb-feature--entry-name))
+             (rvb-feature--enclosing)
+             (rvb-feature--read-name t))))
+  (if-let* ((buffer (get-buffer (rvb-feature--agent-buffer-name feature))))
+      (pop-to-buffer buffer)
+    (user-error "No agent output for %s" feature)))
+
+(defun rvb-feature--redraw-agent-views (feature &optional refresh-status)
+  "Show FEATURE's current agent state in every open feature view.
+
+When REFRESH-STATUS is non-nil, also re-probe an unmodified status
+buffer because the agent may have changed its member worktrees."
+  (dolist (buffer (buffer-list))
+    (with-current-buffer buffer
+      (cond
+       ((and (derived-mode-p 'rvb-feature-status-mode)
+             (equal rvb-feature--buffer-feature feature))
+        (if (and refresh-status (not (buffer-modified-p)))
+            (rvb-feature-refresh)
+          (rvb-feature--update-agent-status)))
+       ((and (derived-mode-p 'rvb-feature-list-mode)
+             rvb-feature--list-state)
+        (rvb-feature--render-list rvb-feature--list-state))))))
+
+(defun rvb-feature--agent-sentinel (process event)
+  "Finish an agent PROCESS after terminal EVENT."
+  (when (and (memq (process-status process) '(exit signal))
+             (not (process-get process 'rvb-feature-finished)))
+    (process-put process 'rvb-feature-finished t)
+    (let* ((feature (process-get process 'rvb-feature))
+           (label (process-get process 'rvb-feature-agent-label))
+           (success (and (eq (process-status process) 'exit)
+                         (zerop (process-exit-status process))))
+           (summary (if success
+                        (format "%s finished %s" label feature)
+                      (format "%s stopped for %s: %s"
+                              label feature (string-trim event)))))
+      (when-let* ((buffer (process-buffer process))
+                  ((buffer-live-p buffer)))
+        (with-current-buffer buffer
+          (let ((inhibit-read-only t))
+            (goto-char (point-max))
+            (unless (bolp) (insert "\n"))
+            (insert "\n" summary "\n"))))
+      ;; The agent may have changed any number of member repositories.
+      ;; Re-probe every open status view when it is safe, and remove the
+      ;; running marker from all views immediately either way.
+      (rvb-feature--redraw-agent-views feature t)
+      (message "%s" summary))))
+
+;;;###autoload
+(defun rvb-feature-assign-to-agent (feature)
+  "Assign FEATURE to `rvb-feature-agent' in a headless process.
+
+The agent runs from the feature directory, so all of the feature's
+member worktrees are in scope.  Its instructions arrive on standard
+input, its output goes to a dedicated buffer, and the feature status
+is refreshed when it exits."
+  (interactive
+   (list (or rvb-feature--buffer-feature
+             (rvb-feature--enclosing)
+             (rvb-feature--read-name t))))
+  (unless (rvb-feature-members feature)
+    (user-error "%s has no repositories to work in" feature))
+  (let* ((status-buffer (get-buffer (format "*feature: %s*" feature)))
+         (buffer (rvb-feature--agent-buffer feature))
+         (old-process (get-buffer-process buffer))
+         (dir (file-name-as-directory (rvb-feature--dir feature)))
+         (command (rvb-feature--agent-command))
+         (program (executable-find (car command)))
+         process)
+    (when (process-live-p old-process)
+      (display-buffer buffer)
+      (user-error "%s is already working on %s"
+                  (process-get old-process 'rvb-feature-agent-label) feature))
+    (unless program
+      (user-error "Cannot find executable: %s" (car command)))
+    ;; The status buffer is the editing surface for feature.org, even
+    ;; when this command was invoked from the global dispatch menu.
+    (when (buffer-live-p status-buffer)
+      (with-current-buffer status-buffer
+        (rvb-feature--settle-edits "assigning the feature to an agent")))
+    (rvb-feature--ensure-org feature)
+    (setq command (cons program (cdr command)))
+    (with-current-buffer buffer
+      (let ((inhibit-read-only t))
+        (erase-buffer)
+        (insert (format "%s is implementing %s\nDirectory: %s\nCommand: %s\n\n"
+                        (rvb-feature--agent-label) feature dir
+                        (mapconcat #'shell-quote-argument command " "))))
+      (special-mode)
+      (setq default-directory dir))
+    (let ((default-directory dir))
+      (setq process
+            (make-process
+             :name (format "rvb-feature-agent-%s" feature)
+             :buffer buffer
+             :command command
+             :connection-type 'pipe
+             :coding 'utf-8-unix
+             :sentinel #'rvb-feature--agent-sentinel)))
+    (process-put process 'rvb-feature feature)
+    (process-put process 'rvb-feature-agent-label (rvb-feature--agent-label))
+    (process-send-string process (rvb-feature--agent-prompt feature))
+    (process-send-eof process)
+    (rvb-feature--redraw-agent-views feature)
+    (display-buffer buffer)
+    (message "Assigned %s to %s" feature (rvb-feature--agent-label))))
 
 (defun rvb-feature--read-member (feature)
   "Prompt for one of FEATURE's repositories."
@@ -2886,6 +3510,7 @@ say -- which is bound in `rvb-feature-status-mode-map' instead."
   [["Feature"
     ("c" "Create a feature" rvb-feature-create)
     ("a" "Add a repo to a feature" rvb-feature-add-repo)
+    ("A" "Assign to agent" rvb-feature-assign-to-agent)
     ("s" "Status  (C-u: another feature)" rvb-feature-status)
     ("l" "List all features" rvb-feature-list)]
    ["Issue"
