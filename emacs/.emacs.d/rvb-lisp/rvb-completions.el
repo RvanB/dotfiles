@@ -87,6 +87,17 @@
   ;; Configure other variables and modes in the :config section,
   ;; after lazily loading the package.
   :config
+  ;; A feature is a project root containing worktrees, not a repository
+  ;; itself.  Fall back to git grep's filesystem mode there so one search
+  ;; crosses every member worktree; keep the usual index-based search when
+  ;; the selected root is in a repository.  `consult--build-args' evaluates
+  ;; the second form after binding `default-directory' to the search root.
+  (setq consult-git-grep-args
+        '("git --no-pager grep --null --color=never --ignore-case\
+           --extended-regexp --line-number -I"
+          (unless (locate-dominating-file default-directory ".git")
+            '("--no-index" "--exclude-standard"))))
+
   ;; For some commands and buffer sources it is useful to configure the
   ;; :preview-key on a per-command basis using the `consult-customize' macro.
   (consult-customize
