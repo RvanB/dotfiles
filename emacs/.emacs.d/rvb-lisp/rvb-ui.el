@@ -37,13 +37,12 @@
 ;;             :rev :newest)
 ;;   :hook (after-init . hydra-posframe-mode))
 
-(add-hook 'prog-mode-hook 'display-line-numbers-mode)
+;; (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
 ;; Enable the standard right-click context menus globally.
 (context-menu-mode 1)
 
-;; Enable tab bar
-(tab-bar-mode)
+;; The tab bar is set up in rvb-tabs.el.
 
 ;; Highlight the delimiter matching the one at point.
 (setq show-paren-delay 0)
@@ -234,10 +233,77 @@ takes effect where you set it."
 (defvar rvb/ui-page-chrome--saved-line-number-faces nil
   "Alist mapping (FRAME . FACE) to the line-number background to restore.")
 
-(defcustom rvb/ui-page-chrome-vertical-padding 0
-  "Vertical padding, in pixels, around page chrome header text."
+(defcustom rvb/ui-page-chrome-vertical-padding 4
+  "Vertical padding, in pixels, above and below page chrome header text.
+The hairline under the header stays at its bottom edge, below the
+padding; see `rvb/ui-page-chrome--metrics'."
   :type 'integer
   :group 'appearance)
+
+(defvar rvb/ui-page-chrome--metrics-cache (make-hash-table :test #'equal)
+  "Header line metrics worked out already, by font and padding.")
+
+(defun rvb/ui-page-chrome--metrics (frame)
+  "Return the header line's metrics on FRAME, as a plist, or nil.
+See `rvb/ui--line-metrics', which this is for the header."
+  (rvb/ui--line-metrics frame 'default rvb/ui-page-chrome-vertical-padding))
+
+(defun rvb/ui--line-metrics (frame face pad)
+  "Return metrics for a line of FACE's text padded by PAD pixels, on FRAME.
+PAD is pixels above and below alike, or (TOP . BOTTOM).
+
+  :height        the line's height in pixels, padding included
+  :ascent        how much of that is above the baseline, as a
+                 percentage -- what an image or a strut as tall as the
+                 line needs as its `:ascent' to sit exactly in it
+  :strut         an invisible, zero-width glyph that tall, which is
+                 what makes the line taller; nil with no padding
+  :rule-position the underline `:position' putting the hairline on the
+                 last row of the padded line; nil with no padding
+
+A face `:box' would pad the line too, but the hairline under the band
+is an underline, and an underline is drawn under the text -- above a
+box's bottom edge, so it would float in the middle of the padding."
+  (let* ((top (max 0 (or (if (consp pad) (car pad) pad) 0)))
+         (bottom (max 0 (or (if (consp pad) (cdr pad) pad) 0)))
+         (pad (cons top bottom))
+         (font (face-font face frame)))
+    (when font
+      (let ((key (list font pad)))
+        (or (gethash key rvb/ui-page-chrome--metrics-cache)
+            (puthash
+             key
+             (when-let* ((info (font-info font frame)))
+               (let* ((ascent (aref info 8))
+                      (descent (aref info 9))
+                      (height (+ ascent descent top bottom))
+                      (percent (round (* 100.0 (+ ascent top)) height))
+                      (padded (> (+ top bottom) 0)))
+                 (list :height height
+                       :top top
+                       :bottom bottom
+                       :ascent percent
+                       :strut (and padded
+                                   (propertize
+                                    " " 'display
+                                    `(space :width (0) :height (,height)
+                                            :ascent ,percent)))
+                       ;; Measured, not taken from the manual: an integer
+                       ;; position counts up from the bottom of the line
+                       ;; here, so 0 is its last row.  `t' would put the
+                       ;; hairline under the text, above the padding.
+                       :rule-position (and padded 0))))
+             rvb/ui-page-chrome--metrics-cache))))))
+
+(defun rvb/ui-page-chrome--rule-attributes (frame)
+  "Return face attributes putting the header's hairline at its padded bottom.
+Nil when there is no padding, or the header face draws no hairline."
+  (when-let* ((position (plist-get (rvb/ui-page-chrome--metrics frame)
+                                    :rule-position))
+              (underline (face-attribute 'rvb/ui-page-chrome-header
+                                         :underline frame t))
+              ((consp underline)))
+    (list :underline (plist-put (copy-sequence underline) :position position))))
 
 (defun rvb/ui-page-chrome--window-p (window)
   "Return non-nil when WINDOW should display RVB page chrome."
@@ -255,15 +321,17 @@ takes effect where you set it."
           rvb/ui-page-chrome--saved-header-lines)))
 
 (defface rvb/ui-page-chrome-header
-  '((t :inherit header-line))
-  "Face for the RVB page-chrome top header band.")
+  '((t :inherit default :underline (:position t)))
+  "Face for the RVB page-chrome top header band.
+By default the page's own background, ruled off from the text below;
+see `rvb/ui-page-chrome--derive-faces'.")
 
 (defface rvb/ui-page-chrome-command
-  '((t :inherit rvb/ui-page-chrome-header))
+  '((t :inherit header-line))
   "Face supplying the page-chrome command-state colours.")
 
 (defface rvb/ui-page-chrome-breadcrumb-highlight
-  '((t :inherit highlight))
+  '((t :inverse-video t))
   "Face used when the pointer is over a page-chrome breadcrumb.")
 
 (defface rvb/ui-page-chrome-scroll-trough
@@ -273,6 +341,125 @@ takes effect where you set it."
 (defface rvb/ui-page-chrome-scroll-handle
   '((t :inherit region))
   "Face for the part of the buffer on screen, in the header-line scrollbar.")
+
+;;;; Page-chrome faces for any theme
+;;
+;; Only rvb3 styles these faces itself.  Any other theme would leave the
+;; band in its `header-line' colours -- a grey or black bar -- when what
+;; is wanted everywhere is the page: the buffer's background, set off by
+;; a hairline beneath.  None of that can be written as a fixed face spec,
+;; because the colours are the theme's, so the default specs are worked
+;; out from `default' whenever a theme is enabled.  A theme that does
+;; style a face still wins: this only rewrites the defaults.
+;;
+;; The scrollbar faces supply colours only -- the track's dots are its
+;; foreground on its background, the handle's grip lines and outline
+;; likewise; `rvb/ui-page-chrome--draw-bar' draws them.
+
+(require 'color)
+
+(defun rvb/ui-page-chrome--blend (a b amount)
+  "Return colour A mixed with B, AMOUNT of the way from A to B."
+  (let ((ca (color-name-to-rgb a))
+        (cb (color-name-to-rgb b)))
+    (if (and ca cb)
+        (apply #'color-rgb-to-hex
+               (append (cl-mapcar (lambda (x y) (+ x (* amount (- y x)))) ca cb)
+                       '(2)))
+      a)))
+
+(defun rvb/ui-page-chrome--theme-style (key)
+  "Return what the enabled themes ask page chrome to do about KEY.
+
+A theme asks by putting a plist on its own symbol, as rvb3 does:
+
+  (put \='rvb3 \='rvb/ui-page-chrome
+       \='(:bar-slider t :tab-slants t :line-number-background t))
+
+  :bar-slider             draw the header scrollbar as a slider -- a
+                          text-coloured line with a striped handle on
+                          it -- rather than a plain bar
+  :tab-slants             give tabs slanted sides, and pad them by
+                          `rvb/tab-bar-vertical-padding'
+  :line-number-background keep the theme's line-number background
+                          rather than drawing the margin in the chrome
+                          colour, `rvb/ui--secondary-background'
+
+The first enabled theme that mentions KEY decides; no theme saying
+anything means nil, the plain behaviour."
+  (cl-loop for theme in custom-enabled-themes
+           for style = (get theme 'rvb/ui-page-chrome)
+           when (plist-member style key) return (plist-get style key)))
+
+(defun rvb/ui--secondary-background ()
+  "Return the current theme's secondary background: the chrome colour.
+
+What the header line, the line-number margin and the current tab are
+drawn in -- a quiet step off the page, so that the text is set apart
+from what is around it.  Themes have one, but no common name
+for it; what they reliably put it in is the background of an inactive
+mode line (modus: `bg-inactive', doric and standard: their dim grey, ef:
+a tinted version of the page), so that is taken -- when it is a quiet
+step, not a strong colour.  Failing that, the page nudged towards the
+text."
+  (let* ((fg (face-foreground 'default nil t))
+         (bg (face-background 'default nil t))
+         (candidate (face-background 'mode-line-inactive nil t))
+         (bg-rgb (and bg (color-name-to-rgb bg)))
+         (candidate-rgb (and candidate (color-name-to-rgb candidate))))
+    (if (and bg-rgb candidate-rgb
+             (not (equal bg-rgb candidate-rgb))
+             ;; A step, not a leap: no channel more than a fifth away.
+             (< (apply #'max (cl-mapcar (lambda (a b) (abs (- a b)))
+                                        bg-rgb candidate-rgb))
+                0.2))
+        candidate
+      (rvb/ui-page-chrome--blend bg fg 0.07))))
+
+(defun rvb/ui-page-chrome--derive-faces (&rest _)
+  "Set the page-chrome faces' default specs from the current theme's colours."
+  (let* ((fg (face-foreground 'default nil t))
+         (bg (face-background 'default nil t))
+         (rule (rvb/ui-page-chrome--blend bg fg 0.35))
+         (chrome (rvb/ui--secondary-background))
+         (handle (rvb/ui-page-chrome--blend bg fg 0.55))
+         (underline `(:color ,rule :position t))
+         (specs
+          `((rvb/ui-page-chrome-header
+             ((t :foreground ,fg :background ,chrome :stipple nil
+                 :underline ,underline)))
+            ;; Command state is the unmistakable one: the theme's own
+            ;; header-line colours, which are the band's old look.
+            (rvb/ui-page-chrome-command
+             ((t :inherit header-line :stipple nil)))
+            (rvb/ui-page-chrome-breadcrumb-highlight
+             ((t :foreground ,bg :background ,fg :stipple nil)))
+            ;; A plain bar: the track is the band, the handle a solid
+            ;; mid-tone.  A theme asking for `:bar-slider' styles these
+            ;; itself; see `rvb/ui-page-chrome--theme-style'.
+            (rvb/ui-page-chrome-scroll-trough
+             ((t :foreground ,fg :background ,chrome :underline ,underline)))
+            (rvb/ui-page-chrome-scroll-handle
+             ((t :foreground ,fg :background ,handle :underline ,underline))))))
+    (when (and fg bg)
+      (pcase-dolist (`(,face ,spec) specs)
+        (face-spec-set face spec 'face-defface-spec))
+      ;; Whatever the theme says, under every theme: the fringes are the
+      ;; page -- side by side, two windows' fringes make a strip between
+      ;; them, and in any other colour it reads as a bar -- and the
+      ;; divider between a window and what is below it, the minibuffer
+      ;; included, is the hairline.
+      (set-face-attribute 'fringe nil :background bg)
+      (dolist (face '(window-divider window-divider-first-pixel
+                                     window-divider-last-pixel))
+        (set-face-attribute face nil :foreground rule))
+      ;; The line-number backgrounds page chrome saved belong to the
+      ;; theme just replaced; the next refresh saves this one's.
+      (setq rvb/ui-page-chrome--saved-line-number-faces nil))))
+
+(add-hook 'enable-theme-functions #'rvb/ui-page-chrome--derive-faces)
+;; The startup theme was enabled further up, before the hook was here.
+(rvb/ui-page-chrome--derive-faces)
 
 (defvar rvb/ui-page-chrome-breadcrumb-map
   (let ((map (make-sparse-keymap)))
@@ -329,7 +516,10 @@ When FILE-P is non-nil, the final path element is rendered as plain text."
     (cl-loop for part in parts
              for index from 0
              do (let ((last-p (= index last-index)))
-                  (push "/" crumbs)
+                  ;; The root is already a slash; a second one here
+                  ;; would read "//private/...".
+                  (unless (and (= index 0) (equal root-label "/"))
+                    (push "/" crumbs))
                   (if (and file-p last-p)
                       (push part crumbs)
                     (setq current
@@ -425,21 +615,17 @@ font matches ordinary buffer text instead of the generic `fixed-pitch' face."
                (_ (unless (eq default-weight 'unspecified)
                     (setq font-attrs
                           (append font-attrs (list :weight default-weight)))))
-               (_ (when (and (integerp rvb/ui-page-chrome-vertical-padding)
-                             (> rvb/ui-page-chrome-vertical-padding 0)
-                             (stringp header-background))
-                    (setq font-attrs
-                          (append font-attrs
-                                  (list :box
-                                        `(:line-width
-                                          (0 . ,rvb/ui-page-chrome-vertical-padding)
-                                          :color ,header-background))))))
+               (_ header-background)
+               (rule (rvb/ui-page-chrome--rule-attributes frame))
                (band-face
                 (let ((faces (rvb/ui-page-chrome--band-faces face command-p)))
-                  (if font-attrs (append faces (list font-attrs)) faces)))
+                  (append (and rule (list rule))
+                          faces
+                          (and font-attrs (list font-attrs)))))
                (width (or width (window-total-width window)))
                (content (truncate-string-to-width content width))
-               (band (concat content
+               (band (concat (plist-get (rvb/ui-page-chrome--metrics frame) :strut)
+                             content
                              (make-string (max 0 (- width (string-width content)))
                                           ?\s))))
     (add-face-text-property 0 (length band) band-face nil band)
@@ -452,26 +638,34 @@ font matches ordinary buffer text instead of the generic `fixed-pitch' face."
     (let* ((file buffer-file-name)
            (path (cond
                   (file
-                   (rvb/ui-page-chrome--path-breadcrumb file t))
+                   ;; Whether the file is modified or read-only: there
+                   ;; is no mode line to say so (see below).
+                   (concat (rvb/ui-page-chrome--path-breadcrumb file t)
+                           (cond (buffer-read-only " (read-only)")
+                                 ((buffer-modified-p) " *")
+                                 (t ""))))
                   (default-directory
                    (rvb/ui-page-chrome--path-breadcrumb default-directory))
                   (t
                    (buffer-name))))
-           ;; Not `mode-line-modified': the mode line carries that, and
-           ;; saying it twice in two bands a screen apart is worse than
-           ;; saying it once where it has always been.  What is left is
-           ;; the things the mode line does not show at all.
-           (status (format-mode-line
-                    '("%e" mode-line-front-space
-                      (:propertize
-                       ("" mode-line-mule-info mode-line-client
-                        mode-line-remote mode-line-window-dedicated)
-                       display (min-width (6.0))))
-                    nil window))
+           ;; Where point is -- "Top  L12", "42%  L310" -- beside the
+           ;; scrollbar that shows the same thing, there being no mode
+           ;; line (see below).  `mode-line-position' is what
+           ;; the mode line used, so it follows the same settings -- a
+           ;; column with `column-number-mode', a size with
+           ;; `size-indication-mode' -- and keeps its mouse menus.
+           (status (string-trim (format-mode-line mode-line-position
+                                                  nil window)))
            ;; Reserve the right edge before truncating long paths so status
-           ;; information can never be pushed out of the header.
-           (path (truncate-string-to-width
-                  path (max 0 (- width (string-width status) 4))))
+           ;; information can never be pushed out of the header.  Cut from
+           ;; the left: the end of the path -- the file, and whether it
+           ;; is modified -- is the part worth keeping.
+           (room (max 1 (- width (string-width status) 4)))
+           (path (if (<= (string-width path) room)
+                     path
+                   (concat "…" (truncate-string-to-width
+                                path (string-width path)
+                                (- (string-width path) (1- room))))))
            (gap (max 2 (- width (string-width path) (string-width status) 2))))
       (truncate-string-to-width
        (concat " " path (make-string gap ?\s) status " ") width))))
@@ -554,6 +748,89 @@ fill at the window's right edge showing the same thing."
       (rvb/ui-page-chrome--claim-drag spacer)
       spacer)))
 
+;;;; Drawing the bar
+;;
+;; MLScroll's bar is three spaces of set pixel widths: the track before
+;; the handle, the handle, the track after.  Under a theme asking for
+;; `:bar-slider' each is given an image of its exact width instead, so
+;; the bar reads as a slider: the track is the band itself with a
+;; text-coloured line through its middle, and the handle is a box of
+;; grip lines sitting on that line, as tall as the text.  Images rather
+;; than faces because a line through the middle of a space, or a box
+;; shorter than the line it is on, is not something a face can draw.
+
+(require 'svg)
+
+(defvar rvb/ui-page-chrome--bar-images (make-hash-table :test #'equal)
+  "Bar images already made, by what they depict.
+The header line is redrawn constantly, and the bar with it.")
+
+(defun rvb/ui-page-chrome--bar-image (kind width metrics colors)
+  "Return an image of the slider's KIND, WIDTH pixels wide.
+KIND is `track' or `handle'.  METRICS is `rvb/ui--line-metrics' for
+the header.  COLORS is a plist: :ground, the band behind the bar;
+:line, the track's line; :handle and :handle-ground, the handle's ink
+and fill; :rule, the hairline along the bottom of the band, or nil."
+  (let ((key (list kind width metrics colors)))
+    (or (gethash key rvb/ui-page-chrome--bar-images)
+        (puthash
+         key
+         (let* ((height (plist-get metrics :height))
+                (middle (/ height 2))
+                (svg (svg-create width height)))
+           (svg-rectangle svg 0 0 width height
+                          :fill (plist-get colors :ground))
+           (pcase kind
+             ('track
+              (svg-rectangle svg 0 middle width 1
+                             :fill (plist-get colors :line)))
+             ('handle
+              ;; As tall as the text, centred on the line: the padding
+              ;; above and below it stays the band.
+              (let ((top (plist-get metrics :top))
+                    (bottom (- height (plist-get metrics :bottom) 1))
+                    (ink (plist-get colors :handle)))
+                (svg-rectangle svg 0.5 (+ top 0.5) (- width 1) (- bottom top)
+                               :fill (plist-get colors :handle-ground)
+                               :stroke ink :stroke-width 1)
+                (cl-loop for x from 3 below (- width 2) by 3
+                         do (svg-rectangle svg x (1+ top) 1 (- bottom top 1)
+                                           :fill ink)))))
+           (when-let* ((rule (plist-get colors :rule)))
+             (svg-rectangle svg 0 (1- height) width 1 :fill rule))
+           (svg-image svg :ascent (plist-get metrics :ascent)))
+         rvb/ui-page-chrome--bar-images))))
+
+(defun rvb/ui-page-chrome--draw-bar (bar window)
+  "Replace BAR's spaces with slider images of the same widths, for WINDOW."
+  (let* ((frame (window-frame window))
+         (metrics (rvb/ui-page-chrome--metrics frame))
+         (rule (face-attribute 'rvb/ui-page-chrome-header :underline frame t))
+         (colors
+          (list :ground (face-background 'rvb/ui-page-chrome-header frame t)
+                :line (face-foreground 'rvb/ui-page-chrome-scroll-trough frame t)
+                :handle (face-foreground 'rvb/ui-page-chrome-scroll-handle frame t)
+                :handle-ground (face-background 'rvb/ui-page-chrome-scroll-handle
+                                                frame t)
+                :rule (and (consp rule) (plist-get rule :color)))))
+    (when metrics
+      (dotimes (i (length bar))
+        (pcase (get-text-property i 'display bar)
+          (`(space :width (,(and (pred numberp) width)))
+           (when (> width 0)
+             (put-text-property
+              i (1+ i) 'display
+              (rvb/ui-page-chrome--bar-image
+               (if (eq (get-text-property i 'face bar)
+                       mlscroll-cur-face-properties)
+                   'handle
+                 'track)
+               (max 1 (round width)) metrics colors)
+              bar)
+             (put-text-property i (1+ i) 'face 'rvb/ui-page-chrome-header
+                                bar))))))
+    bar))
+
 (defun rvb/ui-page-chrome--scrollbar (window)
   "Return the scrollbar for WINDOW's header line, or nil.
 
@@ -566,7 +843,10 @@ was before without it."
       (when-let* (((stringp bar))
                   (keymap (rvb/ui-page-chrome--scroll-keymap)))
         (setq bar (copy-sequence bar))
-        (put-text-property 0 (length bar) 'local-map keymap bar))
+        (put-text-property 0 (length bar) 'local-map keymap bar)
+        (when (and (display-graphic-p (window-frame window))
+                   (rvb/ui-page-chrome--theme-style :bar-slider))
+          (rvb/ui-page-chrome--draw-bar bar window)))
       bar)))
 
 (defun rvb/ui-page-chrome--header-line-format (window)
@@ -582,12 +862,19 @@ was before without it."
                 window (rvb/ui-page-chrome--header-content window width)
                 'rvb/ui-page-chrome-header command-p width)))
     (if bar
-        (list band
-              (rvb/ui-page-chrome--scroll-spacer
-               (rvb/ui-page-chrome--band-faces 'rvb/ui-page-chrome-header
-                                               command-p))
-              bar)
+        (let ((rule (rvb/ui-page-chrome--rule-attributes (window-frame window))))
+          (when rule
+            (add-face-text-property 0 (length bar) rule nil bar))
+          (list band
+                (rvb/ui-page-chrome--scroll-spacer
+                 (append (and rule (list rule))
+                         (rvb/ui-page-chrome--band-faces 'rvb/ui-page-chrome-header
+                                                         command-p)))
+                bar))
       band)))
+
+(defvar-local rvb/ui-page-chrome--header-remap nil
+  "Cookie for this buffer's remapping of `header-line', while page chrome is on.")
 
 (defun rvb/ui-page-chrome--apply-window (window)
   "Apply page chrome to WINDOW."
@@ -595,25 +882,32 @@ was before without it."
     (let ((buffer (window-buffer window)))
       (rvb/ui-page-chrome--save-header-line buffer)
       (with-current-buffer buffer
+        ;; The band is drawn in its own faces, but whatever pixels it
+        ;; does not reach -- a few at the window's right edge, past the
+        ;; scrollbar -- are drawn in `header-line', which is not the page.
+        (unless rvb/ui-page-chrome--header-remap
+          (setq rvb/ui-page-chrome--header-remap
+                (face-remap-add-relative 'header-line
+                                         'rvb/ui-page-chrome-header)))
         (setq-local header-line-format
                     '((:eval (rvb/ui-page-chrome--header-line-format
                                (selected-window)))))))))
 
 (defun rvb/ui-page-chrome--apply-line-number-faces (frame)
-  "Drop the line-number backgrounds in FRAME so numbers blend into the body.
+  "Draw the line-number margin in FRAME in the chrome colour.
 
-A theme's real background is remembered as the restore baseline.  The
-`unspecified' value page chrome sets itself is never captured, and a
-later theme load (which re-sets a real background) refreshes the
-baseline, so restoring always reverts to the active theme."
-  (dolist (face '(line-number line-number-current-line))
-    (let ((current (face-attribute face :background frame)))
-      (unless (eq current 'unspecified)
-        (setf (alist-get (cons frame face)
-                         rvb/ui-page-chrome--saved-line-number-faces
-                         nil nil #'equal)
-              current))
-      (set-face-attribute face frame :background 'unspecified))))
+The header's background, which is `rvb/ui--secondary-background' unless
+the theme says otherwise -- so the margin and the header are one
+colour and only the text is the page.  The theme's own
+background is saved first, once per theme, so turning page chrome off
+puts it back."
+  (let ((chrome (face-background 'rvb/ui-page-chrome-header frame t)))
+    (dolist (face '(line-number line-number-current-line))
+      (let ((key (cons frame face)))
+        (unless (assoc key rvb/ui-page-chrome--saved-line-number-faces)
+          (push (cons key (face-attribute face :background frame))
+                rvb/ui-page-chrome--saved-line-number-faces)))
+      (set-face-attribute face frame :background chrome))))
 
 (defun rvb/ui-page-chrome--restore-line-number-faces ()
   "Restore line-number face backgrounds changed by page chrome."
@@ -629,7 +923,9 @@ baseline, so restoring always reverts to the active theme."
   (when rvb/ui-page-chrome-mode
     (dolist (frame (frame-list))
       (unless (frame-parameter frame 'parent-frame)
-        (rvb/ui-page-chrome--apply-line-number-faces frame)
+        ;; A theme asking to keep its own margin (rvb3) keeps it.
+        (unless (rvb/ui-page-chrome--theme-style :line-number-background)
+          (rvb/ui-page-chrome--apply-line-number-faces frame))
         (walk-windows #'rvb/ui-page-chrome--apply-window 'no-minibuf frame)))))
 
 (defun rvb/ui-page-chrome--restore ()
@@ -638,6 +934,9 @@ baseline, so restoring always reverts to the active theme."
     (pcase-let ((`(,buffer ,was-local ,header-line) entry))
       (when (buffer-live-p buffer)
         (with-current-buffer buffer
+          (when rvb/ui-page-chrome--header-remap
+            (face-remap-remove-relative rvb/ui-page-chrome--header-remap)
+            (setq rvb/ui-page-chrome--header-remap nil))
           (if was-local
               (setq-local header-line-format header-line)
             (kill-local-variable 'header-line-format))))))
@@ -669,6 +968,13 @@ baseline, so restoring always reverts to the active theme."
 ;; header, so keep it enabled unless explicitly toggled off by the user.
 (rvb/ui-page-chrome-mode 1)
 
+;; No mode line.  What it said that is worth saying is on the header
+;; line -- the file, whether it is modified, where point is -- and the
+;; modes it listed put menus of their own in the menu bar.  Buffers
+;; whose major mode sets a mode line of its own still get one.
+(setq-default mode-line-format nil)
+
+
 ;;; The scrollbar, in the header line rather than the mode line
 ;;
 ;; MLScroll describes its bar in *colours*: one for the length of the
@@ -698,7 +1004,10 @@ baseline, so restoring always reverts to the active theme."
         mlscroll-alter-percent-position nil
         ;; The border is drawn in the mode line's background, which is
         ;; not where this bar lives.
-        mlscroll-border 0)
+        mlscroll-border 0
+        ;; Wide enough that the handle's grip lines show even when the
+        ;; window is a sliver of a long buffer.
+        mlscroll-minimum-current-width 12)
   :config
   ;; `mlscroll-layout' recomputes the bar's appearance from those colours
   ;; -- at startup, on a new frame, and on every theme load -- so the
@@ -714,8 +1023,15 @@ baseline, so restoring always reverts to the active theme."
   ["Custom settings"
    ("a" "Appearance settings" (lambda () (interactive) (customize-group 'appearance)))])
 
-;; Clearer separation between buffers
-;; (window-divider-mode)
+;; A hairline along the bottom of each window: between windows stacked
+;; one above the other, and -- with no mode line -- between the bottom
+;; window and the minibuffer, which is otherwise hard to tell from the
+;; code above it.  One pixel, in the hairline colour; see
+;; `rvb/ui-page-chrome--derive-faces'.  The frame is created with it
+;; already (early-init.el), so turning it on changes nothing there.
+(setq window-divider-default-places 'bottom-only
+      window-divider-default-bottom-width 1)
+(window-divider-mode 1)
 
 ;; ;;; Magit todos
 ;; (use-package magit-todos
@@ -880,80 +1196,5 @@ direction and return nil when neither split is possible."
   (if c64-frame-mode
       (c64-frame--apply (selected-frame))
     (c64-frame--restore-state (selected-frame))))
-
-;;; Tab buttons as letters rather than pictures
-;;
-;; The buttons in the tab bar -- the close cross, the new-tab plus, the
-;; history chevrons -- are icons, and on a graphical display an icon is
-;; an image.  Two things follow, and both of them show:
-;;
-;;   The image is drawn with a face of its own, `shadow', which carries a
-;;   background as well as a foreground.  That background is painted into
-;;   the middle of whatever tab the button sits on, so the current tab
-;;   ends up with a white patch and a black cross in it instead of its
-;;   own colours.  No theme can fix that: one static face cannot be both
-;;   of the two kinds of tab it lands on.
-;;
-;;   The image is `:margin 1', a pixel on every side, and taller than the
-;;   text beside it.  The tab bar's row is sized to the tallest thing in
-;;   it, and the pixels the tabs do not reach are painted with the bar's
-;;   own face -- a pale line between the tabs and the header line right
-;;   under them.
-;;
-;; Text has neither problem.  `tab-bar-tab-name-format-face' adds the
-;; tab's face to the whole name, close button included, so the cross
-;; takes the colours of the tab it belongs to; and a row of text is as
-;; tall as text, so the current tab fills it to the edge.
-;;
-;; The cross is U+00D7 MULTIPLICATION SIGN rather than U+2715: SF Mono
-;; has the one and not the other, and a character the default font
-;; lacks sends Emacs looking through every installed font for it the
-;; first time it is drawn -- over half a second of every startup, since
-;; the tab bar is the first thing drawn.
-;;
-;; Defined here rather than assigned: `tab-bar--load-buttons' runs each
-;; time `tab-bar-mode' is turned on and would overwrite a variable set
-;; from here, but it defines each icon only `unless' one already exists.
-(require 'icons)
-
-(define-icon tab-bar-close nil
-  '((text " ×"))
-  "Icon for closing the clicked tab."
-  :version "30.1"
-  :help-echo "Click to close tab")
-
-(define-icon tab-bar-new nil
-  '((text " + "))
-  "Icon for creating a new tab."
-  :version "30.1"
-  :help-echo "New tab")
-
-;; The history chevrons only appear with `tab-bar-history-mode', which
-;; defines them when it is turned on -- same `unless', same treatment.
-(define-icon tab-bar-back nil
-  '((text " < "))
-  "Icon for going back in tab history."
-  :version "30.1")
-
-(define-icon tab-bar-forward nil
-  '((text " > "))
-  "Icon for going forward in tab history."
-  :version "30.1")
-
-;; The tab line's close button is the same picture with the same face,
-;; and its button variable is built when tab-line.el loads -- which is
-;; after this file, so defining the icon here is enough there too.
-(define-icon tab-line-close nil
-  '((text " ×"))
-  "Icon for closing the clicked tab."
-  :version "30.1"
-  :help-echo "Click to close tab")
-
-;; The button *strings* are built once, when `tab-bar-mode' is turned on,
-;; from whatever icons existed at that moment.  A tab bar already running
-;; when this file is loaded therefore keeps its pictures until the mode
-;; is toggled.  Rebuilding here means re-evaluating this file is enough.
-(when (fboundp 'tab-bar--load-buttons)
-  (tab-bar--load-buttons))
 
 (provide 'rvb-ui)

@@ -26,7 +26,9 @@
 ;; leaving a white sliver down both sides.  The fringes still keep the
 ;; text off the edge of the window.
 (dolist (parameter '((tab-bar-lines . 1) (vertical-scroll-bars) (tool-bar-lines . 0)
-                     (internal-border-width . 0)))
+                     (internal-border-width . 0)
+                     ;; `window-divider-mode', bottom only (rvb-ui.el).
+                     (bottom-divider-width . 1) (right-divider-width . 0)))
   (add-to-list 'default-frame-alist parameter)
   (add-to-list 'initial-frame-alist parameter))
 ;; Changing the font, the tab bar or the like resizes the frame to keep

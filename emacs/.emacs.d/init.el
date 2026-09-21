@@ -43,6 +43,7 @@ ARG is its (NAME OPTIONS REVISION)."
 (add-to-list 'load-path (expand-file-name "rvb-lisp" user-emacs-directory))
 (require 'rvb-settings)
 (require 'rvb-ui)
+(require 'rvb-tabs)
 (require 'rvb-completions)
 (require 'rvb-langs)
 (require 'rvb-editing)

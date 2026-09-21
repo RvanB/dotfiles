@@ -26,6 +26,13 @@
   "A one-bit digital page of ink, paper, screens, and reversed video.")
 
 (put 'rvb3 'rvb/ns-appearance 'dark)
+;; What rvb-ui.el should do under this theme: draw the header scrollbar
+;; as a slider -- a line with a striped handle on it -- and leave the
+;; line numbers the chrome grey below rather than blending them into the
+;; page.  (The tab bar is not the theme's at all; see rvb-tabs.el.)  See
+;; `rvb/ui-page-chrome--theme-style'.
+(put 'rvb3 'rvb/ui-page-chrome
+     '(:bar-slider t :line-number-background t))
 
 (let ((class '((class color) (min-colors 89)))
       (graphic '((type graphic) (class color) (min-colors 89)))
@@ -37,6 +44,9 @@
       (wash      "#ffffff")
       (wash-deep "#ffffff")
       (rule      "#b5b5b5")   ; non-text hairlines and borders
+      ;; Everything around the text -- the margin, the header, the tab
+      ;; it belongs to -- so that only the text itself is the page.
+      (chrome    "#e8e8e8")
       (ink       "#171717")   ; the body
       (comment   "#666666")   ; comments recede without losing readability
       ;; Keep semantic role names below without weakening their text colour.
@@ -58,6 +68,9 @@
    ;; The page.
    `(default ((,class (:foreground ,ink :background ,paper))))
    `(cursor ((,class (:background ,ink))))
+   ;; The page, not the chrome: side by side, one window's right fringe
+   ;; and the next one's left make a strip between them, and a grey one
+   ;; reads as a bar dividing them rather than as paper.
    `(fringe ((,class (:foreground ,rule :background ,paper))))
    ;; Keep these attributes direct rather than inherited.  Magit diff faces
    ;; specify their own foregrounds, and could otherwise leave white addition
@@ -76,8 +89,9 @@
    `(window-divider-first-pixel ((,class (:foreground ,rule))))
    `(window-divider-last-pixel ((,class (:foreground ,rule))))
    `(shadow ((,class (:foreground ,ink :background ,wash))))
-   `(line-number ((,class (:foreground ,grey :background ,paper))))
-   `(line-number-current-line ((,class (:foreground ,ink :background ,wash))))
+   `(line-number ((,class (:foreground ,grey :background ,chrome))))
+   `(line-number-current-line ((,class (:foreground ,ink :background ,chrome
+                                                    :weight bold))))
    ;; Ruled off rather than boxed in: the mode line is the same paper,
    ;; separated by a hairline.
    `(mode-line ((,class (:foreground ,ink :background ,paper
@@ -89,31 +103,37 @@
    `(header-line ((,class (:foreground ,paper :background ,ink :box nil))))
    ;; The band says which of the two things the keyboard is doing.
    ;; Typing into the buffer is the quiet state, so the header is the
-   ;; printed screen; giving commands -- God Mode, or a buffer that
-   ;; cannot be typed into at all -- is the unequivocal one, so it is
-   ;; solid reversed video, as every other strong state here is.
+   ;; chrome grey the margin is, ruled off from the text below by a
+   ;; hairline -- the mode line's rule, turned over -- and continuing the
+   ;; current tab above it; giving commands -- God Mode -- is
+   ;; the unequivocal one, so it is solid reversed video, as every other
+   ;; strong state here is.
    ;;
    ;; `:stipple nil' on the command face is not decoration.  The band
    ;; composes the command face *over* the header face, so an attribute
    ;; the command face leaves out is taken from the header face beneath
    ;; it -- and the screen would show through the solid black.
    `(rvb/ui-page-chrome-header
-     ((,graphic (:inherit rvb3-stipple-face))
-      (,class (:foreground ,ink :background ,paper))))
+     ((,class (:foreground ,ink :background ,chrome :stipple nil
+                           :underline (:color ,rule :position t)))))
    `(rvb/ui-page-chrome-command
      ((,class (:foreground ,paper :background ,ink :stipple nil))))
-   ;; The scrollbar keeps its own colours whichever state the band is
-   ;; in, so that it reads as one thing rather than two: the length of
-   ;; the buffer is a blank strip of paper, and the part of it on screen
-   ;; is a solid mark on that strip.  Both are stated outright rather
-   ;; than inherited, because what they would inherit is the band, which
-   ;; is the thing they must not follow.
+   ;; The scrollbar keeps its own look whichever state the band is in, so
+   ;; that it reads as one thing rather than two: the length of the
+   ;; buffer is a line of ink across the header, and the part of it on
+   ;; screen is a white handle of grip lines sitting on that line -- a
+   ;; slider.  rvb-ui.el draws both, in these colours.
    `(rvb/ui-page-chrome-scroll-trough
-     ((,class (:foreground ,paper :background ,paper :stipple nil))))
+     ((,graphic (:foreground ,ink :background ,chrome))
+      (,class (:foreground ,paper :background ,paper))))
    `(rvb/ui-page-chrome-scroll-handle
-     ((,class (:foreground ,ink :background ,ink :stipple nil))))
+     ((,graphic (:foreground ,ink :background ,paper))
+      (,class (:foreground ,ink :background ,ink))))
+   ;; Reversed video, like every other highlight here.  `:stipple nil'
+   ;; for the same reason as the command face: a mouse face is laid over
+   ;; the band's, and whatever it does not say is the band's.
    `(rvb/ui-page-chrome-breadcrumb-highlight
-     ((,class (:foreground ,ink :background ,paper))))
+     ((,class (:foreground ,paper :background ,ink :stipple nil))))
    `(minibuffer-prompt ((,class (:foreground ,ink))))
    `(tooltip ((,class (:foreground ,ink :background ,paper
                                   :box (:line-width 1 :color ,rule)))))
@@ -411,34 +431,16 @@
    ;; an underline in ink, and reversed video that Emacs swaps into paper
    ;; on ink -- the same reversed video everything else here uses.
 
-   ;; Tabs and the rest.
-   ;; The bar is a black rule across the top of the frame, and the tab
-   ;; you are on is the page opened out of it: the only paper in the
-   ;; row.  The tabs you are not on are lettering on the rule itself,
-   ;; which is why nothing marks them off -- there is one thing to find
-   ;; here, and it is the white one.
+   ;; Tabs and the rest.  The tab *bar* is not styled here: rvb-tabs.el
+   ;; draws it the same under every theme, in colours from this one's.
    ;;
-   ;; `:box nil' outright on each: the boxes the stock faces carry draw a
-   ;; raised edge around every tab, and a face this theme does not
-   ;; mention keeps whatever its `defface' says.
-   `(tab-bar ((,class (:foreground ,paper :background ,ink :box nil))))
-   `(tab-bar-tab
-     ((,class (:foreground ,ink :background ,paper :weight bold :box nil))))
-   `(tab-bar-tab-inactive
-     ((,class (:foreground ,paper :background ,ink :box nil))))
-   `(tab-bar-tab-group-current
-     ((,class (:foreground ,ink :background ,paper :weight bold :box nil))))
-   `(tab-bar-tab-group-inactive
-     ((,class (:foreground ,paper :background ,ink :box nil))))
-   `(tab-bar-tab-ungrouped
-     ((,class (:foreground ,comment :background ,ink :box nil))))
-   ;; The tab line reads the same way as the tab bar: a black rule with
+   ;; The tab line reads the way the tab bar does: a black rule with
    ;; the current tab opened out of it.  `:box nil' for the same reason
    ;; -- the stock faces carry a `released-button' box, and a face this
    ;; theme does not mention keeps its `defface'.
    `(tab-line ((,class (:foreground ,paper :background ,ink :box nil))))
    `(tab-line-tab-current
-     ((,class (:foreground ,ink :background ,paper :weight bold :box nil))))
+     ((,class (:foreground ,ink :background ,chrome :weight bold :box nil))))
    ;; The window's own buffer, in a window that is not selected.
    `(tab-line-tab ((,class (:foreground ,paper :background ,ink :box nil))))
    `(tab-line-tab-inactive
