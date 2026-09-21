@@ -20,6 +20,7 @@
 
 (use-package expand-region
   :ensure t
+  :defer t
   :config
   (setq expand-region-smart-cursor t)
   ;; Prioritize symbol over word

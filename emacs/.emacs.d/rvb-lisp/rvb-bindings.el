@@ -16,9 +16,8 @@
 (use-package hydra
   :ensure t)
 
-(require 'magit)
-(keymap-unset magit-status-mode-map "C-c C-w" t)
 (with-eval-after-load 'magit
+  (keymap-unset magit-status-mode-map "C-c C-w" t)
   ;; Unbind C-c C-w in all relevant magit maps
   (dolist (map (list magit-mode-map
                      magit-status-mode-map

@@ -905,13 +905,19 @@ direction and return nil when neither split is possible."
 ;; takes the colours of the tab it belongs to; and a row of text is as
 ;; tall as text, so the current tab fills it to the edge.
 ;;
+;; The cross is U+00D7 MULTIPLICATION SIGN rather than U+2715: SF Mono
+;; has the one and not the other, and a character the default font
+;; lacks sends Emacs looking through every installed font for it the
+;; first time it is drawn -- over half a second of every startup, since
+;; the tab bar is the first thing drawn.
+;;
 ;; Defined here rather than assigned: `tab-bar--load-buttons' runs each
 ;; time `tab-bar-mode' is turned on and would overwrite a variable set
 ;; from here, but it defines each icon only `unless' one already exists.
 (require 'icons)
 
 (define-icon tab-bar-close nil
-  '((text " ✕"))
+  '((text " ×"))
   "Icon for closing the clicked tab."
   :version "30.1"
   :help-echo "Click to close tab")
@@ -938,7 +944,7 @@ direction and return nil when neither split is possible."
 ;; and its button variable is built when tab-line.el loads -- which is
 ;; after this file, so defining the icon here is enough there too.
 (define-icon tab-line-close nil
-  '((text " ✕"))
+  '((text " ×"))
   "Icon for closing the clicked tab."
   :version "30.1"
   :help-echo "Click to close tab")

@@ -5,8 +5,17 @@
 
 (setq-default indent-tabs-mode nil)
 
-;; Garbage collection
-(setq gc-cons-threshold 100000000)
+;; Garbage collection.  early-init.el turns it off for startup; this is
+;; the threshold once Emacs is up.  Big enough that collections are
+;; rare, small enough that each one is short -- at 100 MB a single
+;; collection took over half a second.  Collecting when Emacs loses
+;; focus does the work while you are looking elsewhere.
+(add-hook 'emacs-startup-hook
+          (lambda () (setq gc-cons-threshold (* 32 1024 1024))))
+(add-function :after after-focus-change-function
+              (lambda ()
+                (unless (frame-focus-state)
+                  (garbage-collect))))
 
 ;; Read more from a process at once
 (setq read-process-output-max (* 1024 1024))
@@ -46,6 +55,10 @@
 (use-package exec-path-from-shell
   :ensure t
   :config
+  ;; Every variable wanted from the login shell, fetched in one go: each
+  ;; separate call starts another login shell.
+  (setq exec-path-from-shell-variables
+        '("PATH" "MANPATH" "PERL5LIB" "JAVA_HOME"))
   (when (memq window-system '(mac ns x))
     (exec-path-from-shell-initialize)))
 

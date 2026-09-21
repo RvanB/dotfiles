@@ -1,7 +1,8 @@
+;;; -*- lexical-binding: t; -*-
 ;;; Org mode
-;; Everything below sets Org's own variables and calls its functions, so
-;; load it first rather than relying on `org-mouse' further down to.
-(require 'org)
+;; Not loaded here -- Org takes half a second, and nothing needs it until
+;; an Org buffer opens.  Its options are set ahead of it, which a
+;; defcustom respects, and what needs Org itself waits for it below.
 
 (setq org-directory
       (file-name-as-directory
@@ -93,21 +94,20 @@ specifications to no ellipsis explicitly."
 ;;; reveals the raw leading stars, and the same artifact shows beside an
 ;;; Org Modern folding arrow.  Keep the click behavior but use a direct
 ;;; mouse binding with no hover face.
-(require 'org-mouse)
-(setq org-mouse-features (remove 'activate-stars org-mouse-features))
-
 (defun rvb/org-mouse-cycle-heading (event)
   "Cycle the Org heading clicked in EVENT."
   (interactive "e")
   (mouse-set-point event)
   (org-cycle))
 
-(defvar rvb/org-heading-mouse-map
-  (let ((map (make-sparse-keymap)))
-    (set-keymap-parent map org-mouse-map)
-    (define-key map [mouse-1] #'rvb/org-mouse-cycle-heading)
-    map)
+(defvar rvb/org-heading-mouse-map (make-sparse-keymap)
   "Mouse map for clickable Org heading markers without a hover face.")
+(define-key rvb/org-heading-mouse-map [mouse-1] #'rvb/org-mouse-cycle-heading)
+
+(with-eval-after-load 'org
+  (require 'org-mouse)
+  (setq org-mouse-features (remove 'activate-stars org-mouse-features))
+  (set-keymap-parent rvb/org-heading-mouse-map org-mouse-map))
 
 (defun rvb/org-activate-heading-mouse-map ()
   "Make Org heading markers clickable without highlighting them."

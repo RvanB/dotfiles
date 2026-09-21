@@ -17,7 +17,6 @@
 
 (require 'cl-lib)
 (require 'json)
-(require 'ol)
 (require 'subr-x)
 
 (defgroup rvb/github nil
@@ -789,8 +788,13 @@ BRACKETP is non-nil for a bracketed link."
                   (when (buffer-live-p buffer)
                     (with-current-buffer buffer (font-lock-flush)))))))))))
 
-(org-link-set-parameters "https" :activate-func #'rvb/github-activate)
-(org-link-set-parameters "http" :activate-func #'rvb/github-activate)
+(declare-function org-link-set-parameters "ol" (type &rest parameters))
+
+;; Registered when Org's link library loads, not before: requiring it
+;; here would load much of Org at startup.
+(with-eval-after-load 'ol
+  (org-link-set-parameters "https" :activate-func #'rvb/github-activate)
+  (org-link-set-parameters "http" :activate-func #'rvb/github-activate))
 
 (defun rvb/github-refresh ()
   "Forget every cached issue title and look them up again."

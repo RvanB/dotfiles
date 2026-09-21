@@ -35,10 +35,7 @@
 (require 'calendar)
 (require 'cl-lib)
 (require 'subr-x)
-(require 'cus-edit)
 (require 'json)
-(require 'magit)
-(require 'org)
 (require 'parse-time)
 (require 'transient)
 
@@ -47,6 +44,17 @@
 
 ;; Keep declarations for the Org entry points used below explicit.
 (declare-function org-narrow-to-subtree "org" (&optional element))
+
+;; Magit and Org are not loaded with this file -- together they are over
+;; a second and a half of startup.  Org arrives with the status buffer,
+;; whose mode derives from it; Magit is loaded by both feature modes,
+;; whose faces inherit its.
+(declare-function magit-diff-range "magit-diff" (rev-or-range &optional args files))
+(declare-function magit-diff-paths "magit-diff" (a b))
+(declare-function magit-show-commit "magit-diff" (rev &optional args files module))
+(declare-function magit-status-setup-buffer "magit-status" (&optional directory))
+(declare-function magit-list-repos "magit-repos" ())
+(defvar magit-repository-directories)
 (declare-function org-fold-hide-subtree "org-fold" ())
 
 ;; Optional: rvb-github.el supplies issue lookups and the issue body
@@ -2731,6 +2739,8 @@ worktree redraws the list within `auto-revert-interval'.
 feature at point, \\[rvb-feature-dispatch] is the
 command menu, and \\[revert-buffer] redraws."
   :interactive nil
+  ;; Its faces inherit Magit's; see the note at the top of the file.
+  (require 'magit)
   (setq buffer-read-only t)
   (setq-local revert-buffer-function
               (lambda (&rest _) (rvb-feature-list-refresh)))
@@ -3493,6 +3503,7 @@ Auto Revert keeps git's half current: this buffer visits no file, so
 worktree redraws it.  Never while you have unsaved edits -- a redraw
 rereads the Org file."
   :interactive nil
+  (require 'magit)
   (setq-local revert-buffer-function (lambda (&rest _) (rvb-feature-refresh)))
   (setq-local buffer-stale-function #'rvb-feature--status-stale-p)
   (add-hook 'window-selection-change-functions #'rvb-feature--refresh-on-revisit nil t)

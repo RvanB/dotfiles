@@ -141,7 +141,6 @@ before placing point there."
 (advice-add 'scroll-down-command :override #'rvb/scroll-down-command)
 
 (use-package ultra-scroll
-  :pin "manual"
   :vc (:url "https://github.com/jdtsmith/ultra-scroll"
 	    :rev :newest
 	    :branch "main")

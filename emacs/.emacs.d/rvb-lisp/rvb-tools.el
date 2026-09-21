@@ -1,12 +1,16 @@
 ;;; graphviz
 (use-package graphviz-dot-mode
   :ensure t
+  :defer t
   :config
   (setq graphviz-dot-indent-width 4))
 
 ;;; Magit
 (use-package magit
   :ensure t
+  ;; Over a second to load, so not at startup.  Its commands are
+  ;; autoloaded, and the feature buffers load it when they open.
+  :defer t
   :config
   ;; Magit's default hunk-region treatment deliberately replaces the
   ;; backgrounds *outside* an internal selection with the context background.
@@ -121,9 +125,14 @@ containing repositories as mutually exclusive.  Recurses through
 
 ;;; Debugger
 (use-package dap-mode
-  :ensure t)
+  :ensure t
+  ;; Loads all of lsp-mode, and Gnus through it: a second, at startup,
+  ;; for a debugger.  `dap-debug' and friends are autoloaded.
+  :defer t)
 
-(define-key dired-mode-map [mouse-2] 'dired-mouse-find-file)
+(with-eval-after-load 'dired
+  (define-key dired-mode-map [mouse-2] 'dired-mouse-find-file)
+  (define-key dired-mode-map [mouse-3] 'rvb/dired-mouse-mark))
 
 (defun rvb/dired-mouse-mark (event)
   "Toggle mark at mouse click."
@@ -134,6 +143,5 @@ containing repositories as mutually exclusive.  Recurses through
     (if (eq (char-after) dired-marker-char)
         (dired-unmark 1)
       (dired-mark 1))))
-(define-key dired-mode-map [mouse-3] 'rvb/dired-mouse-mark)
 
 (provide 'rvb-tools)

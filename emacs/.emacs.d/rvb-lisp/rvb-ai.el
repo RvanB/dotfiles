@@ -15,9 +15,24 @@
 
 (require 'project)
 
+(defun rvb/copilot-mode-soon ()
+  "Turn on `copilot-mode' in this buffer once Emacs is next idle.
+
+Not straight away: the first buffer to turn it on starts Copilot's
+server, most of a second, and a file should open without waiting for
+that.  Not at all in *scratch*, whose Lisp Interaction mode is a
+programming mode -- which cost every startup that same second."
+  (unless (derived-mode-p 'lisp-interaction-mode)
+    (run-with-idle-timer
+     0.5 nil
+     (lambda (buffer)
+       (when (buffer-live-p buffer)
+         (with-current-buffer buffer (copilot-mode 1))))
+     (current-buffer))))
+
 (use-package copilot
   :ensure t
-  :hook (prog-mode . copilot-mode)
+  :hook (prog-mode . rvb/copilot-mode-soon)
   :bind (:map copilot-completion-map
               ("<tab>" . copilot-accept-completion)
               ("TAB" . copilot-accept-completion)

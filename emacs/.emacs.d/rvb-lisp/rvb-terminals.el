@@ -4,12 +4,14 @@
 
 (use-package vterm
   :ensure t
+  :defer t
   :init
   (setq vterm-max-scrollback 100000)
   )
 
 (use-package multi-vterm
   :ensure t
+  :defer t
   :init
   )
 
@@ -33,8 +35,8 @@ if one already exists."
 
 (advice-add 'project-shell :override #'my-project-shell)
 
-(require 'tramp)
-(add-to-list 'tramp-remote-path 'tramp-own-remote-path)
+(with-eval-after-load 'tramp
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 
 (defgroup my/eshell-prompt nil
   "TRAMP-aware eshell prompt."

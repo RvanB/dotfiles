@@ -50,23 +50,24 @@
 
 ;; Jump to eglot symbols with consult
 (use-package consult-eglot
-  :ensure t)
+  :ensure t
+  :defer t)
 ;; Added embark support
 (use-package consult-eglot-embark
-  :ensure t)
-
-(exec-path-from-shell-copy-env "PERL5LIB")
+  :ensure t
+  :after (consult-eglot embark))
 
 (defun rvb/eglot-disable-inlay-hints ()
   "Keep Eglot inlay hints disabled by default in the current buffer."
   (eglot-inlay-hints-mode -1))
 
 (defun rvb/eglot-ensure-non-python ()
-  "Start Eglot in programming modes other than Python.
+  "Start Eglot in programming modes other than Python and Lisp.
 
 Python starts Eglot later from `python-base-mode-hook', after PET has
-configured the buffer-local environment."
-  (unless (derived-mode-p 'python-base-mode)
+configured the buffer-local environment.  Emacs Lisp has no language
+server, and trying cost *scratch* -- so every startup -- loading Eglot."
+  (unless (derived-mode-p 'python-base-mode 'lisp-data-mode)
     (eglot-ensure)))
 
 (use-package eglot
@@ -81,7 +82,8 @@ configured the buffer-local environment."
 
 ;;; Go
 (use-package go-mode
-  :ensure t)
+  :ensure t
+  :defer t)
 
 ;;; Java
 (use-package eglot-java
@@ -91,14 +93,13 @@ configured the buffer-local environment."
 ;; Rust
 (use-package rustic
   :ensure t
+  :defer t
   :init
   ;; Let Rustic use the richer built-in rust-ts-mode fontification.  In
   ;; particular, legacy rust-mode does not identify ordinary function calls.
   (setq rust-mode-treesitter-derive t)
   :config
   (setq rustic-lsp-client 'eglot))
-
-(exec-path-from-shell-copy-env "JAVA_HOME")
 
 ;;; Python
 ;;; PET - Python Executable Tracker
@@ -287,6 +288,7 @@ server is told to reread its configuration."
 
 (use-package pet
   :ensure t
+  :defer t
   :custom
   ;; Project configuration and virtualenvs live at (or above) the source
   ;; directory.  Avoid PET's recursive fallback, which otherwise walks large
@@ -328,23 +330,23 @@ server is told to reread its configuration."
 
 ;;; MARC
 (use-package marc-mode
-  :pin "manual"
   :vc (:url "https://github.com/rvanb/marc-mode.el"
             :rev :newest
             :branch "main"))
 
-(require 'eglot)
 ;; (add-to-list 'eglot-server-programs
 ;;              '(python-mode
 ;;                . ("lspx"
 ;;                   "--lsp" "ruff server"
 ;;                   "--lsp" "basedpyright-langserver --stdio")))
 
-(add-to-list 'eglot-server-programs '(marc-mode . ("marc-lsp-server")))
+(with-eval-after-load 'eglot
+  (add-to-list 'eglot-server-programs '(marc-mode . ("marc-lsp-server"))))
 (add-hook 'marc-mode-hook 'eglot-ensure)
 
 ;;; Perl
-(add-to-list 'eglot-server-programs '(perl-mode . ("pls")))
+(with-eval-after-load 'eglot
+  (add-to-list 'eglot-server-programs '(perl-mode . ("pls"))))
 
 ;;; Ruff formatting for Python
 (use-package ruff-format
