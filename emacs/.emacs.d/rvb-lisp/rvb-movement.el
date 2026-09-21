@@ -140,6 +140,44 @@ before placing point there."
 (advice-add 'scroll-up-command :override #'rvb/scroll-up-command)
 (advice-add 'scroll-down-command :override #'rvb/scroll-down-command)
 
+(defun rvb/window-last-start (window)
+  "Return the latest start WINDOW should scroll to.
+That is, the start that puts the last line of its buffer at the bottom
+of the window."
+  (with-current-buffer (window-buffer window)
+    (save-excursion
+      (goto-char (point-max))
+      (vertical-motion (- 1 (window-body-height window)) window)
+      (point))))
+
+(defun rvb/clamp-window-to-end (window)
+  "Keep WINDOW from being scrolled past the end of its buffer.
+
+Emacs lets a window scroll until only the buffer's last line is left,
+at the top, over a window of nothing.  The end of the buffer should be
+where scrolling stops: the last line at the bottom of the window.  So
+a window whose start is later than that is pulled back to it, with any
+partial-line pixel scroll dropped."
+  (with-current-buffer (window-buffer window)
+    (let ((last-start (rvb/window-last-start window)))
+      (when (or (> (window-start window) last-start)
+                (and (= (window-start window) last-start)
+                     (> (window-vscroll window t) 0)))
+        (set-window-start window last-start)
+        (set-window-vscroll window 0 t)))))
+
+(defun rvb/ultra-scroll-down-clamped (scroll delta)
+  "Call SCROLL with DELTA, then keep the window off the end of the buffer.
+
+Wrapped around `ultra-scroll-down', which scrolls toward the end.  At
+the very end it signals `end-of-buffer', and ultra-scroll answers that
+by putting `point-max' at the top of the window -- the empty window
+this is here to prevent -- so the signal is taken here instead."
+  (condition-case nil
+      (funcall scroll delta)
+    (end-of-buffer nil))
+  (rvb/clamp-window-to-end (selected-window)))
+
 (use-package ultra-scroll
   :vc (:url "https://github.com/jdtsmith/ultra-scroll"
 	    :rev :newest
@@ -148,6 +186,7 @@ before placing point there."
   (setq scroll-conservatively 1
         scroll-margin 0)
   :config
+  (advice-add 'ultra-scroll-down :around #'rvb/ultra-scroll-down-clamped)
   (ultra-scroll-mode 1))
 
 (defun rvb/back-to-indentation-or-beginning ()

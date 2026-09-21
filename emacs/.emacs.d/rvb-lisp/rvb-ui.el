@@ -352,9 +352,9 @@ see `rvb/ui-page-chrome--derive-faces'.")
 ;; out from `default' whenever a theme is enabled.  A theme that does
 ;; style a face still wins: this only rewrites the defaults.
 ;;
-;; The scrollbar faces supply colours only -- the track's dots are its
-;; foreground on its background, the handle's grip lines and outline
-;; likewise; `rvb/ui-page-chrome--draw-bar' draws them.
+;; The scrollbar faces supply colours only -- the track's line is its
+;; foreground, the handle's outline and fill are its foreground and
+;; background; `rvb/ui-page-chrome--draw-bar' draws them.
 
 (require 'color)
 
@@ -374,11 +374,8 @@ see `rvb/ui-page-chrome--derive-faces'.")
 A theme asks by putting a plist on its own symbol, as rvb3 does:
 
   (put \='rvb3 \='rvb/ui-page-chrome
-       \='(:bar-slider t :tab-slants t :line-number-background t))
+       \='(:tab-slants t :line-number-background t))
 
-  :bar-slider             draw the header scrollbar as a slider -- a
-                          text-coloured line with a striped handle on
-                          it -- rather than a plain bar
   :tab-slants             give tabs slanted sides, and pad them by
                           `rvb/tab-bar-vertical-padding'
   :line-number-background keep the theme's line-number background
@@ -434,13 +431,15 @@ text."
              ((t :inherit header-line :stipple nil)))
             (rvb/ui-page-chrome-breadcrumb-highlight
              ((t :foreground ,bg :background ,fg :stipple nil)))
-            ;; A plain bar: the track is the band, the handle a solid
-            ;; mid-tone.  A theme asking for `:bar-slider' styles these
-            ;; itself; see `rvb/ui-page-chrome--theme-style'.
+            ;; Graphically, a slider: a text-coloured line with a
+            ;; page-coloured handle outlined in text.  A terminal cannot
+            ;; draw that, so there it is a plain bar: the track is the
+            ;; band, the handle a solid mid-tone.
             (rvb/ui-page-chrome-scroll-trough
              ((t :foreground ,fg :background ,chrome :underline ,underline)))
             (rvb/ui-page-chrome-scroll-handle
-             ((t :foreground ,fg :background ,handle :underline ,underline))))))
+             ((((type graphic)) :foreground ,fg :background ,bg)
+              (t :foreground ,fg :background ,handle :underline ,underline))))))
     (when (and fg bg)
       (pcase-dolist (`(,face ,spec) specs)
         (face-spec-set face spec 'face-defface-spec))
@@ -667,8 +666,14 @@ font matches ordinary buffer text instead of the generic `fixed-pitch' face."
                                 path (string-width path)
                                 (- (string-width path) (1- room))))))
            (gap (max 2 (- width (string-width path) (string-width status) 2))))
-      (truncate-string-to-width
-       (concat " " path (make-string gap ?\s) status " ") width))))
+      ;; What `:eval' returns is read as a mode-line format again, so a
+      ;; literal `%' -- the percentage, or one in a file name -- has to
+      ;; be doubled, or it and the character after it are taken as a
+      ;; %-construct and vanish.
+      (string-replace
+       "%" "%%"
+       (truncate-string-to-width
+        (concat " " path (make-string gap ?\s) status " ") width)))))
 
 (defun rvb/ui-page-chrome-scroll-drag (start-event)
   "Scroll the buffer by dragging the header-line scrollbar.
@@ -684,7 +689,7 @@ That test cannot be answered from outside, either: `posn-area' is a
 rebinding it reaches nothing.  What is left is to keep the loop here,
 where the one line that has to differ can differ.  Everything else is
 MLScroll's, down to the pixel arithmetic, and the scrolling itself is
-still `mlscroll-scroll-to'."
+`rvb/ui-page-chrome--scroll-to'."
   (interactive "e")
   (let* ((start-posn (event-start start-event))
          (start-win (posn-window start-posn))
@@ -692,7 +697,7 @@ still `mlscroll-scroll-to'."
          ;; Where in the bar the click landed, and where that is on screen.
          (x (car (posn-object-x-y start-posn)))
          (xstart-abs (car (posn-x-y start-posn)))
-         (xstart (mlscroll-scroll-to x lcr start-win))
+         (xstart (rvb/ui-page-chrome--scroll-to x lcr start-win))
          event end xnew)
     (unless (terminal-parameter nil 'xterm-mouse-mode)
       (pcase-let ((`(,_ ,scroll-width ,border)
@@ -709,20 +714,21 @@ still `mlscroll-scroll-to'."
             (when (and (memq (posn-area end) '(header-line mode-line))
                        (>= xnew 0)
                        (<= xnew (- scroll-width border)))
-              (mlscroll-scroll-to xnew nil start-win))))))))
+              (rvb/ui-page-chrome--scroll-to xnew nil start-win))))))))
 
 (defvar rvb/ui-page-chrome--scroll-keymap
   (let ((map (make-sparse-keymap)))
     ;; A click on the mode line arrives as a `mode-line' event and a
     ;; click on the header line as a `header-line' one, so MLScroll's own
     ;; map is one the bar can never be reached through up here.  The
-    ;; wheel commands are its; the drag is the one above.
+    ;; drag and the wheel are ours, both through
+    ;; `rvb/ui-page-chrome--scroll-to'.
     ;;
     ;; The press: it jumps the buffer to where it landed, and then
     ;; follows the pointer, which is what dragging is here.
     (define-key map [header-line down-mouse-1] #'rvb/ui-page-chrome-scroll-drag)
-    (define-key map [header-line wheel-up] #'mlscroll-wheel)
-    (define-key map [header-line wheel-down] #'mlscroll-wheel)
+    (define-key map [header-line wheel-up] #'rvb/ui-page-chrome-scroll-wheel)
+    (define-key map [header-line wheel-down] #'rvb/ui-page-chrome-scroll-wheel)
     (define-key map [header-line wheel-left] #'ignore)
     (define-key map [header-line wheel-right] #'ignore)
     map)
@@ -751,11 +757,11 @@ fill at the window's right edge showing the same thing."
 ;;;; Drawing the bar
 ;;
 ;; MLScroll's bar is three spaces of set pixel widths: the track before
-;; the handle, the handle, the track after.  Under a theme asking for
-;; `:bar-slider' each is given an image of its exact width instead, so
-;; the bar reads as a slider: the track is the band itself with a
-;; text-coloured line through its middle, and the handle is a box of
-;; grip lines sitting on that line, as tall as the text.  Images rather
+;; the handle, the handle, the track after.  On a graphical frame each
+;; is given an image of its exact width instead, so the bar reads as a
+;; slider: the track is the band itself with a text-coloured line
+;; through its middle, and the handle is an outlined box sitting on
+;; that line, as tall as the text.  Images rather
 ;; than faces because a line through the middle of a space, or a box
 ;; shorter than the line it is on, is not something a face can draw.
 
@@ -792,10 +798,7 @@ and fill; :rule, the hairline along the bottom of the band, or nil."
                     (ink (plist-get colors :handle)))
                 (svg-rectangle svg 0.5 (+ top 0.5) (- width 1) (- bottom top)
                                :fill (plist-get colors :handle-ground)
-                               :stroke ink :stroke-width 1)
-                (cl-loop for x from 3 below (- width 2) by 3
-                         do (svg-rectangle svg x (1+ top) 1 (- bottom top 1)
-                                           :fill ink)))))
+                               :stroke ink :stroke-width 1))))
            (when-let* ((rule (plist-get colors :rule)))
              (svg-rectangle svg 0 (1- height) width 1 :fill rule))
            (svg-image svg :ascent (plist-get metrics :ascent)))
@@ -844,8 +847,7 @@ was before without it."
                   (keymap (rvb/ui-page-chrome--scroll-keymap)))
         (setq bar (copy-sequence bar))
         (put-text-property 0 (length bar) 'local-map keymap bar)
-        (when (and (display-graphic-p (window-frame window))
-                   (rvb/ui-page-chrome--theme-style :bar-slider))
+        (when (display-graphic-p (window-frame window))
           (rvb/ui-page-chrome--draw-bar bar window)))
       bar)))
 
@@ -994,6 +996,49 @@ puts it back."
   (setq mlscroll-flank-face-properties 'rvb/ui-page-chrome-scroll-trough
         mlscroll-cur-face-properties 'rvb/ui-page-chrome-scroll-handle))
 
+(defun rvb/ui-page-chrome--scroll-to (x &optional idx win)
+  "Scroll WIN to the place X in the scrollbar stands for.
+
+`mlscroll-scroll-to', with X and IDX meaning what they mean there, and
+the same return value, but two things different.  The far end of the
+bar is the end of the buffer -- the last line at the *bottom* of the
+window, not alone at the top of an empty one -- so the whole width of
+the bar is the distance the view can actually travel.  And only the
+view moves: point stays where it is unless it would leave the window,
+the way a scrollbar anywhere else behaves."
+  (pcase-let* ((win (or win (selected-window)))
+               (`(,left ,cur ,right . ,_) (mlscroll--part-widths-linenos win))
+               (border (caddr (terminal-parameter nil 'mlscroll-size)))
+               (barwidth (+ left cur right))
+               (xpos (cond ((symbolp x) ; the wheel: half the handle either way
+                            (+ left (if (eq x 'down)
+                                        (- (/ (float cur) 2))
+                                      (/ (* (float cur) 3) 2))))
+                           ((null idx) x)
+                           ((= idx 0) (- x border))
+                           ((= idx 1) (+ x left))
+                           ((= idx 2) (+ x left cur))
+                           (t x)))
+               (frac (max 0 (min 1 (/ (float xpos) barwidth)))))
+    (with-current-buffer (window-buffer win)
+      (let* ((last-line (line-number-at-pos (rvb/window-last-start win)))
+             (target (save-excursion
+                       (goto-char (point-min))
+                       (forward-line (round (* frac (1- last-line))))
+                       (point))))
+        (unless (= target (window-start win))
+          (set-window-start win target)
+          (set-window-vscroll win 0 t)
+          (rvb/clamp-window-to-end win))))
+    xpos))
+
+(defun rvb/ui-page-chrome-scroll-wheel (event)
+  "Scroll by the wheel EVENT over the header-line scrollbar."
+  (interactive "e")
+  (rvb/ui-page-chrome--scroll-to
+   (if (eq (event-basic-type event) 'wheel-up) 'up 'down)
+   nil (posn-window (event-start event))))
+
 (use-package mlscroll
   :ensure t
   :init
@@ -1005,7 +1050,7 @@ puts it back."
         ;; The border is drawn in the mode line's background, which is
         ;; not where this bar lives.
         mlscroll-border 0
-        ;; Wide enough that the handle's grip lines show even when the
+        ;; Wide enough that the handle reads as a handle even when the
         ;; window is a sliver of a long buffer.
         mlscroll-minimum-current-width 12)
   :config

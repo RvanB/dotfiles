@@ -144,6 +144,56 @@ would draw a raised edge around the bar, and the stock face inherits
   :version "30.1"
   :help-echo "Click to close tab")
 
+;; A tab is a workspace -- a window layout you come back to -- and the
+;; buffer that happens to be selected in it is no name for that: it
+;; changes under you as you work, and two tabs showing the same file
+;; read as the same tab.  A number does not move, so tabs are named for
+;; their place in the bar: "Workspace 1", "Workspace 2", and so on.
+;;
+;; In two halves, because a tab's name is stored on the tab and read
+;; back in two quite different places -- the bar itself, and the prompts
+;; `tab-switch' and `tab-bar-select-tab-by-name' complete from.
+;;
+;;   `tab-bar-tab-name-function' names a tab when it is made.  It takes
+;;   the position from the frame's own `tabs' parameter rather than
+;;   through `tab-bar-tabs-function', which is the other half and would
+;;   call straight back into this.
+;;
+;;   Naming a tab once is not enough, though: close or move one and
+;;   every name after it is a number out.  So `tab-bar-tabs-function' --
+;;   which every reader of the list goes through, the bar redrawing
+;;   through it and `tab-switch' completing through it -- renumbers the
+;;   tabs each time it is asked for them.
+;;
+;; A tab renamed by hand (`tab-rename') is left alone; that is the point
+;; of renaming one.  Clearing that name puts it back in the numbering.
+
+(defun rvb/tab-bar--name (i)
+  "Return the name of the tab in position I, counting from zero."
+  (format "Workspace %d" (1+ i)))
+
+(defun rvb/tab-bar-tab-name-workspace ()
+  "Return the current tab's name, from its place in the bar.
+For `tab-bar-tab-name-function'."
+  (rvb/tab-bar--name
+   (or (seq-position (frame-parameter nil 'tabs) 'current-tab
+                     (lambda (tab key) (eq (car tab) key)))
+       0)))
+
+(defun rvb/tab-bar-tabs-renumbered (&optional frame)
+  "Return FRAME's tabs, each named for its place in the bar.
+For `tab-bar-tabs-function'."
+  (let ((tabs (tab-bar-tabs frame))
+        (i 0))
+    (dolist (tab tabs tabs)
+      (unless (alist-get 'explicit-name tab)
+        (when-let* ((name (assq 'name tab)))
+          (setcdr name (rvb/tab-bar--name i))))
+      (setq i (1+ i)))))
+
+(setq tab-bar-tab-name-function #'rvb/tab-bar-tab-name-workspace
+      tab-bar-tabs-function #'rvb/tab-bar-tabs-renumbered)
+
 ;; A space either side of each tab's label -- its name and close cross --
 ;; so the first tab's name does not start hard against the edge of the
 ;; frame, which has no border to hold it off.  Added before the face is,

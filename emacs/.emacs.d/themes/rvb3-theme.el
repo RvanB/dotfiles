@@ -26,13 +26,12 @@
   "A one-bit digital page of ink, paper, screens, and reversed video.")
 
 (put 'rvb3 'rvb/ns-appearance 'dark)
-;; What rvb-ui.el should do under this theme: draw the header scrollbar
-;; as a slider -- a line with a striped handle on it -- and leave the
-;; line numbers the chrome grey below rather than blending them into the
-;; page.  (The tab bar is not the theme's at all; see rvb-tabs.el.)  See
+;; What rvb-ui.el should do under this theme: leave the line numbers
+;; the chrome grey below rather than blending them into the page.  (The
+;; tab bar is not the theme's at all; see rvb-tabs.el.)  See
 ;; `rvb/ui-page-chrome--theme-style'.
 (put 'rvb3 'rvb/ui-page-chrome
-     '(:bar-slider t :line-number-background t))
+     '(:line-number-background t))
 
 (let ((class '((class color) (min-colors 89)))
       (graphic '((type graphic) (class color) (min-colors 89)))
@@ -121,7 +120,7 @@
    ;; The scrollbar keeps its own look whichever state the band is in, so
    ;; that it reads as one thing rather than two: the length of the
    ;; buffer is a line of ink across the header, and the part of it on
-   ;; screen is a white handle of grip lines sitting on that line -- a
+   ;; screen is a white, outlined handle sitting on that line -- a
    ;; slider.  rvb-ui.el draws both, in these colours.
    `(rvb/ui-page-chrome-scroll-trough
      ((,graphic (:foreground ,ink :background ,chrome))
