@@ -144,6 +144,15 @@ not retried on the next redraw."
   (remhash key rvb/github--cache)
   (remhash key rvb/github--cache-time))
 
+(defun rvb/github-expire-issue (key)
+  "Treat what is known about issue KEY as stale, without forgetting it.
+The next lookup asks GitHub again while the old answer is still shown,
+where forgetting it would leave nothing to show in the meantime.  Its
+due date is expired along with it."
+  (dolist (k (list key (rvb/github--due-key key)))
+    (when (gethash k rvb/github--cache)
+      (puthash k 0 rvb/github--cache-time))))
+
 
 ;;; Rendering
 
@@ -240,6 +249,40 @@ names the operation for error messages."
                (funcall callback text)
              (message "%s failed: %s" what (string-trim text))
              (funcall callback nil))))))))
+
+(defun rvb/github-assigned-issues (callback &optional limit)
+  "Fetch the open issues assigned to you, then call CALLBACK with them.
+
+Across every repository you can see, as `gh search' finds them -- up to
+LIMIT, 100 by default.  CALLBACK receives a list of plists with :key
+\(\"owner/repo#42\"), :repo, :number, :title, :body and :url, or nil
+on failure.  Pull requests are left out; they are what a feature makes,
+not what it is for."
+  (rvb/github--run
+   (list "search" "issues" "--assignee=@me" "--state=open"
+         "--limit" (number-to-string (or limit 100))
+         "--json" "repository,number,title,body,url")
+   nil
+   (lambda (text)
+     (funcall
+      callback
+      (when text
+        (condition-case nil
+            (mapcar (lambda (issue)
+                      (let ((repo (alist-get 'nameWithOwner
+                                             (alist-get 'repository issue)))
+                            (number (alist-get 'number issue)))
+                        (list :key (format "%s#%s" repo number)
+                              :repo repo
+                              :number number
+                              :title (alist-get 'title issue)
+                              :body (alist-get 'body issue)
+                              :url (alist-get 'url issue))))
+                    (json-parse-string text :object-type 'alist
+                                       :array-type 'list :null-object nil))
+          (error (message "Could not read GitHub's list of your issues")
+                 nil)))))
+   "Finding your assigned issues"))
 
 (defun rvb/github-fetch-issue (key callback)
   "Fetch issue KEY, then call CALLBACK with what GitHub said.
@@ -385,6 +428,41 @@ Nil and nil are otherwise the same answer -- see
 `rvb/github-pull-request' -- and a caller about to say \"there is no
 pull request\" had better be sure."
   (eq (gethash (rvb/github--pr-key dir branch) rvb/github--cache) 'pending))
+
+(defun rvb/github-fetch-pull-request (dir branch callback)
+  "Ask GitHub now about BRANCH's pull request in DIR's repository.
+
+Unlike `rvb/github-pull-request', never answered from the cache: for a
+caller about to act on the answer rather than display it.  CALLBACK
+receives the same plist -- :number, :url, :title, :state -- or nil when
+there is none or the lookup failed.  The cache is updated as well."
+  (if (not (file-directory-p dir))
+      (funcall callback nil)
+    (let ((default-directory (file-name-as-directory dir))
+          (key (rvb/github--pr-key dir branch)))
+      (rvb/github--run
+       (list "api" "graphql"
+             "-f" (concat "query=" rvb/github--pr-query)
+             "-F" "owner={owner}" "-F" "repo={repo}"
+             "-f" (concat "branch=" branch))
+       nil
+       (lambda (text)
+         (let ((pr (and text (rvb/github--parse-pr text))))
+           (when text (rvb/github--finish key (or pr 'none)))
+           (funcall callback pr)))
+       (format "Finding the pull request for %s" branch)))))
+
+(defun rvb/github-pull-request-expired-p (dir branch)
+  "Return non-nil if what is known about BRANCH's pull request is stale.
+
+The pull-request counterpart of `rvb/github-issue-expired-p': an answer
+in hand that has passed `rvb/github-cache-ttl'.  That includes GitHub
+having said there is none, since somebody opening one elsewhere is one
+of the changes worth noticing.  Never true of a branch nobody has asked
+about yet, nor of one whose lookup is in flight."
+  (let ((key (rvb/github--pr-key dir branch)))
+    (and (gethash key rvb/github--cache)
+         (rvb/github--ask-p key))))
 
 (defun rvb/github-forget-pull-request (dir branch)
   "Forget what was cached about BRANCH's pull request in DIR."
