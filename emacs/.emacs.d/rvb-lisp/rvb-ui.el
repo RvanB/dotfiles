@@ -327,8 +327,8 @@ By default the page's own background, ruled off from the text below;
 see `rvb/ui-page-chrome--derive-faces'.")
 
 (defface rvb/ui-page-chrome-command
-  '((t :inherit header-line))
-  "Face supplying the page-chrome command-state colours.")
+  '((t :inherit default :inverse-video t :weight bold))
+  "Face for the page-chrome NAV indicator.")
 
 (defface rvb/ui-page-chrome-breadcrumb-highlight
   '((t :inverse-video t))
@@ -425,10 +425,10 @@ text."
           `((rvb/ui-page-chrome-header
              ((t :foreground ,fg :background ,chrome :stipple nil
                  :underline ,underline)))
-            ;; Command state is the unmistakable one: the theme's own
-            ;; header-line colours, which are the band's old look.
+            ;; Invert the page colours so NAV stands out under any theme.
             (rvb/ui-page-chrome-command
-             ((t :inherit header-line :stipple nil)))
+             ((t :foreground ,bg :background ,fg :weight bold
+                 :inverse-video nil :stipple nil)))
             (rvb/ui-page-chrome-breadcrumb-highlight
              ((t :foreground ,bg :background ,fg :stipple nil)))
             ;; Graphically, a slider: a text-coloured line with a
@@ -571,21 +571,8 @@ keep opening Dired and the scrollbar keeps scrolling."
                              string))
         (setq pos next)))))
 
-(defun rvb/ui-page-chrome--band-faces (face command-p)
-  "Return the faces a band drawn in FACE is made of.
-
-The command face is kept ahead of FACE rather than replacing it, so
-that FACE's non-colour attributes -- its stipple above all -- survive
-the composition.  Anything else drawn as part of the band asks for the
-faces here, so it cannot end up a different colour from the band it is
-part of."
-  (if command-p (list 'rvb/ui-page-chrome-command face) (list face)))
-
-(defun rvb/ui-page-chrome--band (window content face &optional command-p width)
+(defun rvb/ui-page-chrome--band (window content face &optional width)
   "Render CONTENT across WINDOW using FACE.
-
-When COMMAND-P is non-nil, change only the band's colors to indicate
-command state; retain the normal page-chrome face and font metrics.
 
 WIDTH is how many columns the band fills, defaulting to the whole
 window.  The scrollbar is given its columns this way: it paints its own
@@ -595,12 +582,6 @@ of it.
 The band uses the frame's `default' font attributes so its fixed-width
 font matches ordinary buffer text instead of the generic `fixed-pitch' face."
   (pcase-let* ((frame (window-frame window))
-               ;; Command state has its own theme face; it is not an error and
-               ;; should not change when diagnostic styling changes.
-               (header-background
-                (if command-p
-                    (face-background 'rvb/ui-page-chrome-command frame t)
-                  (face-background face frame t)))
                (default-family (face-attribute 'default :family frame))
                (default-height (face-attribute 'default :height frame))
                (default-weight (face-attribute 'default :weight frame))
@@ -614,20 +595,18 @@ font matches ordinary buffer text instead of the generic `fixed-pitch' face."
                (_ (unless (eq default-weight 'unspecified)
                     (setq font-attrs
                           (append font-attrs (list :weight default-weight)))))
-               (_ header-background)
                (rule (rvb/ui-page-chrome--rule-attributes frame))
                (band-face
-                (let ((faces (rvb/ui-page-chrome--band-faces face command-p)))
-                  (append (and rule (list rule))
-                          faces
-                          (and font-attrs (list font-attrs)))))
+                (append (and rule (list rule))
+                        (list face)
+                        (and font-attrs (list font-attrs))))
                (width (or width (window-total-width window)))
                (content (truncate-string-to-width content width))
                (band (concat (plist-get (rvb/ui-page-chrome--metrics frame) :strut)
                              content
                              (make-string (max 0 (- width (string-width content)))
                                           ?\s))))
-    (add-face-text-property 0 (length band) band-face nil band)
+    (add-face-text-property 0 (length band) band-face t band)
     (rvb/ui-page-chrome--claim-drag band)
     band))
 
@@ -653,8 +632,14 @@ font matches ordinary buffer text instead of the generic `fixed-pitch' face."
            ;; the mode line used, so it follows the same settings -- a
            ;; column with `column-number-mode', a size with
            ;; `size-indication-mode' -- and keeps its mouse menus.
-           (status (string-trim (format-mode-line mode-line-position
-                                                  nil window)))
+           (status (concat
+                    (when (rvb/ui-page-chrome--command-state-p
+                           (window-buffer window))
+                      (concat (propertize " NAV " 'face
+                                          'rvb/ui-page-chrome-command)
+                              " "))
+                    (string-trim (format-mode-line mode-line-position
+                                                   nil window))))
            ;; Reserve the right edge before truncating long paths so status
            ;; information can never be pushed out of the header.  Cut from
            ;; the left: the end of the path -- the file, and whether it
@@ -858,11 +843,9 @@ was before without it."
          ;; `mlscroll-width-chars' characters of the frame's font.
          (reserved (if bar (1+ mlscroll-width-chars) 0))
          (width (max 0 (- (window-total-width window) reserved)))
-         (command-p (rvb/ui-page-chrome--command-state-p
-                     (window-buffer window)))
          (band (rvb/ui-page-chrome--band
                 window (rvb/ui-page-chrome--header-content window width)
-                'rvb/ui-page-chrome-header command-p width)))
+                'rvb/ui-page-chrome-header width)))
     (if bar
         (let ((rule (rvb/ui-page-chrome--rule-attributes (window-frame window))))
           (when rule
@@ -870,8 +853,7 @@ was before without it."
           (list band
                 (rvb/ui-page-chrome--scroll-spacer
                  (append (and rule (list rule))
-                         (rvb/ui-page-chrome--band-faces 'rvb/ui-page-chrome-header
-                                                         command-p)))
+                         (list 'rvb/ui-page-chrome-header)))
                 bar))
       band)))
 
