@@ -100,23 +100,14 @@
                                               :box nil :overline ,rule))))
    `(mode-line-buffer-id ((,class (:foreground ,ink :weight bold))))
    `(header-line ((,class (:foreground ,paper :background ,ink :box nil))))
-   ;; The band says which of the two things the keyboard is doing.
-   ;; Typing into the buffer is the quiet state, so the header is the
-   ;; chrome grey the margin is, ruled off from the text below by a
-   ;; hairline -- the mode line's rule, turned over -- and continuing the
-   ;; current tab above it; giving commands -- God Mode -- is
-   ;; the unequivocal one, so it is solid reversed video, as every other
-   ;; strong state here is.
-   ;;
-   ;; `:stipple nil' on the command face is not decoration.  The band
-   ;; composes the command face *over* the header face, so an attribute
-   ;; the command face leaves out is taken from the header face beneath
-   ;; it -- and the screen would show through the solid black.
+   ;; The header stays chrome grey, with a hairline below.  God Mode's
+   ;; NAV badge alone uses solid reversed colours.
    `(rvb/ui-page-chrome-header
      ((,class (:foreground ,ink :background ,chrome :stipple nil
                            :underline (:color ,rule :position t)))))
    `(rvb/ui-page-chrome-command
-     ((,class (:foreground ,paper :background ,ink :stipple nil))))
+     ((,class (:foreground ,paper :background ,ink :stipple nil
+                           :inverse-video nil :weight bold))))
    ;; The scrollbar keeps its own look whichever state the band is in, so
    ;; that it reads as one thing rather than two: the length of the
    ;; buffer is a line of ink across the header, and the part of it on
