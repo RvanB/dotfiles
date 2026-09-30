@@ -341,8 +341,79 @@ server is told to reread its configuration."
 ;;                   "--lsp" "basedpyright-langserver --stdio")))
 
 (with-eval-after-load 'eglot
-  (add-to-list 'eglot-server-programs '(marc-mode . ("marc-lsp-server"))))
+  (add-to-list 'eglot-server-programs '(marc-mode . ("marc-lsp-server")))
+  (add-to-list 'eglot-server-programs '(marc-xml-mode . ("marc-lsp-server"))))
 (add-hook 'marc-mode-hook 'eglot-ensure)
+(add-hook 'marc-xml-mode-hook 'eglot-ensure)
+
+(require 'posframe)
+
+(defun rvb/marc-eldoc-position (info)
+  "Place the ElDoc overlay below the header at the window's right edge."
+  (pcase-let ((`(,x . ,y)
+               (posframe-poshandler-window-top-right-corner info)))
+    (cons (- x 12)
+          (+ y (or (plist-get info :header-line-height) 0) 12))))
+
+(defvar-local rvb/marc-eldoc-font-remap nil
+  "Face remap used to make MARC ElDoc text slightly smaller.")
+
+(defvar-local rvb/marc-eldoc-displayed-state nil
+  "Point and modification tick for the visible MARC ElDoc overlay.")
+
+(defun rvb/marc-eldoc-hide-if-stale ()
+  "Hide MARC ElDoc when point or buffer contents change."
+  (when (and rvb/marc-eldoc-displayed-state
+             (not (equal rvb/marc-eldoc-displayed-state
+                         (cons (point) (buffer-modified-tick)))))
+    (setq rvb/marc-eldoc-displayed-state nil)
+    (posframe-hide (eldoc-doc-buffer))))
+
+(defun rvb/marc-eldoc-overlay (docs interactive)
+  "Show MARC DOCS at the top right of the editing window."
+  (if (posframe-workable-p)
+      (when (eq (current-buffer) (window-buffer (selected-window)))
+        (if (null docs)
+            (progn
+              (setq rvb/marc-eldoc-displayed-state nil)
+              (posframe-hide (eldoc-doc-buffer)))
+          (setq rvb/marc-eldoc-displayed-state
+                (cons (point) (buffer-modified-tick)))
+          (eldoc-display-in-buffer docs nil)
+          (with-current-buffer (eldoc-doc-buffer)
+            (unless rvb/marc-eldoc-font-remap
+              (setq rvb/marc-eldoc-font-remap
+                    (face-remap-add-relative 'default :height 0.85)))
+            (setq-local line-spacing 0.12)
+            (save-excursion
+              (goto-char (point-min))
+              (let ((inhibit-read-only t))
+                (put-text-property (point) (line-end-position)
+                                   'face '(:weight medium)))))
+          (let* ((page (face-background 'default nil t))
+                 (ink (face-foreground 'default nil t))
+                 (background (rvb/ui-page-chrome--blend page ink 0.035)))
+            (posframe-show (eldoc-doc-buffer)
+                           :poshandler #'rvb/marc-eldoc-position
+                           :max-width (max 20 (floor (* (window-body-width) 0.40)))
+                           :max-height (max 4 (floor (* (window-body-height) 0.35)))
+                           :background-color background
+                           :internal-border-width 12
+                           :internal-border-color background
+                           :override-parameters
+                           (when (eq window-system 'ns)
+                             '((undecorated-round . t)))
+                           :hidehandler #'posframe-hidehandler-when-buffer-switch
+                           :accept-focus nil))))
+    (eldoc-display-in-echo-area docs interactive)))
+
+(defun rvb/marc-eldoc-setup ()
+  "Show MARC hover documentation in a floating overlay."
+  (setq-local eldoc-display-functions '(rvb/marc-eldoc-overlay))
+  (add-hook 'post-command-hook #'rvb/marc-eldoc-hide-if-stale nil t))
+
+(add-hook 'marc-mode-hook #'rvb/marc-eldoc-setup)
+(add-hook 'marc-xml-mode-hook #'rvb/marc-eldoc-setup)
 
 ;;; Perl
 (with-eval-after-load 'eglot
