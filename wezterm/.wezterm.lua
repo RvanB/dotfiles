@@ -155,7 +155,7 @@ tabline.setup({
 
 
 config.keys = {
-  -- Navigate panes with ALT + hjkl
+  -- Navigate panes with Ctrl + hjkl
   { key = 'h', mods = 'CTRL', action = wezterm.action.ActivatePaneDirection 'Left' },
   { key = 'j', mods = 'CTRL', action = wezterm.action.ActivatePaneDirection 'Down' },
   { key = 'k', mods = 'CTRL', action = wezterm.action.ActivatePaneDirection 'Up' },
@@ -168,6 +168,8 @@ config.keys = {
   -- Option-Left/Right for word navigation
   { key = 'b', mods = 'OPT', action = wezterm.action.SendString '\x1bb' },
   { key = 'f', mods = 'OPT', action = wezterm.action.SendString '\x1bf' },
+  { key = 'k', mods = 'CTRL', action = wezterm.action.DisableDefaultAssignment },
+  { key = 'Enter', mods = 'SHIFT', action = wezterm.action.SendString('\x0a') },
   
   -- M-backspace (Delete a Word backwards)
   { key = 'Backspace',  mods = 'ALT', action = wezterm.action.SendKey({ key = 'w', mods = 'CTRL' }) }
