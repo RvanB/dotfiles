@@ -254,6 +254,23 @@ title here, which is what the feature list reads.  See
 (defconst rvb-feature-implementation-heading "Implementation"
   "Top-level heading holding one sub-heading per member repository.")
 
+(defconst rvb-feature-pr-template
+  (concat
+   "**** Summary\n"
+   "/Describe what changed in 1-2 sentences/\n\n"
+   "**** Notes\n"
+   "- /Added a new API endpoint/\n"
+   "- /Added a button to the UI/\n\n"
+   "**** Review\n"
+   "- [ ] AI reviewed?\n"
+   "- [ ] Tested locally?\n"
+   "- [ ] Tested in =dev=?\n\n"
+   "/Describe what code reviewers should focus on/\n\n"
+   "**** Progress\n"
+   "- /Closes cdlib/repo#X/\n"
+   "- /Refs cdlib/repo#Y/")
+  "Default Org content for a repository's pull-request description.")
+
 
 ;;; Git plumbing
 
@@ -693,7 +710,8 @@ back."
     file))
 
 (defun rvb-feature--ensure-heading (feature name)
-  "Ensure FEATURE's Org file has a repository heading for NAME."
+  "Ensure FEATURE's Org file has a repository heading for NAME.
+New or empty repository sections receive `rvb-feature-pr-template'."
   (let ((file (rvb-feature--ensure-org feature)))
     (with-temp-buffer
       (insert-file-contents file)
@@ -703,8 +721,18 @@ back."
           (goto-char (cdr impl))
           (unless (bolp) (insert "\n"))
           (unless (looking-back "\n\n" 2) (insert "\n"))
-          (insert "** " name "\n")
-          (write-region (point-min) (point-max) file nil 'quiet))))
+          (insert "** " name "\n\n" rvb-feature-pr-template)
+          (write-region (point-min) (point-max) file nil 'quiet)))
+      ;; Existing features may predate the template.  Populate only
+      ;; empty repository sections, preserving anything the user wrote.
+      (when (rvb-feature--goto-heading name)
+        (let* ((body (cons (min (point-max) (1+ (line-end-position)))
+                           (rvb-feature--section-end 2)))
+               (text (buffer-substring-no-properties (car body) (cdr body))))
+          (when (string-blank-p text)
+            (goto-char (car body))
+            (insert "\n" rvb-feature-pr-template "\n")
+            (write-region (point-min) (point-max) file nil 'quiet)))))
     file))
 
 (defun rvb-feature--fill-prose ()
