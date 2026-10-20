@@ -55,6 +55,8 @@ setopt appendhistory
 setopt promptsubst
 setopt INC_APPEND_HISTORY
 setopt SHARE_HISTORY
+setopt autopushd
+setopt pushd_to_home
 
 ########## COMPLETIONS ##########
 
@@ -88,16 +90,11 @@ source "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
 rvb_prompt() {
     local exit_code=$?
-    local directory=${PWD/#$HOME/~}
+    local directory="${PWD/#$HOME/~}"
     local max_directory_length=40
     local prompt_char='>'
     local user_host_color=10
     local remote_prefix=
-
-    if (( ${#directory} > max_directory_length )); then
-        local keep=$(( (max_directory_length - 3) / 2 ))
-        directory="${directory[1,keep]}...${directory[-keep,-1]}"
-    fi
 
     if (( EUID == 0 )); then
         prompt_char='#'
@@ -107,13 +104,96 @@ rvb_prompt() {
         remote_prefix='[ssh] '
     fi
 
+    if [[ -n "$PROFILE" ]]; then
+        local profile_string="%F{6}($PROFILE)%f "
+    else
+        local profile_string=""
+    fi
+    
     print -nr -- \
-        "%F{7}┌─$(printf '%3d' "$exit_code")%f %F{15}%D{%H:%M}%f %B%F{$user_host_color}${remote_prefix}%n@%m%f%b %B%F{6}${directory}%f%b"$'\n'"%F{7}└─${prompt_char}%f "
+        "%F{7}┌─$(printf '%3d' "$exit_code")%f ${profile_string}%F{15}%D{%H:%M}%f %B%F{6}${directory}%f%b"$'\n'"%F{7}└─${prompt_char}%f "
 }
 
 PROMPT='$(rvb_prompt)'
 
 ########## ALIASES AND UTILITY FUNCTIONS ###########
+
+alias status="git status"
+alias branch="git branch --show-current"
+alias push="git push"
+alias pull="git pull"
+alias commit="git commit"
+
+function htprep() {
+  # If PROFILE is set, run "session d2d-zephir-htprep-$PROFILE"
+  if [[ -n "$PROFILE" ]]; then
+      session "d2d-zephir-htprep-$PROFILE"
+  else
+    echo "PROFILE is not set. Please set PROFILE to the desired environment."
+  fi
+}
+
+function htmm() {
+  # If PROFILE is set, run "session d2d-zephir-htmm-$PROFILE"
+  if [[ -n "$PROFILE" ]]; then
+      session "d2d-zephir-htmm-$PROFILE"
+  else
+    echo "PROFILE is not set. Please set PROFILE to the desired environment."
+  fi
+}
+
+function agua() {
+  # If PROFILE is set, run "session d2d-zephir-agua-$PROFILE"
+  if [[ -n "$PROFILE" ]]; then
+      session "d2d-agua-agua-$PROFILE"
+  else
+    echo "PROFILE is not set. Please set PROFILE to the desired environment."
+  fi
+}
+
+function papr() {
+  # If PROFILE is set, run "session d2d-zephir-papr-$PROFILE"
+  if [[ -n "$PROFILE" ]]; then
+      session "d2d-agua-papr-$PROFILE"
+  else
+    echo "PROFILE is not set. Please set PROFILE to the desired environment."
+  fi
+}
+
+function p() {
+  local profile_name="$1"
+
+  # If profile is not provided, unset AWS_PROFILE and PROFILE
+  if [[ -z "$profile_name" ]]; then
+      unset AWS_PROFILE
+      unset PROFILE
+      echo "Unset AWS_PROFILE and PROFILE"
+      return
+  fi
+  
+  if [[ -f "$HOME/.aws/config" ]]; then
+      # Find the profile containing profile_name in ~/.aws/config and set AWS_PROFILE to it
+      local profile
+      profile=$(awk -v name="$profile_name" '
+            BEGIN { found = 0 }
+            /^\[profile / {
+                if ($0 ~ name) {
+                    found = 1
+                    gsub(/^\[profile /, "", $0)
+                    gsub(/\]$/, "", $0)
+                    print $0
+                    exit
+                }
+            }
+            END { if (!found) exit 1 }
+        ' "$HOME/.aws/config")
+      echo "Setting AWS_PROFILE to '$profile'"
+      export AWS_PROFILE="$profile"
+  fi
+
+  echo "Setting PROFILE to '$profile_name'"
+  export PROFILE="$profile_name"
+}
 
 if command -v emacs >/dev/null 2>&1; then
     export EDITOR="emacsclient -n"
@@ -180,18 +260,6 @@ ls() {
   fi
 }
 
-# What to show after clearing
-# post-clear-list() {
-#     ls
-# }
-
-
-# Make `clear` also show directory contents
-# clear() {
-#   command clear
-#   post-clear-list
-# }
-
 # Directory navigation
 setopt AUTO_CD
 autoload -U add-zsh-hook
@@ -228,6 +296,12 @@ fi
 # fzf
 [[ -f "$HOME/.fzf.zsh" ]] && source "$HOME/.fzf.zsh"
 command -v find >/dev/null 2>&1 && export FZF_DEFAULT_COMMAND='find .'
+
+function f() {
+    local dir
+    dir=$(find ~/features -maxdepth 1 -type d -name "$1*" | fzf)
+    [[ -n "$dir" ]] && cd "$dir"
+}
 
 # Eat
 [[ -n "$EAT_SHELL_INTEGRATION_DIR" ]] && [[ -f "$EAT_SHELL_INTEGRATION_DIR/zsh" ]] && \
