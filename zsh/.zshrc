@@ -7,6 +7,7 @@ typeset -U path PATH
 
 # Prioritize homebrew over MacOS packages
 [[ -d "/opt/homebrew/bin" ]] && path=("/opt/homebrew/bin" $path)
+[[ -d "/opt/homebrew/opt/curl/bin" ]] && path=("/opt/homebrew/opt/curl/bin" $path)
 
 [[ -d "$HOME/.local/bin" ]] && path=("$HOME/.local/bin" $path)
 
