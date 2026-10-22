@@ -5,6 +5,9 @@
 
 typeset -U path PATH
 
+# Prioritize homebrew over MacOS packages
+[[ -d "/opt/homebrew/bin" ]] && path=("/opt/homebrew/bin" $path)
+
 [[ -d "$HOME/.local/bin" ]] && path=("$HOME/.local/bin" $path)
 
 # Expects Emacs.app from jimeh/emacs-builds
