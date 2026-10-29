@@ -25,6 +25,10 @@
       (ochre       "#998375")
       (green       "#d3e3b1")
       (diff-green  "#63c174")
+      (term-yellow "#998375")
+      (term-green-bright "#d3e3b1")
+      (term-blue-bright "#829aaa")
+      (term-magenta-bright "#d184c2")
       (string      "#f2f2d0")
       (selection   "#eeeeed"))
   (custom-theme-set-faces
@@ -137,6 +141,25 @@
    `(magit-diff-added ((,class (:foreground ,diff-green))))
    `(magit-diff-removed ((,class (:foreground ,red-bright))))
    `(magit-diff-context-highlight ((,class (:background ,bg-alt))))
+
+   ;; Match Ghostty's rvb2 ANSI palette in embedded terminals.  Vterm
+   ;; reads the foreground and background of each color face separately.
+   `(vterm-color-black ((,class (:foreground ,bg :background ,bg))))
+   `(vterm-color-red ((,class (:foreground ,red :background ,red))))
+   `(vterm-color-green ((,class (:foreground ,diff-green :background ,diff-green))))
+   `(vterm-color-yellow ((,class (:foreground ,term-yellow :background ,term-yellow))))
+   `(vterm-color-blue ((,class (:foreground ,blue :background ,blue))))
+   `(vterm-color-magenta ((,class (:foreground ,magenta :background ,magenta))))
+   `(vterm-color-cyan ((,class (:foreground ,cyan :background ,cyan))))
+   `(vterm-color-white ((,class (:foreground ,fg-dim :background ,fg-dim))))
+   `(vterm-color-bright-black ((,class (:foreground ,fg-dim :background ,fg-dim))))
+   `(vterm-color-bright-red ((,class (:foreground ,red-bright :background ,red-bright))))
+   `(vterm-color-bright-green ((,class (:foreground ,term-green-bright :background ,term-green-bright))))
+   `(vterm-color-bright-yellow ((,class (:foreground ,yellow :background ,yellow))))
+   `(vterm-color-bright-blue ((,class (:foreground ,term-blue-bright :background ,term-blue-bright))))
+   `(vterm-color-bright-magenta ((,class (:foreground ,term-magenta-bright :background ,term-magenta-bright))))
+   `(vterm-color-bright-cyan ((,class (:foreground ,cyan-bright :background ,cyan-bright))))
+   `(vterm-color-bright-white ((,class (:foreground ,fg :background ,fg))))
 
    ;; Org and Markdown.
    `(org-level-1 ((,class (:foreground ,yellow :weight normal))))

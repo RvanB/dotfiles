@@ -210,9 +210,10 @@ ARGUMENTS are its command-line arguments."
   (rvb/project-start-agent
    "codex" (if (boundp 'rvb-feature-codex-executable)
                 rvb-feature-codex-executable "codex")
-   (if (boundp 'rvb-feature-codex-interactive-arguments)
-       rvb-feature-codex-interactive-arguments
-     '("--approve-for-me"))))
+   (cons "--no-alt-screen"
+         (if (boundp 'rvb-feature-codex-interactive-arguments)
+             rvb-feature-codex-interactive-arguments
+           '("--approve-for-me")))))
 
 (defun rvb/project-start-claude ()
   "Start Claude Code in a vterm rooted at the current project."

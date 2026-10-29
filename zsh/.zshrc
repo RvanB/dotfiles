@@ -94,11 +94,14 @@ source "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
 rvb_prompt() {
     local exit_code=$?
+    local exit_code_color=2
     local directory="${PWD/#$HOME/~}"
     local max_directory_length=40
     local prompt_char='>'
     local user_host_color=10
     local remote_prefix=
+
+    (( exit_code == 0 )) || exit_code_color=1
 
     if (( EUID == 0 )); then
         prompt_char='#'
@@ -115,7 +118,7 @@ rvb_prompt() {
     fi
     
     print -nr -- \
-        "%F{7}┌─$(printf '%3d' "$exit_code")%f ${profile_string}%F{15}%D{%H:%M}%f %B%F{6}${directory}%f%b"$'\n'"%F{7}└─${prompt_char}%f "
+        "%F{7}┌─%F{${exit_code_color}}$(printf '%3d' "$exit_code")%f ${profile_string}%D{%H:%M} %B%F{6}${directory}%f%b"$'\n'"%F{7}└─${prompt_char}%f "
 }
 
 PROMPT='$(rvb_prompt)'
@@ -210,6 +213,11 @@ elif command -v vi >/dev/null 2>&1; then
 fi
 
 command -v tmux >/dev/null 2>&1 && alias tmux="TERM=xterm-256color tmux"
+
+# Keep Codex output in vterm's scrollback when started from a vterm shell.
+if [[ "$INSIDE_EMACS" == vterm ]]; then
+    codex() { command codex --no-alt-screen "$@"; }
+fi
 
 [[ -n "$EDITOR" ]] && alias cfzsh="$EDITOR ~/.zshrc"
 [[ -n "$EDITOR" ]] && alias cfemacs="$EDITOR ~/.emacs.d/init.el"

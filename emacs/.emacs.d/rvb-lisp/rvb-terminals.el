@@ -7,7 +7,63 @@
   :defer t
   :init
   (setq vterm-max-scrollback 100000)
+  ;; Vterm renders RGB colors, but GUI Emacs often starts without the
+  ;; terminal's COLORTERM variable.  Codex and Claude use it to decide
+  ;; whether to send the same full-color UI they send to WezTerm/Ghostty.
+  ;; Claude's fullscreen renderer bypasses vterm's scrollback.
+  (setq vterm-environment
+        (append '("COLORTERM=truecolor"
+                  "CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN=1")
+                (seq-remove
+                 (lambda (entry)
+                   (or (string-prefix-p "COLORTERM=" entry)
+                       (string-prefix-p "CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN=" entry)))
+                 (and (boundp 'vterm-environment) vterm-environment))))
+  :config
+  (advice-add 'vterm--filter :before #'rvb/vterm-answer-color-queries)
   )
+
+(defvar-local rvb/vterm-color-query-tail ""
+  "End of the preceding vterm output chunk, for split OSC queries.")
+
+(defconst rvb/vterm-color-query-regexp
+  (rx "\e]1" (or "0" "1") ";?" (or "\a" "\e\\"))
+  "OSC 10 and 11 queries, terminated by BEL or ST.")
+
+(defun rvb/vterm-color-values (color frame)
+  "Return 16-bit RGB values for COLOR on FRAME without palette rounding."
+  (if (and (stringp color)
+           (string-match-p (rx string-start "#" (= 6 hex) string-end) color))
+      (mapcar (lambda (start)
+                (* 257 (string-to-number (substring color start (+ start 2)) 16)))
+              '(1 3 5))
+    (color-values color frame)))
+
+(defun rvb/vterm-answer-color-queries (process input)
+  "Answer foreground and background color queries from PROCESS's INPUT."
+  (when-let ((buffer (process-buffer process)))
+    (when (buffer-live-p buffer)
+      (with-current-buffer buffer
+        (let* ((prior-length (length rvb/vterm-color-query-tail))
+               (combined (concat rvb/vterm-color-query-tail input))
+               (window (get-buffer-window buffer t))
+               (frame (and window (window-frame window)))
+               (start 0))
+          (while (string-match rvb/vterm-color-query-regexp combined start)
+            (let ((end (match-end 0))
+                  (slot (aref combined (+ (match-beginning 0) 3))))
+              (when (> end prior-length)
+                (when-let* ((color (if (eq slot ?0)
+                                       (face-foreground 'default frame t)
+                                     (face-background 'default frame t)))
+                            (rgb (rvb/vterm-color-values color frame)))
+                  (process-send-string
+                   process
+                   (format "\e]1%c;rgb:%04x/%04x/%04x\e\\"
+                           slot (nth 0 rgb) (nth 1 rgb) (nth 2 rgb)))))
+              (setq start end)))
+          (setq rvb/vterm-color-query-tail
+                (substring combined (max 0 (- (length combined) 16)))))))))
 
 (use-package multi-vterm
   :ensure t

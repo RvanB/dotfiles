@@ -3750,7 +3750,7 @@ CONTINUE resumes the last session in the feature directory."
         (rvb-feature--settle-edits (format "handing %s to an agent" feature))))
     (rvb-feature--ensure-org feature)
     (when (buffer-live-p buffer) (kill-buffer buffer))
-    (let* ((command (append (list program)
+    (let* ((command (append (list program "--no-alt-screen")
                             (unless continue rvb-feature-codex-interactive-arguments)
                             (if continue
                                 (list "resume" "--last" "--include-non-interactive" prompt)
