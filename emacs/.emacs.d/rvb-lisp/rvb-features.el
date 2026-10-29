@@ -138,8 +138,8 @@ Applies to descriptions only."
 
 (defcustom rvb-feature-agent 'codex
   "Command-line coding agent a feature is assigned to.
-`rvb-feature-assign-to-agent' runs it non-interactively from the
-feature directory, where it can see every member repository."
+`rvb-feature-assign-to-agent' runs it from the feature directory,
+where it can see every member repository.  Codex uses a vterm buffer."
   :type '(choice (const :tag "Codex CLI" codex)
                  (const :tag "Claude Code" claude))
   :group 'rvb-feature)
@@ -163,6 +163,12 @@ should be done."
 (defcustom rvb-feature-codex-executable "codex"
   "Codex CLI executable used by `rvb-feature-assign-to-agent'."
   :type 'string
+  :group 'rvb-feature)
+
+(defcustom rvb-feature-codex-interactive-arguments
+  '("--approve-for-me")
+  "Arguments for interactive Codex sessions in a feature vterm."
+  :type '(repeat string)
   :group 'rvb-feature)
 
 (defcustom rvb-feature-codex-arguments
@@ -3596,7 +3602,7 @@ to agree to."
       (_ (symbol-name agent)))))
 
 (defun rvb-feature--agent-command (&optional agent continue)
-  "Return the command list for AGENT, by default `rvb-feature-agent'.
+  "Return the headless command list for AGENT, by default `rvb-feature-agent'.
 
 With CONTINUE, the command carries on the agent's most recent session
 in the directory it is run from rather than starting a new one.  Both
@@ -3658,7 +3664,7 @@ the agent that had it, whatever `rvb-feature-agent' says today."
     (get-buffer-process buffer)))
 
 (defun rvb-feature-show-agent (feature)
-  "Open FEATURE's coding-agent output buffer."
+  "Open FEATURE's coding-agent buffer."
   (interactive
    (list (or rvb-feature--buffer-feature
              (and (derived-mode-p 'rvb-feature-list-mode)
@@ -3701,25 +3707,77 @@ buffer because the agent may have changed its member worktrees."
                               label feature (string-trim event)))))
       (when-let* ((buffer (process-buffer process))
                   ((buffer-live-p buffer)))
-        (with-current-buffer buffer
+        (unless (with-current-buffer buffer (derived-mode-p 'vterm-mode))
+          (with-current-buffer buffer
           (let ((inhibit-read-only t))
             (goto-char (point-max))
             (unless (bolp) (insert "\n"))
-            (insert "\n" summary "\n"))))
+            (insert "\n" summary "\n")))))
       ;; The agent may have changed any number of member repositories.
       ;; Re-probe every open status view when it is safe, and remove the
       ;; running marker from all views immediately either way.
       (rvb-feature--redraw-agent-views feature t)
       (message "%s" summary))))
 
+(defun rvb-feature--run-codex-vterm (feature prompt continue doing)
+  "Run interactive Codex for FEATURE with PROMPT in a vterm.
+CONTINUE resumes the last session in the feature directory."
+  (cl-block rvb-feature--run-codex-vterm
+  (unless (require 'vterm nil t)
+    (user-error "vterm is required for interactive feature Codex sessions"))
+  (let* ((dir (file-name-as-directory (rvb-feature--dir feature)))
+         (name (rvb-feature--agent-buffer-name feature))
+         (buffer (get-buffer name))
+         (old-process (and buffer (get-buffer-process buffer)))
+         (program (executable-find rvb-feature-codex-executable))
+         (status-buffer (get-buffer (format "*feature: %s*" feature))))
+    (unless program
+      (user-error "Cannot find executable: %s" rvb-feature-codex-executable))
+    (when (process-live-p old-process)
+      (if (with-current-buffer buffer (derived-mode-p 'vterm-mode))
+          (progn
+            (pop-to-buffer buffer)
+            (if continue
+                (with-current-buffer buffer
+                  (vterm-send-string prompt t)
+                  (vterm-send-return))
+              (user-error "Codex is already running for %s" feature))
+            (cl-return-from rvb-feature--run-codex-vterm buffer))
+        (display-buffer buffer)
+        (user-error "An agent is already running for %s" feature)))
+    (when (buffer-live-p status-buffer)
+      (with-current-buffer status-buffer
+        (rvb-feature--settle-edits (format "handing %s to an agent" feature))))
+    (rvb-feature--ensure-org feature)
+    (when (buffer-live-p buffer) (kill-buffer buffer))
+    (let* ((command (append (list program)
+                            (unless continue rvb-feature-codex-interactive-arguments)
+                            (if continue
+                                (list "resume" "--last" "--include-non-interactive" prompt)
+                              (list prompt))))
+           (vterm-shell (mapconcat #'shell-quote-argument command " "))
+           (vterm-buffer-name name)
+           (vterm-kill-buffer-on-exit nil)
+           (default-directory dir))
+      (setq buffer (vterm name)))
+    (let ((process (get-buffer-process buffer)))
+      (process-put process 'rvb-feature feature)
+      (process-put process 'rvb-feature-agent-label "Codex")
+      (process-put process 'rvb-feature-agent-doing doing)
+      (set-process-sentinel process #'rvb-feature--agent-sentinel))
+    (rvb-feature--set-last-agent feature 'codex)
+    (rvb-feature--redraw-agent-views feature)
+    (message "Codex is %s" doing)
+    buffer)))
+
 ;;;###autoload
 (defun rvb-feature-assign-to-agent (feature)
-  "Assign FEATURE to `rvb-feature-agent' in a headless process.
+  "Assign FEATURE to `rvb-feature-agent'.
 
 The agent runs from the feature directory, so all of the feature's
-member worktrees are in scope.  Its instructions arrive on standard
-input, its output goes to a dedicated buffer, and the feature status
-is refreshed when it exits.
+member worktrees are in scope.  Codex runs interactively in vterm;
+Claude Code writes to a dedicated output buffer.  The feature status
+is refreshed when the agent exits.
 
 This starts a new session.  `rvb-feature-agent-ask' carries on the
 last one, which is how to ask for a correction afterwards."
@@ -3732,15 +3790,15 @@ last one, which is how to ask for a correction afterwards."
   (rvb-feature--run-agent feature (rvb-feature--agent-prompt feature)))
 
 (defun rvb-feature--run-agent (feature prompt &optional continue doing)
-  "Run an agent on FEATURE with PROMPT, headless, from its directory.
+  "Run an agent on FEATURE with PROMPT from its directory.
 
-CONTINUE carries on the last session, with the agent that had it --
-see `rvb-feature--agent-command' -- and appends to its output buffer
-rather than starting it over, so the conversation reads top to bottom.
-Without it, a new session is started with `rvb-feature-agent'.
+CONTINUE carries on the last session with the agent that had it.
+Codex keeps a live terminal when possible; Claude Code appends to its
+output buffer.  Without CONTINUE, start a new session.
 
 DOING says what the agent is up to, for the status line; it reads
 after the agent's name, as in \"Codex is DOING\"."
+  (cl-block rvb-feature--run-agent
   (let* ((agent (or (and continue (rvb-feature--last-agent feature))
                     rvb-feature-agent))
          (label (rvb-feature--agent-label agent))
@@ -3752,6 +3810,9 @@ after the agent's name, as in \"Codex is DOING\"."
          (command (rvb-feature--agent-command agent continue))
          (program (executable-find (car command)))
          process)
+    (when (eq agent 'codex)
+      (rvb-feature--run-codex-vterm feature prompt continue doing)
+      (cl-return-from rvb-feature--run-agent nil))
     (when (process-live-p old-process)
       (display-buffer buffer)
       (user-error "%s is already working on %s"
@@ -3795,7 +3856,7 @@ after the agent's name, as in \"Codex is DOING\"."
     (process-send-eof process)
     (rvb-feature--redraw-agent-views feature)
     (display-buffer buffer)
-    (message "%s is %s" label doing)))
+    (message "%s is %s" label doing))))
 
 ;;;###autoload
 (defun rvb-feature-agent-ask (feature prompt)
