@@ -40,10 +40,6 @@
 (setq history-length 25)
 (savehist-mode 1)
 
-;;; Don't use my nice config for the custom variables
-(setq custom-file (locate-user-emacs-file "custom-vars.el"))
-(load custom-file 'noerror 'nomessage)
-
 ;;; Auto revert EVERYTHING
 (global-auto-revert-mode)
 (setq global-auto-revert-non-file-buffers t)
@@ -95,6 +91,8 @@
         (project-find-regexp "Find regexp" ?r)
         (project-eshell "Eshell" ?e)
         (magit-project-status "Magit" ?m)
+        (rvb/project-start-codex "Codex" ?c)
+        (rvb/project-start-claude "Claude Code" ?l)
         (project-any-command "Other" ?o)))
 
 (defun reload-init-file ()

@@ -25,7 +25,6 @@
 (deftheme rvb3
   "A one-bit digital page of ink, paper, screens, and reversed video.")
 
-(put 'rvb3 'rvb/ns-appearance 'dark)
 ;; What rvb-ui.el should do under this theme: leave the line numbers
 ;; the chrome grey below rather than blending them into the page.  (The
 ;; tab bar is not the theme's at all; see rvb-tabs.el.)  See

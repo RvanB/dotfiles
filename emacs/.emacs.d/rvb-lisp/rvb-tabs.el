@@ -68,7 +68,10 @@ would draw a raised edge around the bar, and the stock face inherits
                       (tab-bar-tab-ungrouped . rvb/tabs-inactive)))
         (set-face-attribute (car pair) nil :inherit (cdr pair)
                             :foreground 'unspecified :background 'unspecified
-                            :box 'unspecified :weight 'unspecified)))))
+                            :box 'unspecified :weight 'unspecified))
+      ;; Derive and persist the native title-bar appearance only after the
+      ;; tab-bar face has its theme-specific background.
+      (rvb/update-ns-appearance))))
 
 (setq tab-bar-tab-face-function #'rvb/tabs--face)
 ;; After the page chrome's own faces are worked out (depth 0), since the

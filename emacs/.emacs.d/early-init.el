@@ -15,6 +15,13 @@
 ;; that changes elpa/, run `package-quickstart-refresh'.
 (setq package-quickstart t)
 
+;; Load the saved native title-bar appearance before the first frame is
+;; created.  rvb-ui.el recalculates and persists it after theme changes.
+(setq custom-file (locate-user-emacs-file "custom-vars.el"))
+(load custom-file 'noerror 'nomessage)
+(defvar rvb/ns-appearance 'dark
+  "Saved native macOS appearance, derived from the tab-bar background.")
+
 ;; Create the first frame the way init will leave it.  Every parameter
 ;; init changes on an existing frame is reapplied by
 ;; `frame-notice-user-settings' once init is done, which relaid out the
@@ -38,5 +45,5 @@
 ;; Frame parameters that need to exist before the first macOS frame is created.
 (add-to-list 'default-frame-alist '(ns-transparent-titlebar . nil))
 (add-to-list 'initial-frame-alist '(ns-transparent-titlebar . nil))
-(add-to-list 'default-frame-alist '(ns-appearance . dark))
-(add-to-list 'initial-frame-alist '(ns-appearance . dark))
+(add-to-list 'default-frame-alist (cons 'ns-appearance rvb/ns-appearance))
+(add-to-list 'initial-frame-alist (cons 'ns-appearance rvb/ns-appearance))

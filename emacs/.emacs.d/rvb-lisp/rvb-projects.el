@@ -181,6 +181,47 @@ for directories that are not repositories."
                    nil t))
 (setq project-prompter #'rvb/project-prompt)
 
+(defun rvb/project-start-agent (name executable arguments)
+  "Start an agent in a vterm for the current project.
+NAME identifies the terminal buffer, EXECUTABLE is the command, and
+ARGUMENTS are its command-line arguments."
+  (let* ((project (project-current t))
+         (default-directory (project-root project))
+         (buffer-name (project-prefixed-buffer-name name))
+         (buffer (get-buffer buffer-name))
+         (program (executable-find executable)))
+    (unless program
+      (user-error "Cannot find executable: %s" executable))
+    (if (and (buffer-live-p buffer)
+             (process-live-p (get-buffer-process buffer)))
+        (pop-to-buffer buffer)
+      (unless (require 'vterm nil t)
+        (user-error "vterm is required to start project agents"))
+      (when (buffer-live-p buffer)
+        (kill-buffer buffer))
+      (let ((vterm-shell (mapconcat #'shell-quote-argument
+                                    (cons program arguments) " "))
+            (vterm-buffer-name buffer-name))
+        (vterm buffer-name)))))
+
+(defun rvb/project-start-codex ()
+  "Start Codex in a vterm rooted at the current project."
+  (interactive)
+  (rvb/project-start-agent
+   "codex" (if (boundp 'rvb-feature-codex-executable)
+                rvb-feature-codex-executable "codex")
+   (if (boundp 'rvb-feature-codex-interactive-arguments)
+       rvb-feature-codex-interactive-arguments
+     '("--approve-for-me"))))
+
+(defun rvb/project-start-claude ()
+  "Start Claude Code in a vterm rooted at the current project."
+  (interactive)
+  (rvb/project-start-agent
+   "claude" (if (boundp 'rvb-feature-claude-executable)
+                 rvb-feature-claude-executable "claude")
+   nil))
+
 ;;; The buffer list, grouped by project
 ;;
 ;; `ibuffer' groups by whatever `ibuffer-filter-groups' says, which is

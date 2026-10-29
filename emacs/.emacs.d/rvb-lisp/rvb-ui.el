@@ -103,12 +103,31 @@
   (rvb/set-default-frame-parameter parameter value)
   (rvb/set-initial-frame-parameter parameter value))
 
-(defun rvb/theme-ns-appearance (&optional theme)
-  "Return the native macOS appearance requested by THEME.
+(defcustom rvb/ns-appearance 'dark
+  "Native macOS appearance saved from the tab-bar background colour."
+  :type '(choice (const dark) (const light))
+  :group 'appearance)
 
-Themes declare their preference with the `rvb/ns-appearance' symbol
-property.  A missing preference leaves the appearance up to macOS."
-  (get (or theme rvb-theme) 'rvb/ns-appearance))
+(defun rvb/tab-bar-ns-appearance (&optional frame)
+  "Return the native appearance matching the tab background on FRAME.
+A background lighter than middle gray asks macOS for a light title bar;
+a darker background asks for a dark one."
+  (let* ((background (face-background 'tab-bar frame t))
+         (rgb (and background (color-values background))))
+    (if (and rgb
+             (> (/ (+ (nth 0 rgb) (nth 1 rgb) (nth 2 rgb)) 3)
+                (/ 65535 2)))
+        'light
+      'dark)))
+
+(defun rvb/update-ns-appearance (&optional _theme)
+  "Recalculate and save `rvb/ns-appearance' from the tab-bar background."
+  (let ((appearance (rvb/tab-bar-ns-appearance)))
+    (unless (eq appearance rvb/ns-appearance)
+      (setq rvb/ns-appearance appearance)
+      (rvb/set-frame-parameter-defaults 'ns-appearance appearance)
+      (customize-save-variable 'rvb/ns-appearance appearance))
+    (rvb/apply-frame-appearances)))
 
 (defun rvb/load-theme (theme &optional no-save)
   "Load THEME and make it the current RVB theme.
@@ -120,7 +139,7 @@ When NO-SAVE is non-nil, do not persist THEME."
   (unless no-save
     (customize-save-variable 'rvb-theme theme))
   (rvb/set-frame-parameter-defaults
-   'ns-appearance (rvb/theme-ns-appearance theme))
+   'ns-appearance rvb/ns-appearance)
   (dolist (frame (frame-list))
     (rvb/apply-frame-appearance frame))
   ;; Loading a theme re-sets `line-number' and other faces, so re-assert the
@@ -140,9 +159,20 @@ When NO-SAVE is non-nil, do not persist THEME."
     (when (display-graphic-p target-frame)
       (set-frame-parameter target-frame 'ns-transparent-titlebar nil)
       (set-frame-parameter target-frame 'ns-appearance
-                           (rvb/theme-ns-appearance)))))
+                           rvb/ns-appearance))))
 
-;; `rvb-settings' loads the persisted Custom values before this module, so the
+(defun rvb/apply-frame-appearances (&optional _frame)
+  "Apply the tab-bar-derived native appearance to every live frame."
+  (dolist (frame (frame-list))
+    (rvb/apply-frame-appearance frame)))
+
+;; The frame exists before themes and tab faces finish loading.  Reapply
+;; after init, when those faces have their final colours; also cover frames
+;; created later.
+(add-hook 'after-init-hook #'rvb/apply-frame-appearances)
+(add-hook 'after-make-frame-functions #'rvb/apply-frame-appearances)
+
+;; The saved `rvb-theme' is loaded from Custom during early init, so the
 ;; selected theme is ready to apply immediately at startup.
 (rvb/ensure-theme-loaded)
 
@@ -222,7 +252,7 @@ takes effect where you set it."
     (setq rvb-theme theme)
     (customize-save-variable 'rvb-theme theme)
     (rvb/set-frame-parameter-defaults
-     'ns-appearance (rvb/theme-ns-appearance theme))
+     'ns-appearance rvb/ns-appearance)
     (dolist (frame (frame-list))
       (rvb/apply-frame-appearance frame))
     (when (and (bound-and-true-p rvb/ui-page-chrome-mode)
