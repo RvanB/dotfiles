@@ -30,6 +30,24 @@
   (rx "\e]1" (or "0" "1") ";?" (or "\a" "\e\\"))
   "OSC 10 and 11 queries, terminated by BEL or ST.")
 
+(defun rvb/vterm-sync-default-directory (&rest _)
+  "Keep the current vterm buffer's `default-directory' at its shell cwd."
+  (when (and (derived-mode-p 'vterm-mode)
+             (fboundp 'vterm--get-pwd))
+    (when-let ((directory (vterm--get-pwd)))
+      (setq default-directory directory
+            list-buffers-directory directory))))
+
+(defun rvb/vterm-sync-default-directory-before-command ()
+  "Refresh vterm's directory before commands that use `default-directory'."
+  (rvb/vterm-sync-default-directory))
+
+(with-eval-after-load 'vterm
+  ;; Vterm receives cwd changes from the shell's OSC 7 reports.  Refresh
+  ;; before project commands so they see the terminal's current location.
+  (add-hook 'pre-command-hook #'rvb/vterm-sync-default-directory-before-command)
+  (add-hook 'vterm-mode-hook #'rvb/vterm-sync-default-directory))
+
 (defun rvb/vterm-color-values (color frame)
   "Return 16-bit RGB values for COLOR on FRAME without palette rounding."
   (if (and (stringp color)
@@ -69,6 +87,9 @@
   :ensure t
   :defer t
   :init
+  ;; multi-vterm creates its buffer before switching to it.  Preserve the
+  ;; invoking buffer's directory so vterm starts in the same location.
+  (setq multi-vterm-buffer-name "vterminal")
   )
 
 ;; https://mocompute.codeberg.page/item/2024/2024-09-03-emacs-project-vterm.html

@@ -168,6 +168,9 @@ return the manual project when DIR lives under a known root."
 ;; Drive `project-switch-project' from my manual directories via the
 ;; public `project-prompter' customization point (Emacs 30+).  This
 ;; bypasses `project--list' / `project-list-file' entirely.
+(defvar rvb/project-history nil
+  "History of selections in the manual project switcher.")
+
 (defun rvb/project-prompt ()
   "Prompt for one of `rvb/project-directories'.
 
@@ -177,8 +180,14 @@ with an entry point of their own -- a feature is opened with
 `rvb-feature-status' -- and they would otherwise both crowd this list
 and reach `project-switch-commands', which offers `magit-project-status'
 for directories that are not repositories."
-  (completing-read "Project: " (rvb/project--normalize rvb/project-directories)
-                   nil t))
+  (let ((directories (rvb/project--normalize rvb/project-directories)))
+    (completing-read
+     "Project: "
+     (lambda (string predicate action)
+       (if (eq action 'metadata)
+           '(metadata (category . project-file))
+         (complete-with-action action directories string predicate)))
+     nil t nil 'rvb/project-history)))
 (setq project-prompter #'rvb/project-prompt)
 
 (defun rvb/project-start-agent (name executable arguments)

@@ -131,6 +131,34 @@ alias push="git push"
 alias pull="git pull"
 alias commit="git commit"
 
+# Jump to the directory of the currently selected Emacs buffer.
+s() {
+  local directory
+  if ! command -v emacsclient >/dev/null 2>&1; then
+    [[ "$1" == --quiet ]] && return 1
+    print -u2 -- "s: emacsclient is not available"
+    return 1
+  fi
+
+  directory=$(emacsclient --quiet --alternate-editor='' --eval \
+    '(with-current-buffer (window-buffer (frame-selected-window (selected-frame))) default-directory)' 2>/dev/null) || {
+      [[ "$1" == --quiet ]] && return 1
+      print -u2 -- "s: could not connect to Emacs"
+      return 1
+    }
+
+  # emacsclient prints Lisp strings as quoted, escaped text; read that
+  # representation as one shell word, then require an existing directory.
+  directory=${(Q)directory}
+  if [[ "$directory" == *:* || ! -d "$directory" ]]; then
+    [[ "$1" == --quiet ]] && return 1
+    print -u2 -- "s: Emacs did not return a usable local directory"
+    return 1
+  fi
+
+  builtin cd -- "$directory"
+}
+
 function htprep() {
   # If PROFILE is set, run "session d2d-zephir-htprep-$PROFILE"
   if [[ -n "$PROFILE" ]]; then
@@ -337,3 +365,8 @@ eval "$(direnv hook zsh)"
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+# If an Emacs server is already running, start new interactive terminals
+# in the selected buffer's directory.  --alternate-editor='' prevents
+# emacsclient from launching another Emacs when no server is available.
+s --quiet

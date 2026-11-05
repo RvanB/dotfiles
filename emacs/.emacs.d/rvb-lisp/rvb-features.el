@@ -44,13 +44,13 @@
 
 ;; Keep declarations for the Org entry points used below explicit.
 (declare-function org-narrow-to-subtree "org" (&optional element))
+(declare-function marginalia-annotate-file "marginalia" (cand))
 
 ;; Magit and Org are not loaded with this file -- together they are over
 ;; a second and a half of startup.  Org arrives with the status buffer,
 ;; whose mode derives from it; Magit is loaded by both feature modes,
 ;; whose faces inherit its.
 (declare-function magit-diff-range "magit-diff" (rev-or-range &optional args files))
-(declare-function magit-diff-paths "magit-diff" (a b))
 (declare-function magit-show-commit "magit-diff" (rev &optional args files module))
 (declare-function magit-status-setup-buffer "magit-status" (&optional directory))
 (declare-function magit-list-repos "magit-repos" ())
@@ -229,7 +229,7 @@ promoted on the way out and demoted on the way back in.
 
 Implementation holds one level-two heading per member repository, and
 that is where the status buffer injects each repository's branch,
-commits and changed files.  Write anything you like under a
+commits and working-tree state.  Write anything you like under a
 repository's heading; it belongs to that repository, and
 `rvb-feature-pr-body' makes it the body of its pull request.
 
@@ -1275,14 +1275,34 @@ URL is already in hand from the lookup that found the pull request."
       (format "%s/%s#%s" (match-string 1 url) (match-string 2 url)
               (match-string 3 url)))))
 
+(defvar rvb-feature-history nil
+  "History of selections in the feature selector.")
+
+(defun rvb-feature-annotate (feature)
+  "Annotate FEATURE with Marginalia's directory attributes and linked issue."
+  (concat (when (fboundp 'marginalia-annotate-file)
+            (marginalia-annotate-file (rvb-feature--dir feature)))
+          (when-let* ((issue (rvb-feature-issue feature)))
+            (propertize (concat "  " issue) 'face 'shadow))))
+
+(with-eval-after-load 'marginalia
+  (add-to-list 'marginalia-annotators
+               '(rvb-feature rvb-feature-annotate builtin none)))
+
 (defun rvb-feature--read-name (&optional require-match)
   "Prompt for a feature name, defaulting to the enclosing one."
   (let ((features (rvb-feature--names))
         (default (rvb-feature--enclosing)))
     (when (and require-match (null features))
       (user-error "No features yet"))
-    (completing-read (format-prompt "Feature" default)
-                     features nil require-match nil nil default)))
+    (completing-read
+     (format-prompt "Feature" default)
+     (lambda (string predicate action)
+       (if (eq action 'metadata)
+           '(metadata (category . rvb-feature)
+                      (annotation-function . rvb-feature-annotate))
+         (complete-with-action action features string predicate)))
+     nil require-match nil 'rvb-feature-history default)))
 
 
 ;;; Adding a repository
@@ -1768,22 +1788,16 @@ which covers the index changes the signatures leave out."
 
 (defun rvb-feature--probe-script (base)
   "Return a shell script reporting one repository's state.
-One process per repository, emitting four separator-delimited sections:
+One process per repository, emitting three separator-delimited sections:
 the porcelain status (branch, upstream, ahead/behind and every changed
-file in a single call), the fork point with BASE, the files that differ
-from it, and the commits since it.
-
-The file list compares the *working tree* to the fork point, not
-HEAD, so it answers \"what does this feature change\" including work
-that is not committed yet."
+file in a single call), the fork point with BASE, and the commits since
+it."
   (let ((sep (concat "printf '%s\\n' " (shell-quote-argument rvb-feature--sep) "\n")))
     (concat
      "base=$(git merge-base HEAD " (shell-quote-argument (or base "HEAD")) " 2>/dev/null)\n"
      "git status --porcelain=v2 --branch\n"
      sep
      "printf '%s\\n' \"$base\"\n"
-     sep
-     "[ -n \"$base\" ] && git diff --name-status -M \"$base\"\n"
      sep
      "[ -n \"$base\" ] && git log --format='%h%x09%s' \"$base\"..HEAD\n"
      "exit 0\n")))
@@ -1822,20 +1836,6 @@ that is not committed yet."
     (list :head head :upstream upstream :ahead ahead :behind behind
           :changes (nreverse changes))))
 
-(defun rvb-feature--parse-diff (text)
-  "Parse `git diff --name-status' TEXT into file plists."
-  (delq nil
-        (mapcar (lambda (line)
-                  (let* ((f (split-string line "\t"))
-                         (code (car f)))
-                    (when (and code (cdr f))
-                      (list :status (substring code 0 1)
-                            ;; Renames and copies name both paths; the
-                            ;; new one is last.
-                            :path (car (last f))
-                            :orig (and (> (length f) 2) (nth 1 f))))))
-                (split-string text "\n" t))))
-
 (defun rvb-feature--parse-commits (text)
   "Parse abbreviated hashes and subjects from tab-separated git log TEXT."
   (mapcar (lambda (line)
@@ -1852,25 +1852,11 @@ that is not committed yet."
                                       (concat "^" (regexp-quote rvb-feature--sep) "$"))))
          (status (rvb-feature--parse-status (or (nth 0 parts) "") dir))
          (fork (let ((s (nth 1 parts))) (unless (string-empty-p (or s "")) s)))
-         (changed (rvb-feature--parse-diff (or (nth 2 parts) "")))
-         (commits (rvb-feature--parse-commits (or (nth 3 parts) "")))
-         ;; Untracked files never appear in a diff against the base, but
-         ;; they are part of what the feature adds.
-         (untracked (mapcar (lambda (c) (list :status "?" :path (plist-get c :path)))
-                            (cl-remove-if-not
-                             (lambda (c) (eq (plist-get c :kind) 'untracked))
-                             (plist-get status :changes))))
-         (uncommitted (mapcar (lambda (c) (plist-get c :path))
-                              (plist-get status :changes))))
+         (commits (rvb-feature--parse-commits (or (nth 2 parts) ""))))
     (append member
             status
             (list :fork fork
                   :commits commits
-                  :changed (mapcar (lambda (c)
-                                     (append c (list :dirty (and (member (plist-get c :path)
-                                                                         uncommitted)
-                                                                 t))))
-                                   (append changed untracked))
                   :probed t))))
 
 (defun rvb-feature--collect (members callback)
@@ -2911,34 +2897,6 @@ face it sits on, which is why it is `default' rather than no face."
   "Face for a member whose worktree is gone from disk."
   :group 'rvb-feature)
 
-;; Adding, modifying and deleting files is what writing code is, not
-;; something to be warned about.  The markers say which of the three a
-;; file is, and a letter says that on its own.
-
-(defface rvb-feature-added '((t :inherit default))
-  "Face for files added relative to the base ref."
-  :group 'rvb-feature)
-
-(defface rvb-feature-modified '((t :inherit default))
-  "Face for files modified relative to the base ref."
-  :group 'rvb-feature)
-
-(defface rvb-feature-deleted '((t :inherit default))
-  "Face for files deleted relative to the base ref."
-  :group 'rvb-feature)
-
-(defface rvb-feature-renamed '((t :inherit magit-branch-remote))
-  "Face for files renamed or copied relative to the base ref."
-  :group 'rvb-feature)
-
-(defface rvb-feature-untracked '((t :inherit magit-dimmed))
-  "Face for untracked paths."
-  :group 'rvb-feature)
-
-(defface rvb-feature-path '((t :inherit magit-filename))
-  "Face for a changed file's path."
-  :group 'rvb-feature)
-
 (defun rvb-feature--dirty-count (m)
   (length (plist-get m :changes)))
 
@@ -2971,20 +2929,10 @@ face it sits on, which is why it is `default' rather than no face."
                           'font-lock-face 'rvb-feature-conflict))))
      "  ")))
 
-(defun rvb-feature--file-face (status)
-  "Return the face for a changed-file STATUS letter."
-  (pcase status
-    ("A" 'rvb-feature-added)
-    ("M" 'rvb-feature-modified)
-    ("D" 'rvb-feature-deleted)
-    ((or "R" "C") 'rvb-feature-renamed)
-    ("?" 'rvb-feature-untracked)
-    (_ 'rvb-feature-count)))
-
 ;;; The status buffer
 ;;
 ;; The buffer is the feature's Org file with the generated parts --
-;; branch state and changed files -- injected into it.  That makes
+;; branch state, working tree and commits -- injected into it.  That makes
 ;; it an ordinary `org-mode' buffer: whatever styles Org buffers styles
 ;; it, links work, folding is Org's, and the prose is editable
 ;; where you read it rather than behind a separate command.
@@ -3232,14 +3180,6 @@ whether the work is still open and when it is due are the issue's."
   (let ((default-directory (file-name-as-directory (plist-get m :dir))))
     (magit-show-commit hash)))
 
-(defun rvb-feature--show-file-diff (m change)
-  "Show member M's CHANGE in Magit."
-  (let ((path (plist-get change :path)))
-    (if (equal (plist-get change :status) "?")
-        (let ((default-directory (file-name-as-directory (plist-get m :dir))))
-          (magit-diff-paths "/dev/null" (expand-file-name path)))
-      (rvb-feature--show-member-diff m (list path)))))
-
 (defun rvb-feature--insert-commits (m)
   "Insert member M's commits as an Org subtree."
   (let ((commits (plist-get m :commits))
@@ -3258,37 +3198,46 @@ whether the work is still open and when it is due are the issue's."
           (insert "\n")
           (rvb-feature--protect start (point) 'rvb-feature-repo name))))))
 
-(defun rvb-feature--insert-changed (m)
-  "Insert the changed-file summary for member M."
-  (let ((changed (plist-get m :changed))
-        (name (plist-get m :name)))
-    (when changed
-      (insert "*** " (format "Changed files (%d)" (length changed)) "  ")
-      (rvb-feature--insert-link
-       "View diff"
-       (lambda () (rvb-feature--show-member-diff m))
-       (format "View %s's diff from %s in Magit"
-               name (or (plist-get m :base) "its base")))
-      (insert "\n")
-      (dolist (c changed)
-        (let ((start (point))
-              (change c)
-              (path (plist-get c :path)))
-          (insert "- "
-                  (propertize (plist-get c :status) 'font-lock-face
-                              (rvb-feature--file-face (plist-get c :status)))
-                  " ")
-          (rvb-feature--insert-link
-           (if (plist-get c :orig)
-               (format "%s -> %s" (plist-get c :orig) path)
-             path)
-           (lambda () (rvb-feature--show-file-diff m change))
-           (format "Show %s's diff in Magit" path))
-          (when (plist-get c :dirty)
-            (insert (propertize " (uncommitted)"
-                                'font-lock-face 'rvb-feature-dirty)))
-          (insert "\n")
-          (rvb-feature--protect start (point) 'rvb-feature-repo name))))))
+(defun rvb-feature--worktree-summary (m)
+  "Return a short description of member M's uncommitted state."
+  (let ((staged 0) (unstaged 0) (untracked 0)
+        (conflicts (rvb-feature--conflict-count m)))
+    (dolist (c (plist-get m :changes))
+      (pcase (plist-get c :kind)
+        ('untracked (cl-incf untracked))
+        ('tracked
+         (let ((xy (plist-get c :xy)))
+           (unless (eq (aref xy 0) ?.) (cl-incf staged))
+           (unless (eq (aref xy 1) ?.) (cl-incf unstaged))))))
+    (if (null (plist-get m :changes))
+        (propertize "clean" 'font-lock-face 'rvb-feature-clean)
+      (string-join
+       (delq nil
+             (list (when (> conflicts 0)
+                     (propertize (format "%d conflicted" conflicts)
+                                 'font-lock-face 'rvb-feature-conflict))
+                   (when (> staged 0) (format "%d staged" staged))
+                   (when (> unstaged 0) (format "%d unstaged" unstaged))
+                   (when (> untracked 0) (format "%d untracked" untracked))))
+       ", "))))
+
+(defun rvb-feature--insert-worktree (m)
+  "Insert member M's working-tree state, linking to Magit.
+Counts rather than a file list: Magit's status buffer already lists
+every file, untracked ones included, and is where staging happens."
+  (let ((name (plist-get m :name)))
+    (insert "*** Working tree: " (rvb-feature--worktree-summary m) "  ")
+    (rvb-feature--insert-link
+     "Magit status"
+     (lambda () (magit-status-setup-buffer (plist-get m :dir)))
+     (format "Open %s's Magit status" name))
+    (insert "  ")
+    (rvb-feature--insert-link
+     "View diff"
+     (lambda () (rvb-feature--show-member-diff m))
+     (format "View %s's diff from %s in Magit"
+             name (or (plist-get m :base) "its base")))
+    (insert "\n")))
 
 (defun rvb-feature--protect-sections ()
   "Protect the structural headings of the feature in this buffer.
@@ -3345,18 +3294,16 @@ else navigates by."
             (save-excursion
               (goto-char body-start)
               (insert "\n")))))
-      (when (or (plist-get m :commits) (plist-get m :changed))
+      (when (and (plist-get m :probed) (not (plist-get m :missing)))
         ;; The end of this repository's subtree: the next repository, or
         ;; the next top-level section.
         (goto-char (rvb-feature--section-end 2))
         (let ((start (point))
-              (commit-heading (and (plist-get m :commits) (point))))
+              commit-heading)
+          (rvb-feature--insert-worktree m)
           (when (plist-get m :commits)
+            (setq commit-heading (point))
             (rvb-feature--insert-commits m))
-          (when (and (plist-get m :commits) (plist-get m :changed))
-            (insert "\n"))
-          (when (plist-get m :changed)
-            (rvb-feature--insert-changed m))
           (insert "\n")
           (rvb-feature--generated start (point) 'rvb-feature-repo name)
           (when commit-heading
